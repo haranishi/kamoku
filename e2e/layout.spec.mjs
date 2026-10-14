@@ -101,6 +101,68 @@ for (const width of WIDTHS) {
   }
 }
 
+// 画面を開いて、準備を済ませ、読み込みが終わるまで待つ（AC-11.6 と AC-11.7 の試験で使う）。
+async function gotoScreen(page, s, width) {
+  await page.setViewportSize({ width, height: 900 });
+  if (s.base) await openSetup(page, s.hash);
+  else await open(page, s.hash);
+  if (s.prepare) await s.prepare(page);
+  await expect(page.locator(s.ready).first()).toBeVisible();
+  await page.waitForLoadState('networkidle');
+}
+
+for (const width of WIDTHS) {
+  for (const s of SCREENS) {
+    test(`AC-11.6 ${s.name} は幅${width}pxで、横に隠れる列も、「…」で欠ける文字も無い`, async ({ page }) => {
+      await gotoScreen(page, s, width);
+      const bad = await page.evaluate(() => {
+        const visible = (e) => {
+          const r = e.getBoundingClientRect();
+          return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+        };
+        const name = (e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]}`;
+        // 横にスクロールする枠の中に、見えていない部分がある（列が隠れている）。意図して許すものは data-allow-hscroll を付ける。
+        const hidden = [...document.querySelectorAll('main *')]
+          .filter((e) => /(auto|scroll)/.test(getComputedStyle(e).overflowX) && e.scrollWidth > e.clientWidth + 1 && visible(e) && !e.closest('[data-allow-hscroll]'))
+          .map((e) => `${name(e)} ${e.scrollWidth}>${e.clientWidth}`);
+        // 「…」で省略されて、情報が欠けている。
+        const cut = [...document.querySelectorAll('main *, .sidebar *, .topbar *, .bottomnav *')]
+          .filter((e) => getComputedStyle(e).textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 1 && visible(e))
+          .map((e) => `${name(e)}「${e.textContent.trim().slice(0, 12)}」`);
+        return { hidden, cut };
+      });
+      expect(bad.hidden, '横に隠れている列がある').toEqual([]);
+      expect(bad.cut, '「…」で欠けた文字がある').toEqual([]);
+    });
+  }
+}
+
+for (const width of WIDTHS.filter((w) => w < 1024)) {
+  for (const s of SCREENS) {
+    test(`AC-11.7 ${s.name} は幅${width}pxで、押せる場所がどれも44×44px以上ある`, async ({ page }) => {
+      await gotoScreen(page, s, width);
+      const small = await page.evaluate(() => {
+        const visible = (e) => {
+          const r = e.getBoundingClientRect();
+          return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden' && !e.closest('[hidden]');
+        };
+        // 文章の中に埋まったリンク（まわりに地の文字がある、行の中のリンク）は、44pxを求めない。
+        const inText = (e) => {
+          if (getComputedStyle(e).display !== 'inline') return false;
+          return [...e.parentElement.childNodes].some((n) => n !== e && n.nodeType === 3 && n.textContent.trim() !== '');
+        };
+        return [...document.querySelectorAll('a[href], button, summary, select, [role="button"], [role="tab"], input[type="checkbox"], input[type="radio"]')]
+          .filter((e) => visible(e) && !e.classList.contains('skip-link') && !inText(e))
+          // チェックとラジオは、包むラベルを含めた大きさで数える。
+          .map((e) => ({ e, r: (e.matches('input') ? e.closest('label') || e : e).getBoundingClientRect() }))
+          .filter(({ r }) => r.width < 44 || r.height < 44)
+          .map(({ e, r }) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]}「${(e.textContent || e.getAttribute('aria-label') || '').trim().slice(0, 10)}」${Math.round(r.width)}x${Math.round(r.height)}`);
+      });
+      expect(small).toEqual([]);
+    });
+  }
+}
+
 // SC-03 下の固定バーの金額は、大きな金額でも切れない（390・768・1440で確かめる）。
 for (const width of WIDTHS) {
   test(`SC-03 未確認の下の固定バーは、幅${width}pxで大きな金額でも切れず、画面の外に出ない`, async ({ page }) => {
@@ -138,6 +200,18 @@ for (const width of WIDTHS) {
     expect(barBox.x + barBox.width).toBeLessThanOrEqual(width);
     const [scroll, client] = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
     expect(scroll).toBeLessThanOrEqual(client);
+    // AC-11.8 バーの下の端と、その下（下のバーか画面の端）の間から、後ろの本文がのぞかない。
+    const peek = await page.evaluate(() => {
+      const r = document.querySelector('.inbox-bar').getBoundingClientRect();
+      const nav = document.querySelector('.bottomnav');
+      const navBox = nav ? nav.getBoundingClientRect() : null;
+      const floor = navBox && navBox.width > 0 ? navBox.top : window.innerHeight;
+      const gap = Math.round(floor - r.bottom);
+      if (gap <= 0) return { gap, hidden: true };
+      const el = document.elementFromPoint(r.left + r.width / 2, r.bottom + Math.min(gap, 4) / 2);
+      return { gap, hidden: Boolean(el && el.closest('.inbox-bar, .bottomnav, [data-bar-mask]')), seen: el && String(el.className) };
+    });
+    expect(peek.hidden, `バーの下に ${peek.gap}px の隙間があり、後ろの本文（${peek.seen}）がのぞく`).toBe(true);
     // Enterで移った先の欄は、固定のバーの下に隠れない。次の行の科目の欄が、画面の中でちょうどバーの裏に来る位置まで
     // スクロールしてから、今の行で Enter を押す（画面の外の欄は、フォーカスで真ん中へ動くので確かめにならない）。
     const k = N - 4;
