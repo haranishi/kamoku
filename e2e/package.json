@@ -1,0 +1,12 @@
+{
+  "name": "kamoku-e2e",
+  "private": true,
+  "description": "kamokuの画面の自動試験（Playwright）。開発専用で、配布物には入らない。",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}

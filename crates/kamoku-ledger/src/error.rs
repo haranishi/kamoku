@@ -81,6 +81,12 @@ pub enum EntryError {
         /// 貸方合計。
         credit: Yen,
     },
+    /// 付随情報の鍵が、半角の小文字・数字・`_` `-` `.` の1〜32バイトでない。
+    BadMetaKey,
+    /// 付随情報の値が1000バイト超。
+    MetaValueTooLong,
+    /// 付随情報が16組超。
+    TooManyMeta,
 }
 impl fmt::Display for EntryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -94,6 +100,9 @@ impl fmt::Display for EntryError {
             Self::MissingSide => f.write_str("借方と貸方が必要です"),
             Self::Overflow => f.write_str("金額の合計が桁あふれしました"),
             Self::Unbalanced { .. } => f.write_str("貸借が一致しません"),
+            Self::BadMetaKey => f.write_str("付随情報の鍵が不正です"),
+            Self::MetaValueTooLong => f.write_str("付随情報の値が長すぎます"),
+            Self::TooManyMeta => f.write_str("付随情報が多すぎます"),
         }
     }
 }

@@ -1,0 +1,245 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 画面の上に重なる部品: ダイアログ、引き出し、通知、コマンド一覧。色は tokens.css の変数だけを使う。 */
+
+/* ---- ダイアログと引き出し ---- */
+/* ブラウザの既定（max-width: calc(100% - 6px - 2em)）を上書きする。引き出しを画面いっぱいに出すため。 */
+.dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 64px);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+  color: var(--c-text);
+  box-shadow: var(--shadow-1);
+}
+
+.dialog::backdrop {
+  background: var(--c-backdrop);
+}
+
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+  animation: dialog-in var(--dur) var(--ease);
+}
+
+.dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-5) 0;
+}
+
+.dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.dialog-error {
+  padding: 0 var(--sp-5);
+}
+
+.dialog-error:has(> .field-error:empty) {
+  display: none;
+}
+
+.dialog-foot {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5) var(--sp-5);
+}
+
+.drawer {
+  width: min(600px, 100vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 0 0 auto;
+  border-radius: var(--radius-m) 0 0 var(--radius-m);
+}
+
+.drawer[open] {
+  animation: drawer-in var(--dur) var(--ease);
+}
+
+.drawer .dialog-body {
+  flex: 1;
+}
+
+.drawer--left {
+  width: min(320px, 88vw);
+  margin: 0 auto 0 0;
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+}
+
+.drawer--left[open] {
+  animation: drawer-left-in var(--dur) var(--ease);
+}
+
+@media (max-width: 767px) {
+  .drawer:not(.drawer--left) {
+    width: 100vw;
+    border-radius: 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes drawer-left-in {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+/* ---- 通知 ---- */
+.toasts {
+  position: fixed;
+  right: var(--sp-5);
+  bottom: var(--sp-5);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  max-width: min(440px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-1);
+  pointer-events: auto;
+  animation: dialog-in var(--dur) var(--ease);
+}
+
+.toast-icon {
+  margin-top: 2px;
+}
+
+.toast--success .toast-icon {
+  color: var(--c-income);
+}
+
+.toast--error {
+  border-color: var(--c-danger);
+}
+
+.toast--error .toast-icon {
+  color: var(--c-danger);
+}
+
+.toast-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.toast .icon-btn {
+  width: 32px;
+  height: 32px;
+}
+
+@media (max-width: 767px) {
+  .toasts {
+    right: var(--sp-4);
+    bottom: calc(var(--bottomnav-h) + var(--sp-3) + env(safe-area-inset-bottom, 0px));
+    left: var(--sp-4);
+    max-width: none;
+  }
+}
+
+/* ---- コマンド一覧 ---- */
+.palette {
+  width: min(640px, calc(100vw - 32px));
+  margin-top: 12vh;
+}
+
+.palette .dialog-body {
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+}
+
+.palette-input {
+  height: 48px;
+  font-size: 18px;
+}
+
+.palette-list {
+  max-height: min(420px, 50vh);
+  overflow-y: auto;
+}
+
+.palette-group {
+  padding: var(--sp-2) var(--sp-3) var(--sp-1);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.palette-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 40px;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+
+.palette-option svg {
+  color: var(--c-muted);
+}
+
+.palette-option[aria-selected="true"] {
+  background: var(--c-primary-soft);
+  box-shadow: inset 3px 0 0 var(--c-primary);
+}
+
+.palette-option-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.keys-table th[scope="row"] {
+  width: 40%;
+  font-weight: 400;
+}

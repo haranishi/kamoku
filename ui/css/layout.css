@@ -1,0 +1,235 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/*
+ * 共通の枠（screens-main.md）。
+ * 1024px以上: 左のサイドバー。768〜1023px: 閉じられるサイドバー（閉じると、アイコンと短い名前の細い列）。
+ * 768px未満: 上の帯と、画面下の5項目のバー。
+ */
+
+.app {
+  --rail-w: 76px;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* ---- サイドバー ---- */
+.sidebar {
+  position: relative;
+  z-index: var(--z-nav);
+  min-width: 0;
+  border-right: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.sidebar-inner {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  height: 100vh;
+  overflow-y: auto;
+  padding: var(--sp-5) var(--sp-3) var(--sp-4);
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-2);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--c-text);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-s);
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+}
+
+.sidebar-business {
+  margin-top: calc(var(--sp-3) * -1);
+  padding: 0 var(--sp-2) 0 calc(var(--sp-2) + 36px);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+/* 1024px以上では効かないので出さない。.icon-btn の display より強くするため、.sidebar を付けて書く。 */
+.sidebar .rail-toggle {
+  display: none;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-group {
+  margin-top: var(--sp-3);
+}
+
+.nav-group-label {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  text-align: left;
+  text-decoration: none;
+}
+
+.nav-item:hover {
+  background: var(--c-surface-2);
+}
+
+.nav-item svg {
+  color: var(--c-muted);
+}
+
+/* いまの画面: 色に加えて、太字と左の帯で示す。 */
+.nav-item[aria-current="page"] {
+  position: relative;
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  font-weight: 700;
+}
+
+.nav-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--c-primary);
+}
+
+.nav-item[aria-current="page"] svg {
+  color: var(--c-primary);
+}
+
+.nav-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-kbd {
+  margin-left: auto;
+}
+
+.nav-count {
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--c-pending-bg);
+  color: var(--c-warn);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+
+.sidebar-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--c-border);
+}
+
+.sidebar-foot .nav-item {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ---- 本文 ---- */
+.main-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.banners:empty {
+  display: none;
+}
+
+.banners {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-7) 0;
+}
+
+.main {
+  width: 100%;
+  max-width: 1240px;
+  padding: var(--sp-6) var(--sp-7) var(--sp-7);
+}
+
+.main:focus {
+  outline: none;
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+.page-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.page-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.topbar,
+.bottomnav {
+  display: none;
+}

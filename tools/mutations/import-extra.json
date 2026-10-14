@@ -1,0 +1,49 @@
+{
+ "test_cmd": [
+  "cargo",
+  "test",
+  "-q",
+  "-p",
+  "kamoku-import",
+  "--no-fail-fast"
+ ],
+ "timeout_sec": 900,
+ "mutations": [
+  {
+   "label": "指紋: 口座を含めない",
+   "file": "crates/kamoku-import/src/fingerprint.rs",
+   "find": "        lp(&mut h, \"kamoku.import.row.v1\");\n        lp(&mut h, wallet);\n",
+   "replace": "        lp(&mut h, \"kamoku.import.row.v1\");\n"
+  },
+  {
+   "label": "取込: 入金と出金の両方を出金として通す",
+   "file": "crates/kamoku-import/src/mapping.rs",
+   "find": "(Some(_), Some(_)) => return Err(\"入金と出金の両方に金額があります。\".to_owned()),",
+   "replace": "(Some(v), Some(_)) => (Direction::Out, v),"
+  },
+  {
+   "label": "取込: 0円を金額ありとみなす",
+   "file": "crates/kamoku-import/src/mapping.rs",
+   "find": "match (out.filter(|v| *v != 0), inn.filter(|v| *v != 0)) {",
+   "replace": "match (out, inn) {"
+  },
+  {
+   "label": "文字コード: BOMなしのUTF-8を判定しない",
+   "file": "crates/kamoku-import/src/decode.rs",
+   "find": "} else if std::str::from_utf8(bytes).is_ok() {",
+   "replace": "} else if false {"
+  },
+  {
+   "label": "文字コード: NULを許す",
+   "file": "crates/kamoku-import/src/decode.rs",
+   "find": "if text.contains('\\0') {",
+   "replace": "if false {"
+  },
+  {
+   "label": "取込: 取引番号を使わない",
+   "file": "crates/kamoku-import/src/fingerprint.rs",
+   "find": ".filter(|id| !id.is_empty());",
+   "replace": ".filter(|_| false);"
+  }
+ ]
+}

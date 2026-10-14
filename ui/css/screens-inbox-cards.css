@@ -1,0 +1,197 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 未確認（SC-03）の表を、入れ物が狭いとき（1080px未満・600px未満）に、1件を数段のカードにする形。 */
+
+/* ---- 数段のカード（狭い入れ物） ---- */
+@container inbox (max-width: 1079px) {
+  .inbox-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .inbox-table,
+  .inbox-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .inbox-table tr.inbox-row {
+    display: grid;
+    grid-template-columns: 44px repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "cand desc desc amount"
+      "cand date account account"
+      "cand tax partner pct"
+      "cand memo memo ops";
+    gap: var(--sp-2) var(--sp-3);
+    align-items: end;
+    padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-2);
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .inbox-table.is-exempt tr.inbox-row {
+    grid-template-areas:
+      "cand desc desc amount"
+      "cand date account account"
+      "cand partner partner pct"
+      "cand memo memo ops";
+  }
+
+  .inbox-table tr.inbox-row.has-msg {
+    border-bottom: 0;
+  }
+
+  .inbox-table tr.inbox-row > td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .inbox-table tr.inbox-row > td::before {
+    content: attr(data-label);
+    color: var(--c-muted);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+  }
+
+  .inbox-table tr.inbox-row > td[data-label=""]::before,
+  .inbox-table tr.inbox-row > td.c-cand::before {
+    display: none;
+  }
+
+  .inbox-table .c-cand {
+    grid-area: cand;
+    align-self: start;
+    align-items: center;
+  }
+
+  .inbox-table .c-desc {
+    grid-area: desc;
+    align-self: center;
+  }
+
+  .inbox-table .c-amount {
+    grid-area: amount;
+    align-self: center;
+    align-items: flex-end;
+  }
+
+  .inbox-table .c-amount::before {
+    display: none;
+  }
+
+  .inbox-table .c-date {
+    grid-area: date;
+  }
+
+  .inbox-table .c-account {
+    grid-area: account;
+  }
+
+  .inbox-table .c-tax {
+    grid-area: tax;
+  }
+
+  .inbox-table .c-partner {
+    grid-area: partner;
+  }
+
+  .inbox-table .c-memo {
+    grid-area: memo;
+  }
+
+  .inbox-table .c-pct {
+    grid-area: pct;
+  }
+
+  .inbox-table .c-ops {
+    grid-area: ops;
+    align-items: flex-end;
+  }
+
+  .inbox-table .c-date .input {
+    width: 100%;
+  }
+
+  .inbox-table tr.inbox-row.is-candidate {
+    background: var(--c-primary-soft);
+    box-shadow: inset 4px 0 0 var(--c-primary);
+  }
+
+  .inbox-table tr.inbox-row.is-candidate > td,
+  .inbox-table tr.inbox-row.is-candidate > td.c-cand {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .inbox-table tr.inbox-row.is-candidate .cand-text {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    color: var(--c-primary);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+  }
+
+  .inbox-table .cand {
+    flex-direction: column;
+    min-height: 44px;
+  }
+
+  .inbox-table tr.inbox-msg {
+    display: block;
+  }
+
+  .inbox-table tr.inbox-msg > td {
+    display: block;
+    padding: 0 var(--sp-4) var(--sp-3) 56px;
+    border-bottom: 1px solid var(--c-border);
+  }
+}
+
+@container inbox (max-width: 599px) {
+  .inbox-table tr.inbox-row,
+  .inbox-table.is-exempt tr.inbox-row {
+    grid-template-columns: 44px minmax(0, 1fr) minmax(5.5em, auto);
+    grid-template-areas:
+      "cand desc amount"
+      "date date pct"
+      "account account account"
+      "tax tax tax"
+      "partner partner partner"
+      "memo memo ops";
+    padding: var(--sp-3) var(--sp-3) var(--sp-4);
+  }
+
+  .inbox-table tr.inbox-msg > td {
+    padding: 0 var(--sp-3) var(--sp-3);
+  }
+}
+
+@media (max-width: 767px) {
+  .inbox-table .input,
+  .inbox-table .select {
+    height: var(--control-h);
+    font-size: var(--fs-input);
+  }
+
+  .inbox-tools {
+    padding: var(--sp-2) var(--sp-4) var(--sp-3);
+  }
+
+  .inbox-filters > * {
+    flex: 1 1 100%;
+  }
+}

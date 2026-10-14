@@ -1,0 +1,311 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 画面ごとの並び（ホーム）。登録と仕訳帳は screens-entry.css と screens-journal.css。 */
+
+.card-title {
+  font-size: var(--fs-h2);
+}
+
+/* ---- ホーム ---- */
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.month-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.month-select {
+  width: auto;
+  min-width: 9.5em;
+}
+
+.next-card {
+  border-color: var(--c-primary);
+  border-left-width: 4px;
+  background: var(--c-primary-soft);
+}
+
+.next-card .card-title {
+  margin-bottom: var(--sp-2);
+}
+
+.next-text {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.next-actions-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.kpi-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.kpi-value {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-kpi);
+  font-weight: 700;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kpi-value .unit,
+.row-value .unit,
+.totals .unit,
+.rank-value .unit {
+  margin-left: 2px;
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.kpi-diff {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+/* 2行に折れても、矢印は1行目の高さに置く。 */
+.kpi-diff svg {
+  margin-top: 2px;
+}
+
+.kpi-note {
+  margin-top: var(--sp-2);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.home-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-s);
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+}
+
+.row-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.row-sub {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.row-value {
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+}
+
+.totals div,
+.facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.totals dt,
+.facts dt {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+.totals dd,
+.facts dd {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rank {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: 0;
+}
+
+.rank-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: baseline;
+}
+
+.rank-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rank-value {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rank-bar {
+  position: relative;
+  grid-column: 1 / -1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--c-surface-2);
+}
+
+.rank-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--w, 0%);
+  border-radius: 3px;
+  background: var(--c-primary);
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.hash-manual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+}
+
+.hash-manual:empty {
+  display: none;
+}
+
+@media (max-width: 1279px) {
+  .kpis,
+  .home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 2列のときは、台帳と消費税を横に並べて、下の段を埋める。 */
+  .home-stack {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .home-stack > * {
+    flex: 1 1 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .home {
+    gap: var(--sp-3);
+  }
+
+  .kpis {
+    gap: var(--sp-3);
+  }
+
+  .kpi {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .kpi-value {
+    font-size: 20px;
+  }
+
+  .month-select {
+    min-width: 0;
+  }
+
+  .home-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
+  }
+
+  .home-stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-3);
+  }
+
+  .home-stack > * {
+    flex: none;
+  }
+}

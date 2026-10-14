@@ -1,0 +1,251 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 登録簿（SC-07 口座、SC-08 勘定科目、SC-09 取引先）と、追加・編集のダイアログ。 */
+
+.masters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.masters-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+}
+
+.masters-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.masters-section .card-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.masters-off {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+/* ---- 口座 ---- */
+.wallet-totals {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+  margin-top: 0;
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.wallet-totals div {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wallet-totals dd {
+  font-size: var(--fs-h2);
+}
+
+.wallet-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.wallet-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.wallet-item.is-off {
+  background: var(--c-surface-2);
+}
+
+.wallet-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.wallet-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wallet-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 16px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.wallet-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-4);
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.wallet-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-weight: 600;
+}
+
+.wallet-balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+}
+
+.wallet-amount {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wallet-amount .unit {
+  margin-left: 2px;
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ---- 勘定科目・取引先 ---- */
+.acct-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-left: calc(var(--depth, 0) * 1.5em);
+  font-weight: 600;
+}
+
+.acct-name.is-parent {
+  font-weight: 700;
+}
+
+.accounts-table tr.is-off td,
+.partners-table tr.is-off td {
+  color: var(--c-muted);
+}
+
+/* 分類ごとの表の列を、どの表でも同じ幅にそろえる（縦に見比べやすいように）。積み上げ表示（640px未満）には当てない。 */
+@media (min-width: 640px) {
+  .accounts-table {
+    table-layout: fixed;
+  }
+
+  .accounts-table th:nth-child(1) {
+    width: 30%;
+  }
+
+  .accounts-table th:nth-child(2) {
+    width: 22%;
+  }
+
+  .accounts-table th:nth-child(3) {
+    width: 20%;
+  }
+
+  .accounts-table th:nth-child(4) {
+    width: 16%;
+  }
+
+  .accounts-table th:nth-child(5) {
+    width: 12%;
+  }
+
+  .accounts-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* 積み上げ表示では、空の欄（読み・メモなど）の見出しだけが並ばないようにする。 */
+@media (max-width: 639px) {
+  .accounts-table td:empty,
+  .partners-table td:empty {
+    display: none;
+  }
+}
+
+.accounts-table .acct-cell {
+  white-space: normal;
+}
+
+/* ---- ダイアログ ---- */
+.form-dialog .seg-options {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1023px) {
+  .wallet-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .masters-tools {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .masters-tools .search-box {
+    flex: 1 1 100%;
+  }
+
+  .wallet-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .wallet-balance {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .wallet-links a {
+    min-height: 44px;
+  }
+
+  .acct-name {
+    padding-left: 0;
+  }
+}
+
+/* 選択肢が多い切り替え（口座の型、明るさ）は、狭い画面では選択肢を1つずつの行にして、枠の中で途中から折り返さないようにする
+ * （2列にすると、選んだ印が付いたときに「クレジットカード」「OSに合わせる」が2行に割れた）。 */
+@media (max-width: 767px) {
+  .seg--grid .seg-options {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .seg--grid .seg-option {
+    justify-content: flex-start;
+  }
+}

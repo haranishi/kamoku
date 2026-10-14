@@ -1,0 +1,208 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 取引の登録と訂正。広い画面では、左に入力、右に仕訳のプレビュー。仕訳で入力・訂正の差分・テンプレートは screens-entry-more.css。 */
+
+.entry-layout {
+  display: grid;
+  grid-template-areas:
+    "main side"
+    "actions side";
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  grid-template-rows: auto 1fr;
+  gap: var(--sp-4) var(--sp-5);
+  align-items: start;
+}
+
+.entry-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.entry-side {
+  position: sticky;
+  top: var(--sp-5);
+  grid-area: side;
+  min-width: 0;
+}
+
+.entry-actions-card {
+  grid-area: actions;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.entry-form,
+.tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4) var(--sp-5);
+}
+
+.span-2 {
+  grid-column: 1 / -1;
+}
+
+.field-note {
+  color: var(--c-muted);
+}
+
+.detail-cell .btn {
+  align-self: flex-start;
+}
+
+.pct-input {
+  flex: none !important;
+  width: 6em;
+}
+
+.pct-out {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.form-error:empty,
+.block-note:empty,
+.stale-box:empty {
+  display: none;
+}
+
+.entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.entry-actions-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* ---- 仕訳のプレビュー ---- */
+.pv-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.pv-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.pv-table th,
+.pv-table td {
+  height: auto;
+  padding: var(--sp-2) var(--sp-3);
+  vertical-align: top;
+  white-space: normal;
+}
+
+.pv-table .sub {
+  display: block;
+}
+
+.pv-table .num {
+  white-space: nowrap;
+}
+
+.pv-side {
+  width: 5.5em;
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+/* 貸方の行は、借方の行と区切りの線で分ける。 */
+.pv-table tr.pv-debit + tr.pv-credit > td {
+  border-top: 2px solid var(--c-border);
+}
+
+.pv-account {
+  min-width: 6em;
+}
+
+.pv-idle,
+.pv-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  color: var(--c-muted);
+}
+
+.pv-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border-radius: var(--radius-s);
+  background: var(--c-pending-bg);
+}
+
+.pv-warnings li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.pv-warnings svg {
+  margin-top: 2px;
+  color: var(--c-warn);
+}
+
+.pv-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 1279px) {
+  .entry-layout {
+    grid-template-areas:
+      "main"
+      "side"
+      "actions";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .entry-side {
+    position: static;
+  }
+}
+
+@media (max-width: 639px) {
+  .entry-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .entry-main {
+    gap: var(--sp-4);
+  }
+
+  .entry-actions-main {
+    width: 100%;
+  }
+
+  .entry-actions-main .btn--primary {
+    flex: 1 1 100%;
+  }
+}

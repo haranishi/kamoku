@@ -1,0 +1,67 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 段階の表示（取込の3段階と、初期設定の4段階で使う）。済んだ段階は印と文字、いまの段階は塗りで示す。 */
+
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin-bottom: var(--sp-4);
+  counter-reset: none;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.step-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--c-border-strong);
+  border-radius: 50%;
+  background: var(--c-surface);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.step.is-current {
+  color: var(--c-text);
+  font-weight: 700;
+}
+
+.step.is-current .step-no {
+  border-color: var(--c-primary);
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+}
+
+.step.is-done .step-no {
+  border-color: var(--c-income);
+  background: var(--c-ok-bg);
+  color: var(--c-income);
+}
+
+.import-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.import-card > h2:focus {
+  outline: none;
+}
+
+.import-step {
+  gap: var(--sp-4);
+}

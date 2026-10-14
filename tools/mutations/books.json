@@ -1,0 +1,67 @@
+{
+ "test_cmd": [
+  "cargo",
+  "test",
+  "-q",
+  "-p",
+  "kamoku-books",
+  "--no-fail-fast"
+ ],
+ "timeout_sec": 900,
+ "mutations": [
+  {
+   "label": "按分: 四捨五入を切捨てに",
+   "file": "crates/kamoku-books/src/compose_parts.rs",
+   "find": "i64::try_from((scaled + 50) / 100)",
+   "replace": "i64::try_from(scaled / 100)"
+  },
+  {
+   "label": "税: 設定の端数処理を無視して常に切捨て",
+   "file": "crates/kamoku-books/src/tax.rs",
+   "find": "Some(rate) => Ok(split_tax_included(gross, rate, rounding)?.tax),",
+   "replace": "Some(rate) => Ok(split_tax_included(gross, rate, Rounding::Floor)?.tax),"
+  },
+  {
+   "label": "元帳: 残高をいつも借方から見る",
+   "file": "crates/kamoku-books/src/reports/ledger.rs",
+   "find": "balance = add(balance, signed(line, acc.normal_side())?)?;",
+   "replace": "balance = add(balance, signed(line, Side::Debit)?)?;"
+  },
+  {
+   "label": "元帳: 期首に開始日の動きも入れる",
+   "file": "crates/kamoku-books/src/reports/ledger.rs",
+   "find": "let opening = carried(&plain, chart, from.year(), from.previous_day())?",
+   "replace": "let opening = carried(&plain, chart, from.year(), Some(from))?"
+  },
+  {
+   "label": "貸借対照表: 前年までの損益を元入金に足さない",
+   "file": "crates/kamoku-books/src/reports/mod.rs",
+   "find": "bump(&mut balances, CAPITAL, signed(line, Side::Credit)?)?;",
+   "replace": "let _ = CAPITAL;"
+  },
+  {
+   "label": "税: 経過措置の控除を切上げに",
+   "file": "crates/kamoku-books/src/reports/tax.rs",
+   "find": "(i128::from(tax.get()) * i128::from(percent)) / 100)",
+   "replace": "(i128::from(tax.get()) * i128::from(percent) + 99) / 100)"
+  },
+  {
+   "label": "税: 経過措置の控除を負の無限大へ丸める(返品が相殺されない)",
+   "file": "crates/kamoku-books/src/reports/tax.rs",
+   "find": "(i128::from(tax.get()) * i128::from(percent)) / 100)",
+   "replace": "(i128::from(tax.get()) * i128::from(percent)).div_euclid(100))"
+  },
+  {
+   "label": "貸借対照表: 事業主貸・事業主借を年で区切らない",
+   "file": "crates/kamoku-books/src/reports/mod.rs",
+   "find": ".any(|ancestor| chart.has_ancestor(account.code.as_str(), ancestor))",
+   "replace": ".any(|_| false)"
+  },
+  {
+   "label": "貸借対照表: 事業主勘定の子の科目を年で区切らない",
+   "file": "crates/kamoku-books/src/reports/mod.rs",
+   "find": ".any(|ancestor| chart.has_ancestor(account.code.as_str(), ancestor))",
+   "replace": ".any(|ancestor| account.code.as_str() == *ancestor)"
+  }
+ ]
+}

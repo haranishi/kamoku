@@ -1,0 +1,38 @@
+[package]
+name = "kamoku-app"
+description = "手元で動くkamokuの本体。ブラウザで開く画面と、それに応えるサーバー。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish.workspace = true
+license = "MIT OR Apache-2.0"
+build = "build.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "kamoku"
+path = "src/main.rs"
+
+[dependencies]
+encoding_rs = "0.8.42"
+getrandom = "0.4.3"
+kamoku-books = { version = "0.0.1", path = "../kamoku-books" }
+kamoku-import = { version = "0.0.1", path = "../kamoku-import" }
+kamoku-ledger = { version = "0.0.1", path = "../kamoku-ledger" }
+kamoku-store = { version = "0.0.1", path = "../kamoku-store" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha2 = "0.10"
+time = { version = "0.3.55", default-features = false, features = ["formatting", "parsing", "macros", "std"] }
+
+[dev-dependencies]
+# 保存層と同じ版（新しいクレートは増えない）。別の接続から失敗を起こす試験だけで使う。
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+tempfile = "3.27.0"
+
+[lints]
+workspace = true

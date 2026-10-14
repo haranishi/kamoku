@@ -12,10 +12,14 @@
 //!   + opt_lp(reason) + opt_entry(entry)
 //! opt_entry = なし: 0x00 / あり: 0x01 + enc_entry
 //! enc_entry = lp(id) + i32 big-endian(year) + u8(month 1..=12) + u8(day)
-//!   + lp(description) + u32 big-endian(明細行数) + 行順の enc_line
+//!   + lp(description) + u32 big-endian(明細行数) + 行順の enc_line + enc_meta
 //! enc_line = lp(account) + u8(side: Debit=1, Credit=2) + i64 big-endian(amount)
 //!   + opt_lp(tax_code) + i64 big-endian(tax_amount) + lp(memo)
+//! enc_meta = 付随情報が空: 何も足さない
+//!   / 空でない: 0x01 + u32 big-endian(組の数) + 鍵の昇順（バイト順）に lp(key) + lp(value)
 //! ```
+//! `enc_meta` は符号化の末尾にあり、空のときは1バイトも足しません。付随情報の無い
+//! イベントのハッシュは、付随情報を足す前の版と同じです（`tests/golden.rs` が守ります）。
 //! 保存されたバイト列そのものを使い、Debug 表現は使用しません。
 
 use crate::{Event, Hash, Side};
@@ -60,6 +64,16 @@ pub(crate) fn event_hash(event: &Event) -> Option<Hash> {
             opt_lp(&mut h, line.tax_code.as_deref())?;
             h.update(line.tax_amount.get().to_be_bytes());
             lp(&mut h, &line.memo)?;
+        }
+        let meta = entry.meta();
+        if !meta.is_empty() {
+            h.update([1]);
+            h.update(u32::try_from(meta.len()).ok()?.to_be_bytes());
+            // BTreeMap<String, _> の順は、文字列のバイト順と一致する。
+            for (key, value) in meta {
+                lp(&mut h, key)?;
+                lp(&mut h, value)?;
+            }
         }
     }
     Some(Hash(h.finalize().into()))

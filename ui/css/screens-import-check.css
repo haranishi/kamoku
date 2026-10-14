@@ -1,0 +1,82 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 取込（SC-04）の(3): 判定の件数、行ごとの判定と理由、「この行も取り込む」。 */
+
+/* ---- (3) 取り込む前の確認 ---- */
+.check-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.check-counts li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.check-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-s);
+  background: var(--c-surface-2);
+  font-size: var(--fs-sm);
+}
+
+.check-notes li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.check-notes svg {
+  margin-top: 3px;
+  color: var(--c-primary);
+}
+
+.check-table .reason-cell {
+  min-width: 16em;
+}
+
+.reason-text {
+  display: block;
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+.check-table tr.is-invalid .reason-text {
+  color: var(--c-danger);
+}
+
+.check-table td {
+  height: auto;
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
+}
+
+.force-check {
+  margin-top: var(--sp-1);
+  font-weight: 600;
+}
+
+.import-done .empty-body {
+  max-width: 40em;
+}
+
+@media (max-width: 767px) {
+  .check-table .reason-cell {
+    min-width: 0;
+  }
+}
+
+/* 積み上げ表示で、理由の無い行に「理由・選択」の見出しだけが出ないようにする。 */
+@media (max-width: 639px) {
+  .check-table td.reason-cell:empty {
+    display: none;
+  }
+}

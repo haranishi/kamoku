@@ -1,0 +1,235 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 仕訳帳と詳細の引き出し。 */
+
+/* ---- 絞り込み ---- */
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.filter-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.period-label {
+  min-width: 7.5em;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  flex: 0 1 380px;
+  align-items: center;
+  min-width: 0;
+}
+
+.search-box > svg {
+  position: absolute;
+  left: 12px;
+  color: var(--c-muted);
+  pointer-events: none;
+}
+
+.search-box .input {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.search-box kbd {
+  position: absolute;
+  right: 10px;
+}
+
+.filter-more summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 32px;
+  color: var(--c-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filter-more[open] summary {
+  margin-bottom: var(--sp-3);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--sp-3);
+}
+
+.list-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  margin-bottom: var(--sp-2);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.list-summary span:last-child {
+  color: var(--c-text);
+  font-weight: 700;
+}
+
+.sub-inline {
+  margin-left: var(--sp-2);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+}
+
+.state-plain {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+}
+
+/*
+ * 入れ物が900px未満のとき（768pxの画面、スマホ）は、1件を3行のカードにする。
+ * 1行目: 摘要と金額、2行目: No・日付・状態、3行目: 借方と貸方。金額の列が表の外に隠れないようにするため。
+ */
+.list-host {
+  container-type: inline-size;
+  container-name: journal;
+}
+
+@container journal (max-width: 899px) {
+  .journal-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .journal-table,
+  .journal-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .journal-table tbody tr {
+    display: grid;
+    grid-template-areas:
+      "desc desc desc total"
+      "no date date state"
+      "debit debit credit credit";
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    gap: 2px var(--sp-2);
+    align-items: baseline;
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .journal-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .journal-table td {
+    display: block;
+    height: auto;
+    padding: 0;
+    border: 0;
+    color: var(--c-muted);
+    font-size: var(--fs-xs);
+    white-space: normal;
+  }
+
+  .journal-table .c-desc {
+    grid-area: desc;
+    min-width: 0;
+    color: var(--c-text);
+    font-size: var(--fs-body);
+    font-weight: 700;
+  }
+
+  .journal-table .c-desc .sub-inline {
+    font-weight: 400;
+  }
+
+  .journal-table .c-total {
+    grid-area: total;
+    color: var(--c-text);
+    font-size: var(--fs-body);
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .journal-table .c-no {
+    grid-area: no;
+    text-align: left;
+  }
+
+  .journal-table .c-no::before {
+    content: "No.";
+  }
+
+  .journal-table .c-date {
+    grid-area: date;
+  }
+
+  .journal-table .c-state {
+    grid-area: state;
+    justify-self: end;
+  }
+
+  .journal-table .c-debit {
+    grid-area: debit;
+  }
+
+  .journal-table .c-credit {
+    grid-area: credit;
+  }
+
+  .journal-table .c-debit::before,
+  .journal-table .c-credit::before {
+    content: attr(data-label) " ";
+    font-weight: 700;
+  }
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.pager:empty {
+  display: none;
+}
+
+.pager-text {
+  color: var(--c-muted);
+  font-variant-numeric: tabular-nums;
+}

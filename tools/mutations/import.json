@@ -1,0 +1,49 @@
+{
+  "test_cmd": [
+    "cargo",
+    "test",
+    "-q",
+    "-p",
+    "kamoku-import",
+    "--no-fail-fast"
+  ],
+  "timeout_sec": 900,
+  "mutations": [
+    {
+      "label": "指紋: 金額の符号を落とす",
+      "file": "crates/kamoku-import/src/fingerprint.rs",
+      "find": "lp(&mut h, &row.signed_amount().to_string());",
+      "replace": "lp(&mut h, &row.amount.to_string());"
+    },
+    {
+      "label": "指紋: 摘要を正規化しない",
+      "file": "crates/kamoku-import/src/fingerprint.rs",
+      "find": "lp(&mut h, &normalize_text(&row.description));",
+      "replace": "lp(&mut h, &row.description);"
+    },
+    {
+      "label": "出現番号: 同じ指紋でも1のまま",
+      "file": "crates/kamoku-import/src/fingerprint.rs",
+      "find": "*count = count.saturating_add(1);",
+      "replace": "*count = 1;"
+    },
+    {
+      "label": "CSV: 二重の引用符を閉じ引用符として読む",
+      "file": "crates/kamoku-import/src/csv.rs",
+      "find": "'\"' if chars.peek() == Some(&'\"') => {",
+      "replace": "'\"' if chars.peek() == Some(&'\\u{0}') => {"
+    },
+    {
+      "label": "CSV: 区切りの判定で引用符の崩れを数えない",
+      "file": "crates/kamoku-import/src/csv.rs",
+      "find": "let score = (Reverse(anomalies), same, width);",
+      "replace": "let score = (Reverse(anomalies * 0), same, width);"
+    },
+    {
+      "label": "日付: 令和の始まりを確かめない",
+      "file": "crates/kamoku-import/src/values.rs",
+      "find": "return (era.first <= date && era.last.is_none_or(|last| date <= last)).then_some(date);",
+      "replace": "return era.last.is_none_or(|last| date <= last).then_some(date);"
+    }
+  ]
+}

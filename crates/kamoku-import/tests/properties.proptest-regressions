@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 402e7508f4b1edb45e452a090fe01eeec903e784542ded6d3493e50dad8ef53a # shrinks to (rows, shuffled) = ([ParsedRow { line: 1, date: 2026-10-02, description: "サンプル", direction: In, amount: 100, id: None }, ParsedRow { line: 1, date: 2026-10-02, description: "サンプル", direction: In, amount: 100, id: None }], [ParsedRow { line: 1, date: 2026-10-02, description: "サンプル", direction: In, amount: 100, id: None }, ParsedRow { line: 1, date: 2026-10-02, description: "サンプル", direction: In, amount: 100, id: None }])
+cc 5bac6152c1fb5614d13482c001409b1c65e406693bdd48db96acde2e9f6f5ccf # shrinks to rows = [["", "\t\t,"]]

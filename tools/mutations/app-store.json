@@ -1,0 +1,54 @@
+{
+  "test_cmd": [
+    "cargo",
+    "test",
+    "-q",
+    "-p",
+    "kamoku-store",
+    "--no-fail-fast"
+  ],
+  "timeout_sec": 1800,
+  "exclude": [
+    "target",
+    ".git",
+    "node_modules",
+    ".cargo-home",
+    ".cargo-target",
+    "screens-out",
+    "test-results",
+    "playwright-report",
+    "e2e"
+  ],
+  "mutations": [
+    {
+      "label": "保存層 refresh_masters: 読んだ科目と設定を使わない",
+      "file": "crates/kamoku-store/src/recovery.rs",
+      "find": "        self.chart = chart;\n        self.settings = settings;\n",
+      "replace": "        let _ = (chart, settings);\n"
+    },
+    {
+      "label": "保存層 refresh_masters: 台帳の末尾が変わっても読み直さない",
+      "file": "crates/kamoku-store/src/recovery.rs",
+      "find": "            self.reload()?;\n            return Err(StoreError::Stale);\n",
+      "replace": "            return Err(StoreError::Stale);\n"
+    },
+    {
+      "label": "保存層 refresh_masters: 台帳の末尾が変わっても Stale を返さない",
+      "file": "crates/kamoku-store/src/recovery.rs",
+      "find": "            self.reload()?;\n            return Err(StoreError::Stale);\n",
+      "replace": "            return self.reload();\n"
+    },
+    {
+      "label": "保存層 recover: 開いたトランザクションを巻き戻さない",
+      "file": "crates/kamoku-store/src/recovery.rs",
+      "find": "            let _ = self.conn.execute_batch(\"ROLLBACK\");\n",
+      "replace": ""
+    },
+    {
+      "label": "保存層 recover: 読み直せなくても読み取り専用にしない",
+      "file": "crates/kamoku-store/src/recovery.rs",
+      "find": "            self.failure = Some(VerifyFailure::row(\n                0,\n                format!(\"途中で止まった処理のあとの再読込に失敗しました: {error}\"),\n            ));",
+      "replace": "            let _ = error;"
+    }
+  ]
+}

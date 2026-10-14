@@ -1,0 +1,234 @@
+{
+  "test_cmd": [
+    "cargo",
+    "test",
+    "-q",
+    "-p",
+    "kamoku-app",
+    "--no-fail-fast"
+  ],
+  "timeout_sec": 1800,
+  "exclude": [
+    "target",
+    ".git",
+    "node_modules",
+    ".cargo-home",
+    ".cargo-target",
+    "screens-out",
+    "test-results",
+    "playwright-report",
+    "e2e"
+  ],
+  "mutations": [
+    {
+      "label": "入口: Host の検査を外す",
+      "file": "crates/kamoku-app/src/app.rs",
+      "find": "        if !gate::host_ok(head, self.port) {",
+      "replace": "        if false && !gate::host_ok(head, self.port) {"
+    },
+    {
+      "label": "入口: 変更の要求の Origin の検査を外す",
+      "file": "crates/kamoku-app/src/app.rs",
+      "find": "        if head.method.changes_state() && !gate::origin_ok(head, self.port) {",
+      "replace": "        if false && head.method.changes_state() && !gate::origin_ok(head, self.port) {"
+    },
+    {
+      "label": "入口: Sec-Fetch-Site を見ない",
+      "file": "crates/kamoku-app/src/gate.rs",
+      "find": "    ours && site\n",
+      "replace": "    ours || site && false\n"
+    },
+    {
+      "label": "入口: Cookie の値を照合せず、あれば通す",
+      "file": "crates/kamoku-app/src/app.rs",
+      "find": "            .any(|value| self.sessions.valid(value))",
+      "replace": "            .any(|value| !value.is_empty() || self.sessions.valid(value))"
+    },
+    {
+      "label": "入口: 合言葉を比べず、t があれば通す",
+      "file": "crates/kamoku-app/src/app.rs",
+      "find": "        if !given.is_some_and(|t| ids::same_secret(&t, &self.token)) {",
+      "replace": "        if !given.is_some_and(|t| !t.is_empty() || ids::same_secret(&t, &self.token)) {"
+    },
+    {
+      "label": "入口: Cookie から HttpOnly を落とす",
+      "file": "crates/kamoku-app/src/gate.rs",
+      "find": "    format!(\"{COOKIE}={session}; HttpOnly; SameSite=Strict; Path=/\")",
+      "replace": "    format!(\"{COOKIE}={session}; SameSite=Strict; Path=/\")"
+    },
+    {
+      "label": "見出し: CSP を付けない",
+      "file": "crates/kamoku-app/src/gate.rs",
+      "find": "    response.set_header(\"Content-Security-Policy\", CSP);",
+      "replace": "    let _ = CSP;"
+    },
+    {
+      "label": "読み取り専用: 経路の検査を外す（保存の層の検査は残る）",
+      "file": "crates/kamoku-app/src/router.rs",
+      "find": "        body,\n        write,\n        run,",
+      "replace": "        body,\n        write: write && false,\n        run,"
+    },
+    {
+      "label": "CSV: 式の防止を外す",
+      "file": "crates/kamoku-app/src/csv.rs",
+      "find": "    if value.starts_with(['=', '+', '-', '@', '\\t', '\\r']) {",
+      "replace": "    if value.starts_with(['=', '+', '-', '@', '\\t', '\\r']) && false {"
+    },
+    {
+      "label": "CSV: 式の防止からタブと CR を落とす",
+      "file": "crates/kamoku-app/src/csv.rs",
+      "find": "    if value.starts_with(['=', '+', '-', '@', '\\t', '\\r']) {",
+      "replace": "    if value.starts_with(['=', '+', '-', '@']) {"
+    },
+    {
+      "label": "受け口: 本文の長さを読む前に比べない",
+      "file": "crates/kamoku-app/src/http/conn.rs",
+      "find": "    if head.content_length > limit {",
+      "replace": "    if head.content_length > limit && false {"
+    },
+    {
+      "label": "受け口: Transfer-Encoding を断らない",
+      "file": "crates/kamoku-app/src/http/request.rs",
+      "find": "    if head.header(\"transfer-encoding\").is_some() {",
+      "replace": "    if head.header(\"transfer-encoding\").is_some() && false {"
+    },
+    {
+      "label": "静的配信: --ui-dir の外を指すリンクを配る（行き先をフォルダの中と比べない）",
+      "file": "crates/kamoku-app/src/statics.rs",
+      "find": "                .strip_prefix(root)\n                .ok()?",
+      "replace": "                .strip_prefix(file.parent()?)\n                .ok()?"
+    },
+    {
+      "label": "再送防止: 本文が違っても最初の結果を返す",
+      "file": "crates/kamoku-app/src/api/client_ids.rs",
+      "find": "            if seen.digest == *digest {",
+      "replace": "            if seen.digest == *digest || id.is_empty() || !id.is_empty() {"
+    },
+    {
+      "label": "取込: ファイル内の出現番号を捨て、すべて1番として渡す",
+      "file": "crates/kamoku-app/src/api/import_rows.rs",
+      "find": "            occurrence: *occurrence,",
+      "replace": "            occurrence: (*occurrence).min(1),"
+    },
+    {
+      "label": "取込（保存層の写しを変える）: 選んだ重複の行を新規の行より先に入れる",
+      "file": "crates/kamoku-store/src/inbox.rs",
+      "find": "            for draft in fresh {\n                insert_draft(&s.conn, &batch.wallet, &draft, &mut summary)?;\n            }\n            for mut draft in forced {\n                draft.occurrence = next_occurrence(&s.conn, &draft.fingerprint)?;\n                insert_draft(&s.conn, &batch.wallet, &draft, &mut summary)?;\n            }\n",
+      "replace": "            for mut draft in forced {\n                draft.occurrence = next_occurrence(&s.conn, &draft.fingerprint)?;\n                insert_draft(&s.conn, &batch.wallet, &draft, &mut summary)?;\n            }\n            for draft in fresh {\n                insert_draft(&s.conn, &batch.wallet, &draft, &mut summary)?;\n            }\n"
+    },
+    {
+      "label": "期首残高: 同じ内容でも訂正の版を増やす",
+      "file": "crates/kamoku-app/src/api/opening.rs",
+      "find": "            if entry != old {",
+      "replace": "            if entry != old || true {"
+    },
+    {
+      "label": "A1 再送防止: client_id の上限を元の200バイトに戻す",
+      "file": "crates/kamoku-app/src/api/client_ids.rs",
+      "find": "pub(crate) const CLIENT_ID_MAX_LEN: usize = 64;",
+      "replace": "pub(crate) const CLIENT_ID_MAX_LEN: usize = 200;"
+    },
+    {
+      "label": "A1 再送防止: バイト数の上限を見ない",
+      "file": "crates/kamoku-app/src/api/client_ids.rs",
+      "find": "if self.records.len() >= self.limits.count || self.bytes >= self.limits.bytes {",
+      "replace": "if self.records.len() >= self.limits.count {"
+    },
+    {
+      "label": "A1 再送防止: 本文の指紋が中身によらず同じ",
+      "file": "crates/kamoku-app/src/api/client_ids.rs",
+      "find": "Ok(Sha256::digest(&bytes).into())",
+      "replace": "Ok(Sha256::digest(&bytes[..0]).into())"
+    },
+    {
+      "label": "A2 再送防止: いっぱいなら最古の記録を追い出して受け付ける",
+      "file": "crates/kamoku-app/src/api/client_ids.rs",
+      "find": "            return Err(ApiError::new(\n                503,\n                \"busy\",\n                \"混み合っています。数分たってから、もう一度保存してください。\",\n            ));",
+      "replace": "            let oldest = self.records.iter().min_by_key(|(_, r)| r.at).map(|(k, _)| k.clone());\n            if let Some(old) = oldest.and_then(|k| self.records.remove(&k)) {\n                self.bytes = self.bytes.saturating_sub(old.size);\n            }"
+    },
+    {
+      "label": "A2 再送防止: 空きの検査を、再送の照合より先にする",
+      "file": "crates/kamoku-app/src/api/client_ids.rs",
+      "find": "        self.purge(now);\n        if let Some(seen) = self.records.get(id) {",
+      "replace": "        self.purge(now);\n        if self.records.len() >= self.limits.count || self.bytes >= self.limits.bytes {\n            return Err(ApiError::new(503, \"busy\", \"混み合っています。\"));\n        }\n        if let Some(seen) = self.records.get(id) {"
+    },
+    {
+      "label": "A3 確定: 2,000件の上限を外す",
+      "file": "crates/kamoku-app/src/api/drafts.rs",
+      "find": "    if given.len() > CONFIRM_MAX {",
+      "replace": "    if given.len() > CONFIRM_MAX * 1000 {"
+    },
+    {
+      "label": "B1 マスタ: 変更系の要求の前に読み直さない",
+      "file": "crates/kamoku-app/src/app.rs",
+      "find": "                refresh_masters(&mut state, head.method, route.write)\n                    .and_then(|()| (route.run)(&mut state, &call))",
+      "replace": "                (route.run)(&mut state, &call)"
+    },
+    {
+      "label": "B2 ロック: 汚れていても立て直さずに使う",
+      "file": "crates/kamoku-app/src/app.rs",
+      "find": "                guard.store.recover();\n",
+      "replace": ""
+    },
+    {
+      "label": "B2 ロック: 汚れの印を消さない",
+      "file": "crates/kamoku-app/src/app.rs",
+      "find": "                self.state.clear_poison();\n",
+      "replace": ""
+    },
+    {
+      "label": "B3 demo: 決まった名前のフォルダを使い回す",
+      "file": "crates/kamoku-app/src/paths.rs",
+      "find": "let dir = private_dir(&temp, \"kamoku-demo\").map_err(|e| {",
+      "replace": "let dir = fs::create_dir_all(temp.join(\"kamoku-demo-fixed\")).map(|()| temp.join(\"kamoku-demo-fixed\")).map_err(|e| {"
+    },
+    {
+      "label": "B4 静的配信: 正規化した行き先に決まりを掛けない",
+      "file": "crates/kamoku-app/src/statics.rs",
+      "find": "            if !ui_path_allowed(&canonical) || !file.is_file() {",
+      "replace": "            if !file.is_file() {"
+    },
+    {
+      "label": "B5 ホーム: 未確認の出金の合計の桁を見ない",
+      "file": "crates/kamoku-app/src/api/dashboard.rs",
+      "find": "                .filter(|t| *t <= MAX_REPORT_AMOUNT)\n",
+      "replace": ""
+    },
+    {
+      "label": "B6 取込: 下書きを入れてから列の対応を保存する",
+      "file": "crates/kamoku-app/src/api/import_rows.rs",
+      "find": "    if save_profile {\n        state\n            .store\n            .save_import_profile(&wallet, mapping.clone(), call.now)?;\n    }\n    let summary = commit_table(\n        &mut state.store,\n        &upload.table,\n        &wallet,\n        &mapping,\n        &upload.filename,\n        force,\n        call.now,\n    )?;\n",
+      "replace": "    let summary = commit_table(\n        &mut state.store,\n        &upload.table,\n        &wallet,\n        &mapping,\n        &upload.filename,\n        force,\n        call.now,\n    )?;\n    if save_profile {\n        state\n            .store\n            .save_import_profile(&wallet, mapping.clone(), call.now)?;\n    }\n"
+    },
+    {
+      "label": "B7 取込履歴: offset を読み捨てる",
+      "file": "crates/kamoku-app/src/api/imports.rs",
+      "find": "        .skip(usize::try_from(offset).unwrap_or(usize::MAX))",
+      "replace": "        .skip(0)"
+    },
+    {
+      "label": "B7 取込履歴: total を返した件数にする",
+      "file": "crates/kamoku-app/src/api/imports.rs",
+      "find": "ok(json!({ \"total\": all.len(), \"items\": to_value(&page)? }))",
+      "replace": "ok(json!({ \"total\": page.len(), \"items\": to_value(&page)? }))"
+    },
+    {
+      "label": "B8 受け口: 期限を、受け付けた時でなく取り出した時から数える",
+      "file": "crates/kamoku-app/src/http/conn.rs",
+      "find": "    let deadline = accepted + limits.request_timeout;",
+      "replace": "    let deadline = Instant::now() + limits.request_timeout;"
+    },
+    {
+      "label": "B9 受け口: 断るときは HEAD でも本文を送る",
+      "file": "crates/kamoku-app/src/http/server.rs",
+      "find": "        } => (handler.reject(status, message), body),",
+      "replace": "        } => (handler.reject(status, message), true),"
+    },
+    {
+      "label": "B9 受け口: 見出しを読み切る前の断りで HEAD を見ない",
+      "file": "crates/kamoku-app/src/http/conn.rs",
+      "find": "    !buf.starts_with(b\"HEAD \")",
+      "replace": "    true"
+    }
+  ]
+}

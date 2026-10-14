@@ -1,0 +1,139 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 帳票（SC-06）: タブ、期間と書き出しの帯、親子を字下げした表、合計の行、貸借対照表の2列。 */
+
+.report-panel.tabpanel {
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+}
+
+/* 左に期間（と元帳の科目）、右に書き出し。どの欄にも上に見出しがあるので、下の線でそろえる。 */
+.report-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sp-3) var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.report-toolbar-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3) var(--sp-5);
+  min-width: 0;
+}
+
+.period-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3) var(--sp-4);
+  min-width: 0;
+}
+
+.period-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.period-controls .field-error:not(:empty) {
+  max-width: 36em;
+}
+
+.period-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.period-row .select {
+  width: auto;
+}
+
+.period-date .input {
+  width: 11.5em;
+}
+
+.report-account {
+  min-width: min(18em, 100%);
+}
+
+.report-export {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.report-export-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.csv-enc {
+  width: auto;
+}
+
+.csv-link[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.report-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.report-title {
+  font-size: var(--fs-h2);
+  font-variant-numeric: tabular-nums;
+}
+
+.report-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.report-narrow {
+  max-width: 760px;
+}
+
+.report-section h3 {
+  margin-bottom: var(--sp-2);
+  font-size: 16px;
+}
+
+.report-more summary {
+  color: var(--c-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.report-more[open] summary {
+  margin-bottom: var(--sp-3);
+}
+
+.report-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.report-note svg {
+  margin-top: 2px;
+}
+
+.report-check {
+  display: flex;
+}

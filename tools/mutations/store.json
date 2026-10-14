@@ -1,0 +1,97 @@
+{
+  "test_cmd": [
+    "cargo",
+    "test",
+    "-q",
+    "-p",
+    "kamoku-store",
+    "--no-fail-fast"
+  ],
+  "timeout_sec": 1200,
+  "mutations": [
+    {
+      "label": "復元: 壊れた連番も接頭部分に含める",
+      "file": "crates/kamoku-store/src/db_ledger.rs",
+      "find": "events.retain(|e| e.seq < f.seq);",
+      "replace": "events.retain(|e| e.seq <= f.seq);"
+    },
+    {
+      "label": "訂正・取消: 元の日付の締めを見ない",
+      "file": "crates/kamoku-store/src/posting.rs",
+      "find": "            self.locked(entry.date())?;\n        }\n        Ok(())",
+      "replace": "            let _ = entry;\n        }\n        Ok(())"
+    },
+    {
+      "label": "登録: 締めと科目の検査を省く",
+      "file": "crates/kamoku-store/src/posting.rs",
+      "find": "        self.entry_check(&entry)?;\n        let event = self.ledger.post(entry, now)?.clone();",
+      "replace": "        let event = self.ledger.post(entry, now)?.clone();"
+    },
+    {
+      "label": "仕訳No: 全イベントを数える",
+      "file": "crates/kamoku-store/src/lib.rs",
+      "find": "            if e.kind == EventKind::Posted {\n                no += 1;",
+      "replace": "            if true {\n                no += 1;"
+    },
+    {
+      "label": "取込: 強制の指定を無視して常に捨てる",
+      "file": "crates/kamoku-store/src/inbox.rs",
+      "find": "if force.contains(&draft.line) {",
+      "replace": "if false {"
+    },
+    {
+      "label": "確定: 明細の照合をやめる",
+      "file": "crates/kamoku-store/src/confirmation.rs",
+      "find": "            || entry.lines() != expected.lines",
+      "replace": "            || false"
+    },
+    {
+      "label": "権限: DBを0644にする",
+      "file": "crates/kamoku-store/src/files.rs",
+      "find": "    mode(path, 0o600)?;\n    for suffix",
+      "replace": "    mode(path, 0o644)?;\n    for suffix"
+    },
+    {
+      "label": "権限: -walと-shmを0644にする",
+      "file": "crates/kamoku-store/src/files.rs",
+      "find": "            mode(&sidecar, 0o600)?;",
+      "replace": "            mode(&sidecar, 0o644)?;"
+    },
+    {
+      "label": "追記専用: 台帳の明細の更新を許す",
+      "file": "crates/kamoku-store/migrations/0001_init.sql",
+      "find": "CREATE TRIGGER ledger_lines_no_update BEFORE UPDATE ON ledger_lines BEGIN SELECT RAISE(ABORT,'append only'); END;\n",
+      "replace": ""
+    },
+    {
+      "label": "追記専用: 変更履歴の削除を許す",
+      "file": "crates/kamoku-store/migrations/0001_init.sql",
+      "find": "CREATE TRIGGER change_log_no_delete BEFORE DELETE ON change_log BEGIN SELECT RAISE(ABORT,'append only'); END;",
+      "replace": ""
+    },
+    {
+      "label": "締め: 締めた日と同じ日を許す",
+      "file": "crates/kamoku-store/src/posting.rs",
+      "find": ".is_some_and(|d| date <= d)",
+      "replace": ".is_some_and(|d| date < d)"
+    },
+    {
+      "label": "別プロセス: 台帳の末尾の食い違いを見ない（書き込み）",
+      "file": "crates/kamoku-store/src/lib.rs",
+      "find": "if tail != memory {",
+      "replace": "if false && tail != memory {"
+    },
+    {
+      "label": "訂正: 版の食い違いを見ない",
+      "file": "crates/kamoku-store/src/posting.rs",
+      "find": "if latest.revision != revision {",
+      "replace": "if false && latest.revision != revision {"
+    },
+    {
+      "label": "追記専用: 台帳の仕訳の更新を許す",
+      "file": "crates/kamoku-store/migrations/0001_init.sql",
+      "find": "BEFORE UPDATE ON ledger_events BEGIN",
+      "replace": "BEFORE UPDATE ON ledger_events WHEN 0 BEGIN"
+    }
+  ]
+}
