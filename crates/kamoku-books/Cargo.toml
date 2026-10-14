@@ -1,0 +1,24 @@
+[package]
+name = "kamoku-books"
+description = "勘定科目・仕訳の組み立て・帳票（試算表、損益計算書、貸借対照表、消費税の集計）を計算する。入出力を持たない。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish.workspace = true
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+kamoku-ledger = { version = "0.0.1", path = "../kamoku-ledger" }
+kamoku-jp-tax = { version = "0.0.1", path = "../kamoku-jp-tax" }
+serde = { version = "1", features = ["derive"] }
+time = { version = "0.3", default-features = false }
+
+[dev-dependencies]
+proptest = "1"
+serde_json = "1"
+time = { version = "0.3", default-features = false, features = ["macros"] }
+
+[lints]
+workspace = true

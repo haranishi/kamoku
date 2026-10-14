@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{AccountCode, EntryError, EntryId, Yen, ids::valid_code};
+use std::collections::BTreeMap;
 use time::Date;
+
+const META_KEY_MAX: usize = 32;
+const META_VALUE_MAX: usize = 1000;
+const META_PAIRS_MAX: usize = 16;
 
 /// 借方・貸方の区別。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,6 +68,8 @@ pub struct Entry {
     description: String,
     lines: Vec<Line>,
     total: Yen,
+    // 鍵の昇順で持つ。挿入の順がハッシュに影響しないようにするため。
+    meta: BTreeMap<String, String>,
 }
 impl Entry {
     /// 明細、文字列長、税額、貸借一致を検証して仕訳を作ります。
@@ -125,7 +132,37 @@ impl Entry {
             description: description.to_owned(),
             lines,
             total: debit,
+            meta: BTreeMap::new(),
         })
+    }
+    /// 付随情報（取引先の名前、入力の種類など）を1組足します。同じ鍵は上書きします。
+    /// 付随情報はハッシュの対象です。鍵は半角の小文字・数字・`_` `-` `.` の1〜32バイト、
+    /// 値は1000バイト以下、組は16までです。
+    ///
+    /// # Errors
+    /// 鍵の形、値の長さ、組の数の違反を返します。
+    pub fn with_meta(mut self, key: &str, value: &str) -> Result<Self, EntryError> {
+        if key.is_empty()
+            || key.len() > META_KEY_MAX
+            || !key.bytes().all(|b| {
+                b.is_ascii_lowercase() || b.is_ascii_digit() || matches!(b, b'_' | b'-' | b'.')
+            })
+        {
+            return Err(EntryError::BadMetaKey);
+        }
+        if value.len() > META_VALUE_MAX {
+            return Err(EntryError::MetaValueTooLong);
+        }
+        if !self.meta.contains_key(key) && self.meta.len() >= META_PAIRS_MAX {
+            return Err(EntryError::TooManyMeta);
+        }
+        self.meta.insert(key.to_owned(), value.to_owned());
+        Ok(self)
+    }
+    /// 鍵の昇順の付随情報。
+    #[must_use]
+    pub const fn meta(&self) -> &BTreeMap<String, String> {
+        &self.meta
     }
     /// 仕訳識別子。
     #[must_use]

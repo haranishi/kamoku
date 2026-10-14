@@ -188,6 +188,9 @@ pub struct TransitionalRule {
 }
 const SOURCE: &str =
     "https://www.nta.go.jp/taxes/shiraberu/zeimokubetsu/shohi/keigenzeiritsu/pdf/qa/113-3.pdf";
+/// 経過措置の表（[`transitional_rules`]）を、根拠の資料と最後に突き合わせた日（`YYYY-MM-DD`）。
+/// 集計の画面に「使った表の最終確認日」として出します。表を確かめ直したら、この日付も更新してください。
+pub const TRANSITIONAL_TABLE_CHECKED_ON: &str = "2026-10-14";
 /// 経過措置の表。問113-3・令和8年4月追加、確認日2026-10-14。
 /// 改正時も過去の日付に適用する行を保持してください。
 /// この表が持つのは割合と期間だけです。適用の条件（請求書等と帳簿の保存）、一の仕入先ごとの上限

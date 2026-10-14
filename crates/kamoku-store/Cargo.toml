@@ -1,0 +1,27 @@
+[package]
+name = "kamoku-store"
+description = "台帳、下書き、マスタをSQLiteに保存する。台帳の連鎖を起動のたびに検証する。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish.workspace = true
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+kamoku-books = { version = "0.0.1", path = "../kamoku-books" }
+kamoku-import = { version = "0.0.1", path = "../kamoku-import" }
+kamoku-ledger = { version = "0.0.1", path = "../kamoku-ledger" }
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+time = { version = "0.3.55", default-features = false }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+proptest = "1.12.0"
+tempfile = "3.27.0"
+time = { version = "0.3.55", default-features = false, features = ["macros"] }

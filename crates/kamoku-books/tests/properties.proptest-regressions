@@ -1,0 +1,10 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 00c99445cd4c307256b218c5b2efa8a0168519ff10764d72dcd659ed768cb6bd # shrinks to entries = [Entry { id: EntryId("S0"), date: 2026-05-10, description: "", lines: [Line { account: AccountCode("owner_draw"), side: Debit, amount: Yen(1), tax_code: None, tax_amount: Yen(0), memo: "家事按分 100%" }, Line { account: AccountCode("w02"), side: Credit, amount: Yen(1), tax_code: None, tax_amount: Yen(0), memo: "" }], total: Yen(1), meta: {"business_pct": "0", "kind": "expense", "source": "manual"} }], (from, to) = (2026-01-01, 2026-05-10)
+cc e9b8880c75b35c6804889fbb539ea29d534127bafbe6009821e095a1031689fd # shrinks to entries = [Entry { id: EntryId("S0"), date: 2025-11-05, description: "", lines: [Line { account: AccountCode("owner_draw"), side: Debit, amount: Yen(1), tax_code: None, tax_amount: Yen(0), memo: "家事按分 100%" }, Line { account: AccountCode("w01"), side: Credit, amount: Yen(1), tax_code: None, tax_amount: Yen(0), memo: "" }], total: Yen(1), meta: {"business_pct": "0", "kind": "expense", "source": "manual"} }], (from, to) = (2025-11-05, 2025-11-05)
+cc 4d5d4c3727313ad93bc36f0c8ca9034fb56e6e88433a9eae6a293b459657300a # shrinks to i = SimpleInput { kind: Expense, date: 2025-01-01, amount: 417, account: Some("exp_comm"), wallet: "w01", to_wallet: None, tax_code: None, partner: "", description: "", business_pct: Some(3), memo: "" }, r = 0
+cc 8a3af807daa6a0eb9a852e23fb10fbbb2fbaafc14140d4ac849b79914d3ad409 # shrinks to i = SimpleInput { kind: Expense, date: 2025-01-01, amount: 1, account: Some("exp_comm"), wallet: "w01", to_wallet: None, tax_code: None, partner: "", description: "", business_pct: Some(50), memo: "" }, r = 0

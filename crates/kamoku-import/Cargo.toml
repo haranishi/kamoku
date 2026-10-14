@@ -1,0 +1,24 @@
+[package]
+name = "kamoku-import"
+description = "銀行・カードの明細CSVを読む。文字コードの判定、列の対応、重複の判定に使う指紋を作る。入出力を持たない。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish.workspace = true
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+encoding_rs = "0.8"
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+time = { version = "0.3", default-features = false }
+
+[dev-dependencies]
+proptest = "1"
+serde_json = "1"
+time = { version = "0.3", default-features = false, features = ["macros"] }
+
+[lints]
+workspace = true
