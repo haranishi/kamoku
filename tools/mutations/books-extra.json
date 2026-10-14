@@ -1,0 +1,103 @@
+{
+ "test_cmd": [
+  "cargo",
+  "test",
+  "-q",
+  "-p",
+  "kamoku-books",
+  "--no-fail-fast"
+ ],
+ "timeout_sec": 900,
+ "mutations": [
+  {
+   "label": "繰越: 当年の損益も元入金に回す",
+   "file": "crates/kamoku-books/src/reports/mod.rs",
+   "find": "let before_frame = entry.date().year() < frame_year;",
+   "replace": "let before_frame = entry.date().year() <= frame_year;"
+  },
+  {
+   "label": "試算表: 期末が期首のまま",
+   "file": "crates/kamoku-books/src/reports/trial.rs",
+   "find": "let closing = add(start, change)?;",
+   "replace": "let closing = start;"
+  },
+  {
+   "label": "貸借対照表: 費用を利益に足す",
+   "file": "crates/kamoku-books/src/reports/balance.rs",
+   "find": "Kind::Expense => net = sub(net, own)?,",
+   "replace": "Kind::Expense => net = add(net, own)?,"
+  },
+  {
+   "label": "消費税: 仕入の向きを貸方にする",
+   "file": "crates/kamoku-books/src/reports/tax.rs",
+   "find": "TaxClass::Purchase | TaxClass::TransitionalPurchase => Side::Debit,",
+   "replace": "TaxClass::Purchase | TaxClass::TransitionalPurchase => Side::Credit,"
+  },
+  {
+   "label": "消費税: 経過措置の割合を無視",
+   "file": "crates/kamoku-books/src/reports/tax.rs",
+   "find": "let percent = transitional_percent(entry.date());",
+   "replace": "let percent = 100u8; let _ = transitional_percent(entry.date());"
+  },
+  {
+   "label": "按分: 科目の既定の割合を無視",
+   "file": "crates/kamoku-books/src/compose.rs",
+   "find": "input.business_pct.unwrap_or(account.default_pct).min(100)",
+   "replace": "input.business_pct.unwrap_or(100).min(100)"
+  },
+  {
+   "label": "組み立て: 科目と口座が同じでも通す",
+   "file": "crates/kamoku-books/src/compose.rs",
+   "find": "if account.code == wallet.code {",
+   "replace": "if false {"
+  },
+  {
+   "label": "組み立て: 相手が口座でも税区分と割合を通す",
+   "file": "crates/kamoku-books/src/compose.rs",
+   "find": "    if account.is_wallet() {\n        // 口座どうしのお金の移動",
+   "replace": "    if false {\n        // 口座どうしのお金の移動"
+  },
+  {
+   "label": "検査: 金額0を通す",
+   "file": "crates/kamoku-books/src/compose_parts.rs",
+   "find": "if (1..=MAX_AMOUNT).contains(&amount) {",
+   "replace": "if (0..=MAX_AMOUNT).contains(&amount) {"
+  },
+  {
+   "label": "按分: 0.5を切り下げる",
+   "file": "crates/kamoku-books/src/compose_parts.rs",
+   "find": "(scaled + 50) / 100",
+   "replace": "(scaled + 49) / 100"
+  },
+  {
+   "label": "組み立て: 事業分が0円でも行を作る",
+   "file": "crates/kamoku-books/src/compose.rs",
+   "find": "    if business > Yen::ZERO {\n        let line",
+   "replace": "    if true {\n        let line"
+  },
+  {
+   "label": "組み立て: 事業主貸が0円でも行を作る",
+   "file": "crates/kamoku-books/src/compose.rs",
+   "find": "    if private > Yen::ZERO {\n        let owner",
+   "replace": "    if true {\n        let owner"
+  },
+  {
+   "label": "期首: 初日の期首残高の仕訳を期首に入れない",
+   "file": "crates/kamoku-books/src/reports/mod.rs",
+   "find": "entry.date() < from || (entry.date() == from && is_opening(entry))",
+   "replace": "entry.date() < from"
+  },
+  {
+   "label": "動き: 初日の期首残高の仕訳を動きから除かない",
+   "file": "crates/kamoku-books/src/reports/mod.rs",
+   "find": "        .filter(|e| !(is_opening(e) && e.date() == from))\n",
+   "replace": ""
+  },
+  {
+   "label": "元帳: 初日の期首残高の仕訳を行から除かない",
+   "file": "crates/kamoku-books/src/reports/ledger.rs",
+   "find": "        .filter(|(_, e)| !(is_opening(e) && e.date() == from))\n",
+   "replace": ""
+  }
+ ]
+}

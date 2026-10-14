@@ -1,0 +1,25 @@
+{
+  "test_cmd": [
+    "cargo",
+    "test",
+    "-q",
+    "-p",
+    "kamoku-ledger",
+    "--no-fail-fast"
+  ],
+  "timeout_sec": 900,
+  "mutations": [
+    {
+      "label": "符号化: 付随情報の印を0x02に",
+      "file": "crates/kamoku-ledger/src/encoding.rs",
+      "find": "            h.update([1]);\n            h.update(u32::try_from(meta.len()).ok()?.to_be_bytes());",
+      "replace": "            h.update([2]);\n            h.update(u32::try_from(meta.len()).ok()?.to_be_bytes());"
+    },
+    {
+      "label": "付随情報: 鍵の大文字を許す",
+      "file": "crates/kamoku-ledger/src/entry.rs",
+      "find": "b.is_ascii_lowercase() || b.is_ascii_digit()",
+      "replace": "b.is_ascii_alphabetic() || b.is_ascii_digit()"
+    }
+  ]
+}
