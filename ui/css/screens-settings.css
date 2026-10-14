@@ -1,0 +1,135 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 設定（SC-10）と初期設定（SC-00）、期首残高の入力。 */
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.settings-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: calc(var(--sp-3) * -1) 0 var(--sp-4);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  scroll-margin-top: var(--sp-4);
+}
+
+.settings-section > h2:focus {
+  outline: none;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4) var(--sp-5);
+  max-width: 56em;
+}
+
+.opening-form {
+  max-width: 720px;
+}
+
+.settings-section .field,
+.setup-card .field {
+  max-width: 40em;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--c-border);
+}
+
+.settings-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.settings-block:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.settings-block h3 {
+  font-size: 16px;
+}
+
+.settings-block .field {
+  width: 100%;
+}
+
+.hash-full {
+  display: block;
+  max-width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-s);
+  background: var(--c-surface-2);
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.check-out:empty {
+  display: none;
+}
+
+.check-out {
+  width: 100%;
+}
+
+.check-result {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid;
+  border-radius: var(--radius-m);
+}
+
+.check-result > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.check-result--ok {
+  border-color: var(--c-income);
+  background: var(--c-ok-bg);
+}
+
+.check-result--ok > svg {
+  color: var(--c-income);
+}
+
+.check-result--ng {
+  border-color: var(--c-danger);
+  background: var(--c-danger-bg);
+}
+
+.check-result--ng > svg {
+  color: var(--c-danger);
+}
+
+.export-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.export-row .select {
+  width: auto;
+}

@@ -1,0 +1,223 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/*
+ * 未確認（SC-03）。入れ物が1080px以上なら1行の表、それより狭ければ1件を数段のカードにする（入れ物の幅で決める）。
+ * 下の固定バーは、画面の下に付いてくる。768px未満では、画面下の5項目のバーの上に置く。
+ */
+
+.page-count {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.inbox-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-2) var(--sp-5) var(--sp-4);
+}
+
+.inbox-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.inbox-wallet {
+  width: auto;
+  min-width: 12em;
+}
+
+.inbox-panel.tabpanel {
+  gap: var(--sp-2);
+}
+
+.inbox-host {
+  container-type: inline-size;
+  container-name: inbox;
+}
+
+/* ---- 1行の表（広い入れ物） ---- */
+.inbox-table th,
+.inbox-table td {
+  padding: var(--sp-1) 6px;
+}
+
+.inbox-table td {
+  height: auto;
+  min-height: var(--row-h);
+}
+
+.inbox-table tbody tr > td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+:root[data-density="compact"] .inbox-table tbody tr > td {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.inbox-table .input,
+.inbox-table .select {
+  height: 36px;
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-table);
+}
+
+.inbox-table .combo .input {
+  padding-right: 28px;
+}
+
+.inbox-table .combo-chevron {
+  right: 6px;
+}
+
+.inbox-table .c-cand {
+  width: 44px;
+  text-align: center;
+}
+
+.inbox-table .c-date {
+  width: 96px;
+}
+
+.inbox-table .c-desc {
+  min-width: 9em;
+  white-space: normal;
+}
+
+.inbox-table .c-amount {
+  width: 92px;
+  text-align: right;
+}
+
+.inbox-table .c-account {
+  width: 152px;
+}
+
+.inbox-table .c-tax {
+  width: 148px;
+}
+
+.inbox-table .c-partner {
+  width: 132px;
+}
+
+.inbox-table .c-memo {
+  width: 116px;
+}
+
+.inbox-table .c-pct {
+  width: 76px;
+}
+
+.inbox-table .c-ops {
+  width: 48px;
+  text-align: center;
+}
+
+.inbox-table .pct-cell {
+  width: 3.6em;
+  flex: none;
+}
+
+.inbox-table.is-exempt .c-tax {
+  display: none;
+}
+
+.desc-text {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.inbox-table .sub,
+.ignored-table .sub {
+  display: block;
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+}
+
+.amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.amount--in {
+  color: var(--c-income);
+}
+
+.dir-text,
+.cand-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.cand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-width: 32px;
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.cand-check {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--c-primary);
+  cursor: pointer;
+}
+
+/* 確定候補の行: 色に加えて、左の帯と、候補の欄の印で示す（色だけに頼らない）。 */
+.inbox-table tr.inbox-row.is-candidate > td {
+  background: var(--c-primary-soft);
+}
+
+.inbox-table tr.inbox-row.is-candidate > td.c-cand {
+  box-shadow: inset 4px 0 0 var(--c-primary);
+}
+
+.inbox-table tr.inbox-row.has-msg > td {
+  border-bottom: 0;
+}
+
+.inbox-table tr.inbox-msg > td {
+  height: auto;
+  padding: 0 var(--sp-3) var(--sp-3) 50px;
+  white-space: normal;
+}
+
+.inbox-table tr.inbox-row.is-candidate + tr.inbox-msg > td {
+  background: var(--c-primary-soft);
+}
+
+.row-msg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.row-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+
+.row-note svg,
+.row-msg .field-error svg {
+  margin-top: 2px;
+}

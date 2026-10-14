@@ -1,0 +1,140 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 未確認（SC-03）の下の固定バー（確定候補の件数・入金と出金の合計・保存の状態・確定する）と、確定の前の確認。 */
+
+/* ---- 下の固定バー ---- */
+/* Enterで次の行へ移ったとき、フォーカスした欄が固定のバーの下に隠れないよう、スクロールの余白を取る。 */
+:root:has(.inbox-bar) {
+  scroll-padding-bottom: 140px;
+}
+
+@media (max-width: 767px) {
+  :root:has(.inbox-bar) {
+    scroll-padding-top: calc(var(--topbar-h) + var(--sp-2));
+    scroll-padding-bottom: calc(var(--bottomnav-h) + 200px);
+  }
+}
+
+.inbox-bar {
+  position: sticky;
+  bottom: var(--sp-3);
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.inbox-bar-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.inbox-sums {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-5);
+  min-width: 0;
+}
+
+.inbox-sum {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.inbox-sum dt {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.inbox-sum dd {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.inbox-sum .unit {
+  margin-left: 2px;
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+.inbox-bar-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+}
+
+.inbox-bar-foot:has(> :empty + :empty) {
+  display: none;
+}
+
+.inbox-save {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+}
+
+.inbox-save[data-state="failed"] {
+  color: var(--c-danger);
+  font-weight: 700;
+}
+
+.inbox-note:empty,
+.inbox-save:empty {
+  display: none;
+}
+
+.confirm-sums {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.confirm-sums div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.confirm-sums dt {
+  color: var(--c-muted);
+}
+
+.confirm-sums dd {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .inbox-bar {
+    bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px) + var(--sp-2));
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .inbox-sums {
+    gap: var(--sp-1) var(--sp-4);
+  }
+
+  .inbox-confirm {
+    flex: 1 1 100%;
+  }
+}

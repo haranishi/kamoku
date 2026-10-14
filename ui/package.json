@@ -1,0 +1,11 @@
+{
+  "name": "kamoku-ui",
+  "private": true,
+  "description": "kamokuの画面。ビルドの工程も依存も持たない。このファイルは、Nodeに ES modules だと伝えるためだけにある。",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "mock": "node dev/mock-server.mjs --port 8766",
+    "check": "node dev/check-contrast.mjs && node dev/check-policy.mjs"
+  }
+}

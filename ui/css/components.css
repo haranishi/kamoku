@@ -1,0 +1,280 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 入力の部品: ボタンと入力欄。色は tokens.css の変数だけを使う。
+ * 候補欄・切り替え・タブは components-pickers.css、状態の部品は components-status.css、
+ * 表とグラフは components-data.css、重なる部品は components-overlay.css。 */
+
+/* ---- ボタン ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: var(--control-h);
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-s);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+
+.btn:hover {
+  background: var(--c-surface-2);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.btn--primary {
+  border-color: var(--c-primary);
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+}
+
+.btn--primary:hover {
+  background: var(--c-primary);
+  opacity: 0.92;
+}
+
+.btn--danger {
+  border-color: var(--c-danger);
+  background: var(--c-danger);
+  color: var(--c-on-danger);
+}
+
+.btn--danger:hover {
+  background: var(--c-danger);
+  opacity: 0.92;
+}
+
+.btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--c-primary);
+}
+
+.btn--ghost:hover {
+  background: var(--c-primary-soft);
+}
+
+.btn--sm {
+  height: 32px;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.btn kbd {
+  border-color: currentColor;
+  background: transparent;
+  color: inherit;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--c-muted);
+}
+
+.icon-btn:hover {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .btn,
+  .btn--sm {
+    min-height: 44px;
+  }
+
+  .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ---- 入力欄 ---- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field-label {
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.field-label .req {
+  margin-left: var(--sp-1);
+  color: var(--c-muted);
+  font-weight: 400;
+}
+
+.field-hint {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+}
+
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  color: var(--c-danger);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.field-error:empty {
+  display: none;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-h);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-s);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--fs-input);
+}
+
+.textarea {
+  height: auto;
+  min-height: 88px;
+  padding: var(--sp-2) var(--sp-3);
+  resize: vertical;
+}
+
+.select {
+  padding-right: var(--sp-6);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--c-muted);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--c-primary);
+}
+
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"] {
+  border-color: var(--c-danger);
+  border-width: 2px;
+}
+
+.input:disabled,
+.select:disabled {
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+  cursor: not-allowed;
+}
+
+.input--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.affix {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.affix > .input,
+.affix > .combo {
+  flex: 1;
+}
+
+.affix-text {
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--c-primary);
+}
+
+/* 金額と「円」: 折り返しでも離れず、「円」は小さく、数字との間に空白を入れない（全画面で同じ書き方。js/components/money.js）。 */
+.money {
+  white-space: nowrap;
+}
+
+.money .unit {
+  margin-left: 2px;
+  color: var(--c-muted);
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+/* 名前や札は、語の途中で折り返さない。入りきらない長い名前だけは、行の端で折る。 */
+.keep {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 値が無いとき（js/components/money.js の emptyValue）。 */
+.empty-value {
+  color: var(--c-muted);
+}
+
+/* 押せる大きさ: 文章の外にあるリンクに付ける。幅1024px未満で44×44px以上にする（AC-11.7）。 */
+@media (max-width: 1023px) {
+  .tap {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

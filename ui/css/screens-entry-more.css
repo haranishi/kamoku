@@ -1,0 +1,126 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 取引の登録の続き: 「仕訳で入力」の表、訂正の差分、テンプレートの一覧。 */
+
+/* ---- 仕訳で入力 ---- */
+.jl-table .input,
+.jl-table .select {
+  height: 36px;
+}
+
+.jl-table td {
+  padding: var(--sp-2);
+}
+
+.jl-table td:first-child {
+  width: 7em;
+}
+
+.jl-account {
+  min-width: 12em;
+}
+
+.jl-amount {
+  width: 9em;
+}
+
+.jl-tax {
+  width: 11em;
+}
+
+.jl-memo {
+  min-width: 8em;
+}
+
+.jl-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.jl-balance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 訂正の差分とテンプレート ---- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.diff-table th[scope="row"] {
+  width: 7em;
+  font-weight: 700;
+}
+
+.diff-before,
+.diff-after {
+  white-space: pre-line !important;
+}
+
+.diff-after {
+  font-weight: 700;
+}
+
+.tpl-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.tpl-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+  text-align: left;
+}
+
+.tpl-item:hover {
+  background: var(--c-surface-2);
+}
+
+.tpl-item svg {
+  margin-top: 2px;
+  color: var(--c-primary);
+}
+
+.tpl-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tpl-name {
+  font-weight: 700;
+}
+
+.tpl-sum {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 639px) {
+  .jl-table td:first-child,
+  .jl-amount,
+  .jl-tax {
+    width: 100%;
+  }
+
+  .jl-table td > * {
+    flex: 1;
+    min-width: 0;
+  }
+}

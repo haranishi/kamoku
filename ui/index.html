@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors -->
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <title>kamoku</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/layout-narrow.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/components-pickers.css">
+  <link rel="stylesheet" href="css/components-status.css">
+  <link rel="stylesheet" href="css/components-data.css">
+  <link rel="stylesheet" href="css/components-overlay.css">
+  <link rel="stylesheet" href="css/screens.css">
+  <link rel="stylesheet" href="css/screens-entry.css">
+  <link rel="stylesheet" href="css/screens-entry-more.css">
+  <link rel="stylesheet" href="css/screens-journal.css">
+  <link rel="stylesheet" href="css/screens-journal-detail.css">
+  <link rel="stylesheet" href="css/screens-steps.css">
+  <link rel="stylesheet" href="css/screens-inbox.css">
+  <link rel="stylesheet" href="css/screens-inbox-cards.css">
+  <link rel="stylesheet" href="css/screens-inbox-bar.css">
+  <link rel="stylesheet" href="css/screens-import.css">
+  <link rel="stylesheet" href="css/screens-import-check.css">
+  <link rel="stylesheet" href="css/screens-reports.css">
+  <link rel="stylesheet" href="css/screens-report-table.css">
+  <link rel="stylesheet" href="css/screens-masters.css">
+  <link rel="stylesheet" href="css/screens-settings.css">
+  <link rel="stylesheet" href="css/screens-setup.css">
+  <script src="js/theme-boot.js"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" id="skip-link" href="#main">本文へ移動</a>
+  <div class="app" id="app">
+    <div class="main-col">
+      <div class="banners" id="banners"></div>
+      <main class="main" id="main" tabindex="-1">
+        <noscript>
+          <p>kamokuの画面は JavaScript で動きます。ブラウザの設定で JavaScript を有効にしてください。</p>
+        </noscript>
+      </main>
+    </div>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+</body>
+</html>

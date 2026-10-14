@@ -1,0 +1,225 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 帳票（SC-06）の表: 親子の字下げ、区分の見出し、合計の行、貸借対照表の2列、狭い画面での貼り付いた科目の列。 */
+
+/* ---- 帳票の表 ---- */
+.report-table th[scope="row"] {
+  font-weight: 400;
+}
+
+.report-table .rt-name {
+  min-width: 12em;
+  padding-left: calc(var(--sp-3) + var(--depth, 0) * 1.5em);
+  white-space: normal;
+}
+
+.report-table .rt-name.is-parent {
+  font-weight: 700;
+}
+
+.report-table .rt-name.is-direct {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+.report-table tr.rt-parent td {
+  font-weight: 700;
+}
+
+.report-table tr.rt-group th {
+  height: 32px;
+  padding-top: var(--sp-3);
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* 区分の見出しは行の幅いっぱいのセルなので、文字だけを左に貼り付ける（横にスクロールしても読める）。 */
+.report-table .rt-group-label {
+  display: inline-block;
+  position: sticky;
+  left: var(--sp-3);
+}
+
+.report-table tr.rt-total > *,
+.report-table tr.rt-grand > * {
+  font-weight: 700;
+}
+
+.report-table tr.rt-total > * {
+  border-top: 1px solid var(--c-border-strong);
+}
+
+.report-table tr.rt-grand > * {
+  border-top: 2px solid var(--c-border-strong);
+  background: var(--c-surface-2);
+}
+
+.rt-loss {
+  margin-left: var(--sp-2);
+  vertical-align: 1px;
+}
+
+.rt-wide th,
+.rt-wide td {
+  white-space: nowrap;
+}
+
+.rt-wide .rt-name {
+  position: sticky;
+  left: 0;
+  z-index: var(--z-raised);
+  background: var(--c-surface);
+}
+
+.rt-wide tr.rt-grand .rt-name,
+.rt-wide tr.rt-group th {
+  background: var(--c-surface-2);
+}
+
+.bs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.ledger-facts,
+.tax-sums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+}
+
+.ledger-facts div,
+.tax-sums div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ledger-facts dt,
+.tax-sums dt {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.ledger-facts dd,
+.tax-sums dd {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tax-sums {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+}
+
+.tax-estimate dd {
+  color: var(--c-primary);
+}
+
+.ledger-table td a {
+  font-weight: 700;
+}
+
+@media (max-width: 1023px) {
+  .bs-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1023px) {
+  .report-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 月ごとの数字の表は、最初の列が「1月」なので、科目の名前の列の最小の幅は要らない（狭い画面で4列が収まるように）。 */
+.report-table.rt-months .rt-name {
+  min-width: 4em;
+}
+
+@media (max-width: 767px) {
+  /* 6つのタブを、横にスクロールさせずに全部見せる（どのタブがあるかが分かるように）。 */
+  .report-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  /* 年・月の選び方は1行に収める（選択欄が縮む）。自由な期間の行だけは折り返す。 */
+  .period-row:not(.period-range) {
+    flex-wrap: nowrap;
+  }
+
+  .period-row:not(.period-range) .select,
+  .period-row:not(.period-range) .period-date {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* 「2026年」「10月」が欠けない幅は残す。 */
+  .period-row .period-year {
+    min-width: 6.5em;
+  }
+
+  .period-row .period-month {
+    min-width: 5em;
+  }
+
+  .period-date .input {
+    width: 100%;
+  }
+
+  /* 表が横にスクロールしても、科目の名前は見えたままにする（行の線は、スクロールしても表の線がそのまま見える。影で足すと二重になる）。 */
+  .report-table .rt-name {
+    position: sticky;
+    left: 0;
+    z-index: var(--z-raised);
+    background: var(--c-surface);
+  }
+
+  .report-table tr.rt-grand .rt-name,
+  .report-table tr.rt-group th {
+    background: var(--c-surface-2);
+  }
+
+  .report-toolbar {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .report-toolbar-main,
+  .period-picker,
+  .report-account {
+    width: 100%;
+  }
+
+  .report-export-row > * {
+    flex: 1 1 auto;
+  }
+
+  .report-table .rt-name {
+    min-width: 9em;
+  }
+}
+
+/* 積み上げ表示の元帳では、金額の無い借方・貸方の行を出さない（見出しだけが並ばないように）。 */
+@media (max-width: 639px) {
+  .ledger-table td:empty {
+    display: none;
+  }
+
+  /* 月ごとの数字の4列は、7桁の金額でも幅390に収まるよう、セルの左右の余白を詰める。 */
+  .report-table.rt-months th,
+  .report-table.rt-months td {
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+}

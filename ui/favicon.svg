@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors -->
+  <!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+  <rect width="32" height="32" rx="7" fill="#1F4E79"/>
+  <path d="M10 8h12.5v16H10a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M12 13h7M12 17h7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+</svg>

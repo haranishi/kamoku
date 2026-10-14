@@ -1,0 +1,215 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 期首残高の入力（設定と初期設定で共有）と、初期設定（SC-00）の段階・口座・確認の並び。 */
+
+/* ---- 期首残高 ---- */
+.opening-table th[scope="row"] {
+  font-weight: 400;
+}
+
+.opening-table td,
+.opening-table th {
+  height: auto;
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
+}
+
+.opening-name {
+  display: block;
+  font-weight: 600;
+}
+
+.opening-table .sub {
+  display: block;
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+}
+
+.opening-table .affix {
+  justify-content: flex-end;
+}
+
+.opening-table .input {
+  width: 11em;
+  flex: none;
+}
+
+/* 外せる行（口座でない科目）だけにボタンがある。空の列で幅を取らないようにする。 */
+.opening-table th:last-child,
+.opening-ops {
+  width: 1px;
+  padding-right: var(--sp-1);
+  padding-left: var(--sp-1);
+}
+
+.opening-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+}
+
+.opening-totals div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.opening-totals dt {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.opening-totals dd {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.opening-capital dd {
+  color: var(--c-primary);
+}
+
+.opening-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.opening-hint svg {
+  margin-top: 2px;
+}
+
+/* ---- 初期設定 ---- */
+.setup-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: 880px;
+}
+
+.setup-card > h2:focus {
+  outline: none;
+}
+
+.setup-wallets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.setup-wallet {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface-2);
+}
+
+.setup-wallet svg {
+  color: var(--c-muted);
+}
+
+.setup-wallet-name {
+  flex: 1;
+  font-weight: 700;
+}
+
+.setup-summary {
+  display: flex;
+  flex-direction: column;
+}
+
+.setup-summary div {
+  display: grid;
+  grid-template-columns: 9em minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.setup-summary dt {
+  color: var(--c-muted);
+  font-weight: 700;
+}
+
+.setup-summary dd {
+  overflow-wrap: anywhere;
+}
+
+/* 初期設定の間は、ほかの画面へ行けないので、移動のメニューを隠す（押しても初期設定に戻るだけになるため）。 */
+:root[data-setup] .app {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+:root[data-setup] .sidebar,
+:root[data-setup] .bottomnav,
+:root[data-setup] .topbar-actions {
+  display: none;
+}
+
+:root[data-setup] .main {
+  max-width: 944px;
+  margin: 0 auto;
+}
+
+.setup-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+  color: var(--c-text);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 767px) {
+  .setup-brand {
+    display: none;
+  }
+}
+
+/* 仕訳の詳細で、期首残高の仕訳の見直し先を案内する。 */
+.detail-opening {
+  align-items: center;
+  color: var(--c-muted);
+}
+
+@media (max-width: 767px) {
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-nav .btn {
+    flex: 1 1 auto;
+  }
+
+  .opening-table td.num {
+    width: 50%;
+  }
+
+  .opening-table .input {
+    width: 100%;
+    min-width: 5.5em;
+  }
+
+  .opening-table .affix {
+    gap: var(--sp-1);
+  }
+
+  .setup-summary div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  :root[data-setup] .main {
+    padding-bottom: var(--sp-7);
+  }
+}

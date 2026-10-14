@@ -1,0 +1,207 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 全体の土台: 余白の初期化、文字、フォーカスの輪、動きを減らす設定。 */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: "palt" 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-tight);
+  font-weight: 700;
+}
+
+h3 {
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+
+/* 段落の最後の1〜2文字（「す。」「ん。」）だけが次の行に残らないようにする（対応しないブラウザでは普通の折り返し）。 */
+p {
+  text-wrap: pretty;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: var(--c-primary);
+  text-underline-offset: 3px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+svg {
+  flex-shrink: 0;
+}
+
+/* 金額はすべて等幅の数字で、桁をそろえる（AC-11.5）。 */
+.num,
+.tnum,
+input[inputmode="numeric"],
+input[inputmode="decimal"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * フォーカスの輪。消さない。ライトとダークの両方で、背景との差が3:1以上ある --c-primary を使う（AC-10.3、AC-11.3）。
+ * 2pxの線と2pxの隙間で、ボタンの色の上でも輪が見えるようにする。
+ */
+:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* 見出しへのフォーカス（画面の切り替え後、引き出しを開いた後）は、輪を出さずに読み上げだけ移す。 */
+h1[tabindex="-1"]:focus,
+h2[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--sp-2);
+  left: var(--sp-2);
+  z-index: var(--z-toast);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-s);
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.muted {
+  color: var(--c-muted);
+}
+
+.small {
+  font-size: var(--fs-sm);
+}
+
+kbd,
+.kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 var(--sp-1);
+  border: 1px solid var(--c-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* スマホの幅では、ほかの場所（下のバー）にもある操作を隠す。キーの手がかりも、触って使う幅では出さない。 */
+@media (max-width: 767px) {
+  .hide-mobile,
+  .btn kbd,
+  .seg-option kbd,
+  .nav-kbd {
+    display: none !important;
+  }
+}
+
+/* 動きを減らす設定では、すべての移り変わりと繰り返しの動きを止める（AC-11.4）。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}

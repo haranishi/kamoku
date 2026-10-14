@@ -1,0 +1,140 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/*
+ * 色・文字・間隔の変数。部品のCSSは、ここの変数だけを使う（16進の色を書かない）。
+ * 色の組のコントラストは ui/dev/check-contrast.mjs が計算して確かめる（AC-11.2）。
+ * 赤（朱 --c-danger）は「訂正・取消・失敗」だけに使い、費用の金額には使わない。
+ */
+
+:root {
+  color-scheme: light;
+  --c-bg: #F6F5F1;
+  --c-surface: #FFFFFF;
+  --c-surface-2: #FAF9F6;
+  --c-text: #1B2430;
+  --c-muted: #566170;
+  --c-border: #D9D5CB;
+  --c-border-strong: #8A8576;
+  --c-primary: #1F4E79;
+  --c-on-primary: #FFFFFF;
+  --c-primary-soft: #E4EDF6;
+  --c-income: #17653F;
+  --c-warn: #8A4B08;
+  --c-danger: #A8301A;
+  --c-on-danger: #FFFFFF;
+  --c-pending-bg: #FBEFD5;
+  --c-ok-bg: #DDF0E4;
+  --c-danger-bg: #F8DDD6;
+  --c-backdrop: rgb(16 21 27 / 0.45);
+  --c-shadow: rgb(27 36 48 / 0.08);
+
+  --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-body: 14px;
+  --fs-table: 14px;
+  --fs-input: 16px;
+  --fs-h2: 18px;
+  --fs-h1: 22px;
+  --fs-kpi: 24px;
+  --lh-body: 1.6;
+  --lh-tight: 1.3;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --radius-s: 6px;
+  --radius-m: 10px;
+  /* 影は1段階だけ。浮いているもの（候補・引き出し・通知）にだけ付ける。 */
+  --shadow-1: 0 1px 2px var(--c-shadow), 0 4px 16px var(--c-shadow);
+
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-nav: 40;
+  --z-overlay: 100;
+  --z-toast: 1000;
+
+  --dur-fast: 150ms;
+  --dur: 200ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --control-h: 40px;
+  --row-h: 40px;
+  --sidebar-w: 232px;
+  --topbar-h: 56px;
+  --bottomnav-h: 60px;
+  /* 下に固定するバーの、下の端からの距離。幅767px以下は、下のバーの真上に隙間なく載せる（AC-11.8）。 */
+  --bar-bottom: 0px;
+}
+
+/* 行の密度（設定の「見た目」）。表の行の高さだけを変える。 */
+:root[data-density="compact"] {
+  --row-h: 32px;
+}
+
+/* スマホの幅では本文を16pxに、押せる場所を44px以上に（nfr.md）。 */
+@media (max-width: 767px) {
+  :root {
+    --fs-body: 16px;
+    --control-h: 44px;
+    --bar-bottom: var(--bottomnav-h);
+  }
+}
+
+/* ダーク: OSの設定に従う場合（手動でライトを選んだときは除く）。値は下の手動のダークと同じ。 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --c-bg: #10151B;
+    --c-surface: #18202A;
+    --c-surface-2: #1D2733;
+    --c-text: #E8ECF1;
+    --c-muted: #A3AEBC;
+    --c-border: #2E3A48;
+    --c-border-strong: #667587;
+    --c-primary: #8DB9E3;
+    --c-on-primary: #0B1722;
+    --c-primary-soft: #1F3347;
+    --c-income: #6FCB9A;
+    --c-warn: #E5B15C;
+    --c-danger: #F29A86;
+    --c-on-danger: #10151B;
+    --c-pending-bg: #3A2E14;
+    --c-ok-bg: #173626;
+    --c-danger-bg: #40201A;
+    --c-backdrop: rgb(0 0 0 / 0.6);
+    --c-shadow: rgb(0 0 0 / 0.35);
+  }
+}
+
+/* ダーク: 手動で選んだ場合。 */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: #10151B;
+  --c-surface: #18202A;
+  --c-surface-2: #1D2733;
+  --c-text: #E8ECF1;
+  --c-muted: #A3AEBC;
+  --c-border: #2E3A48;
+  --c-border-strong: #667587;
+  --c-primary: #8DB9E3;
+  --c-on-primary: #0B1722;
+  --c-primary-soft: #1F3347;
+  --c-income: #6FCB9A;
+  --c-warn: #E5B15C;
+  --c-danger: #F29A86;
+  --c-on-danger: #10151B;
+  --c-pending-bg: #3A2E14;
+  --c-ok-bg: #173626;
+  --c-danger-bg: #40201A;
+  --c-backdrop: rgb(0 0 0 / 0.6);
+  --c-shadow: rgb(0 0 0 / 0.35);
+}

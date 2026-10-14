@@ -1,0 +1,225 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 取込（SC-04）: 段階の表示、ファイルを置く場所、列の対応、取り込む前の確認。 */
+
+/* ---- (1) ファイルを置く場所 ---- */
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-5);
+  border: 2px dashed var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-surface-2);
+  text-align: center;
+}
+
+.drop-zone.is-over {
+  border-color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.drop-zone.is-disabled {
+  border-style: dotted;
+}
+
+.drop-zone.is-disabled .drop-title {
+  color: var(--c-muted);
+}
+
+.drop-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+}
+
+.drop-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.drop-hint {
+  max-width: 34em;
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+.drop-busy:empty {
+  display: none;
+}
+
+.drop-busy {
+  color: var(--c-primary);
+  font-weight: 700;
+}
+
+/* ---- (2) 列の対応 ---- */
+.import-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.import-facts div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.import-facts dt {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.import-facts dd {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.enc-dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.enc-dd .select {
+  width: auto;
+  height: 32px;
+  font-size: var(--fs-sm);
+}
+
+.import-source {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-s);
+  background: var(--c-primary-soft);
+}
+
+.import-source svg {
+  margin-top: 2px;
+  color: var(--c-primary);
+}
+
+.sample-table th,
+.sample-table td {
+  max-width: 16em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sample-table thead th {
+  height: auto;
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  vertical-align: bottom;
+}
+
+.sample-table th .col-name {
+  display: block;
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+}
+
+.col-tag {
+  margin: 2px var(--sp-1) 0 0;
+}
+
+.sample-table .is-mapped {
+  background: var(--c-ok-bg);
+}
+
+.sample-table thead th.is-mapped {
+  background: var(--c-ok-bg);
+}
+
+.import-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4) var(--sp-5);
+}
+
+.map-amount {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--c-border);
+}
+
+.check-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.check-group legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.check-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+}
+
+.skip-input {
+  flex: none !important;
+  width: 5em;
+}
+
+.seg--wrap .seg-options {
+  display: flex;
+}
+
+.import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--c-border);
+}
+
+@media (max-width: 767px) {
+  .map-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 金額の形と入金の向きは、選択肢を1つずつの行にする（枠の中で途中から折り返さないように）。 */
+  .import-map .seg-options {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .import-map .seg-option {
+    justify-content: flex-start;
+  }
+
+  .drop-zone {
+    padding: var(--sp-5) var(--sp-4);
+  }
+
+  .import-actions .btn {
+    flex: 1 1 auto;
+  }
+}

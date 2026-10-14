@@ -1,0 +1,192 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 状態を示す部品: 札、入れ物、帯（読み取り専用・デモ）、空の状態、骨組み。色は tokens.css の変数だけを使う。 */
+
+/* ---- 札（状態の文字と記号） ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 22px;
+  padding: 0 var(--sp-2);
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.badge--ok {
+  background: var(--c-ok-bg);
+  color: var(--c-income);
+}
+
+.badge--warn {
+  background: var(--c-pending-bg);
+  color: var(--c-warn);
+}
+
+.badge--danger {
+  background: var(--c-danger-bg);
+  color: var(--c-danger);
+}
+
+.badge--muted {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+}
+
+/* 件数や「新しい」のような、注意ではない目印。藍の淡い色。 */
+.badge--info {
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+}
+
+/* ---- 入れ物 ---- */
+.card {
+  min-width: 0;
+  padding: var(--sp-5);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+@media (max-width: 767px) {
+  .card {
+    padding: var(--sp-4);
+  }
+}
+
+/* ---- 帯（読み取り専用・デモ） ---- */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid;
+  border-radius: var(--radius-m);
+  color: var(--c-text);
+}
+
+.banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.banner-title {
+  font-weight: 700;
+}
+
+.banner--danger {
+  border-color: var(--c-danger);
+  background: var(--c-danger-bg);
+}
+
+.banner--danger > svg {
+  color: var(--c-danger);
+}
+
+.banner--warn {
+  border-color: var(--c-warn);
+  background: var(--c-pending-bg);
+}
+
+.banner--warn > svg {
+  color: var(--c-warn);
+}
+
+.banner--info {
+  border-color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.banner--info > svg {
+  color: var(--c-primary);
+}
+
+/* ---- 空の状態と骨組み ---- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-7) var(--sp-5);
+  text-align: center;
+}
+
+.empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.empty-body {
+  max-width: 36em;
+  color: var(--c-muted);
+  /* 「す。」だけが次の行に残らないよう、行の長さをそろえて折り返す。 */
+  text-wrap: balance;
+}
+
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.skel {
+  display: block;
+  height: 14px;
+  border-radius: var(--radius-s);
+  background: var(--c-surface-2);
+  animation: skel-pulse 1.2s var(--ease) infinite alternate;
+}
+
+.skel-block {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@keyframes skel-pulse {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.45;
+  }
+}

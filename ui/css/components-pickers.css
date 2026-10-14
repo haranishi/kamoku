@@ -1,0 +1,186 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 選ぶ部品: 候補つきの入力欄（combobox）、種別の切り替え（segmented）、タブ。色は tokens.css の変数だけを使う。 */
+
+/* ---- 候補つきの入力欄（combobox） ---- */
+.combo {
+  position: relative;
+  min-width: 0;
+}
+
+.combo .input {
+  padding-right: 36px;
+}
+
+.combo-chevron {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  color: var(--c-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+/* 位置と幅は combobox.js が入力欄の位置から決める（表の横スクロールの中でも切れないように fixed）。 */
+.combo-list {
+  position: fixed;
+  z-index: var(--z-overlay);
+  max-width: calc(100vw - 16px);
+  max-height: 288px;
+  overflow-y: auto;
+  padding: var(--sp-1);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.combo-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 36px;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+
+.combo-option-hint {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+/* 印のある候補: 色に加えて、左の帯で示す。 */
+.combo-option[aria-selected="true"] {
+  background: var(--c-primary-soft);
+  box-shadow: inset 3px 0 0 var(--c-primary);
+}
+
+.combo-empty {
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 767px) {
+  .combo-option {
+    min-height: 44px;
+  }
+}
+
+/* ---- 種別の切り替え（segmented） ---- */
+.seg {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.seg legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.seg-options {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+}
+
+.seg-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 34px;
+  padding: 0 var(--sp-4);
+  border-radius: 7px;
+  color: var(--c-muted);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.seg-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.seg-option:hover {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+}
+
+.seg-check {
+  display: none;
+}
+
+.seg-option:has(input:checked) {
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+}
+
+.seg-option:has(input:checked) .seg-check {
+  display: inline-flex;
+}
+
+.seg-option:has(input:focus-visible) {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+.seg-option kbd {
+  border-color: currentColor;
+  background: transparent;
+  color: inherit;
+}
+
+@media (max-width: 767px) {
+  .seg-option {
+    height: 44px;
+  }
+}
+
+/* ---- タブ ---- */
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.tab {
+  flex-shrink: 0;
+  height: 40px;
+  margin-bottom: -1px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--c-muted);
+  font-weight: 600;
+}
+
+.tab:hover {
+  color: var(--c-text);
+}
+
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--c-primary);
+  color: var(--c-primary);
+  font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  .tab {
+    height: 44px;
+  }
+}

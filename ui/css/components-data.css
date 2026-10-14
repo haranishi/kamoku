@@ -1,0 +1,265 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* 表とグラフ。色は tokens.css の変数だけを使う。 */
+
+/* ---- 表 ---- */
+.table-wrap {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+}
+
+.table-wrap:focus-visible {
+  outline-offset: 2px;
+}
+
+.table {
+  width: 100%;
+  font-size: var(--fs-table);
+}
+
+.table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.table th,
+.table td {
+  height: var(--row-h);
+  padding: 0 var(--sp-3);
+  border-bottom: 1px solid var(--c-border);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table thead th {
+  height: 36px;
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table .wrap {
+  min-width: 12em;
+  white-space: normal;
+}
+
+.table .ellipsis {
+  max-width: 22em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table tbody tr[tabindex] {
+  cursor: pointer;
+}
+
+.table tbody tr[tabindex]:hover {
+  background: var(--c-surface-2);
+}
+
+.table tbody tr:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: -2px;
+  background: var(--c-primary-soft);
+}
+
+.table tbody tr.is-current {
+  background: var(--c-primary-soft);
+}
+
+.table tfoot td,
+.table tfoot th {
+  border-top: 2px solid var(--c-border);
+  border-bottom: 0;
+  font-weight: 700;
+}
+
+.table .sub {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+}
+
+.table tr.is-voided td {
+  color: var(--c-muted);
+}
+
+.table tr.is-voided .amount {
+  text-decoration: line-through;
+}
+
+/* 640px未満は、行を積み上げて見せる（見出しは各セルの data-label で出す）。 */
+@media (max-width: 639px) {
+  .table--stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table--stack,
+  .table--stack tbody,
+  .table--stack tr,
+  .table--stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .table--stack tr {
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .table--stack tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table--stack td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    height: auto;
+    min-height: 0;
+    padding: 2px 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .table--stack td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    color: var(--c-muted);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+  }
+
+  .table--stack td[data-label=""]::before {
+    display: none;
+  }
+
+  .table--stack td.stack-title {
+    font-weight: 700;
+  }
+
+  .table--stack .ellipsis {
+    max-width: none;
+  }
+}
+
+/* ---- グラフ ---- */
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-plot {
+  min-width: 0;
+}
+
+.chart-highlight {
+  fill: var(--c-primary-soft);
+}
+
+.chart-grid {
+  stroke: var(--c-border);
+  stroke-width: 1;
+}
+
+.chart-zero {
+  stroke: var(--c-border-strong);
+  stroke-width: 1;
+}
+
+.chart-label {
+  fill: var(--c-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-bar--revenue {
+  fill: var(--c-primary);
+}
+
+.chart-bar--expense {
+  stroke: var(--c-muted);
+  stroke-width: 1;
+}
+
+.chart-hatch-bg {
+  fill: var(--c-surface);
+}
+
+.chart-hatch-line {
+  stroke: var(--c-muted);
+  stroke-width: 2;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--c-income);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-dot {
+  fill: var(--c-surface);
+  stroke: var(--c-income);
+  stroke-width: 2;
+}
+
+.chart-dot--loss {
+  fill: var(--c-income);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+.chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.chart-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
