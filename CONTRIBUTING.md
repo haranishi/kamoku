@@ -29,13 +29,11 @@
 ## 作業を始める
 
 ```
-cargo fmt --all -- --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace
-cargo deny check
+tools/check-all.sh                   # 書式、clippy、全試験、文書、依存、ライセンス表示、画面の単体試験
+cd e2e && npm ci && ./run-real.sh    # 画面やAPIを触った変更のとき。本物のサーバーでの通し試験
 ```
 
-四つとも通ってから、PRを出してください。ライセンス表示の検査は `reuse lint` です。新しいファイルには、既存のファイルと同じ SPDX の2行（著作権者とライセンス）を先頭に付けます。
+通ってから、PRを出してください。手順の詳細は[開発の手引き](docs/development.md)、試験の層は[試験の地図](docs/testing.md)にあります。新しいファイルには、既存のファイルと同じ SPDX の2行（著作権者とライセンス）を先頭に付けます。守りを足したら、その守りを外す誤りを `tools/mutations/` に足して、試験が赤くなることを確かめてください。
 
 ## 税のルールを変えるとき
 
