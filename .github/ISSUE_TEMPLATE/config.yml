@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: セキュリティの報告（非公開）
+    url: https://github.com/haranishi/kamoku/security/advisories/new
+    about: 脆弱性や、改ざん検知を迂回する方法は、公開のIssueに書かず、こちらから知らせてください。

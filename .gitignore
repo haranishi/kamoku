@@ -1,0 +1,29 @@
+target/
+**/*.rs.bk
+.DS_Store
+.idea/
+.vscode/
+.env
+.env.*
+
+# 会計の実データをうっかりコミットしないための網。
+# 試験に使うサンプルは tests/fixtures/synthetic/ に置く合成データだけにする。
+*.csv
+*.CSV
+*.tsv
+*.xlsx
+*.xls
+*.pdf
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.pkg
+/vault/
+/data/
+!tests/fixtures/synthetic/**
+!**/tests/fixtures/synthetic/**
+
+# 依存ライブラリの取得先（Codexをオフラインで動かすための作業用。コミットしない）
+/.cargo-home

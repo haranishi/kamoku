@@ -1,0 +1,30 @@
+# 開発ワークフロー・ハーネス契約（正本は作者のObsidianノート「開発ワークフロー・ハーネス契約テンプレート」）。
+# 役割は人格でなく、工程の契約として置く。
+
+meta: {name: "kamoku-dev-workflow", version: "1.0.0", status: active, owner: "保守者"}
+goal: >
+  Phase 0の完了。kamoku-ledger と kamoku-jp-tax が仕様どおりに動き、
+  cargo test・clippy・deny、REUSE検査、gitleaks が通り、権利と規約の確認記録が揃い、
+  別の担当による読み取りレビューの指摘に対応済みであること。
+non_goals:
+  - "画面・取込・書き出し（Phase 1以降）"
+  - "GitHubへの公開操作（保守者の承認後に行う）"
+roles:
+  - {stage: research,  runner: "Claude／Explore／Web検索", deliverable: "根拠つきの調査記録（docs/legal/）"}
+  - {stage: design,    runner: "Claudeのメインループ",     deliverable: "設計文書・実装指示書"}
+  - {stage: implement, runner: "Codex（workspace-write）",  deliverable: "コード・試験・変更一覧",
+     denied: ["git commit/push", "crates/ の外への書き込み", "新しい依存の追加（事前に相談）"]}
+  - {stage: verify,    runner: "決定的な試験 → 別セッションのCodex（read-only）", deliverable: "検証結果と指摘一覧"}
+  - {stage: human_gate, runner: "保守者", approves: ["commit・push・公開", "名前とライセンスの最終決定", "スコープの変更"]}
+loop_control:
+  retry: "verifyが不合格なら implement へ差し戻す。上限3周。同じ失敗が2回続いたら保守者へ返す"
+  budgets: {max_cycles: 3}
+terminal_states: [SUCCESS, NO_WORK, NEEDS_HUMAN, BUDGET_EXCEEDED, FAILED, UNCERTAIN]
+invariants:
+  - "完了は自己申告でなく証拠（試験の結果、実ファイル、コマンドの出力）で判定する"
+  - "設計と実装、実装とレビューを同じ担当に兼ねさせない"
+  - "公開前に、著作権・規約・法律の確認を行い、docs/legal/rights-check.md に記録する。調べていないことは『問題なし』と書かない"
+  - "他の会計OSS（GPL/AGPL）のコードを見て写さない。仕様だけから書く"
+  - "実データ（帳簿・領収書・口座の明細）を、リポジトリにも指示書にも入れない"
+  - "工程間の受け渡しは、自己完結の文書で行う"
+receipt: "各周回の結果を .agent-harness/runs/ に残す"

@@ -1,0 +1,39 @@
+name: 税のルールの誤りの指摘
+description: kamoku-jp-tax の表や計算が、法令や国税庁の説明と違うとき
+labels: [tax-rule]
+body:
+  - type: input
+    id: target
+    attributes:
+      label: 対象
+      description: 表の行、または関数の名前
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 正しいと考える内容
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: 国税庁などの一次資料のURL
+      description: URLのない指摘は、確認できるまで保留します。
+    validations:
+      required: true
+  - type: input
+    id: confirmed
+    attributes:
+      label: 資料を確認した日
+    validations:
+      required: true
+  - type: dropdown
+    id: professional
+    attributes:
+      label: 税理士・公認会計士ですか
+      options:
+        - はい
+        - いいえ
+    validations:
+      required: true

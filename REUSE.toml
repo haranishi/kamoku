@@ -1,0 +1,41 @@
+version = 1
+SPDX-PackageName = "kamoku"
+SPDX-PackageDownloadLocation = "https://github.com/haranishi/kamoku"
+
+# 既定: コード（Rustのcrate、CIの設定、スクリプト）。MIT OR Apache-2.0 の選択式。
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 Ikki Nishihara and the kamoku contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# 文書と、利用者が写して使う雛形。雛形は国税庁の例を参考にしているので、出典の表示が条件のCC BY 4.0にする。
+[[annotations]]
+path = ["*.md", "docs/**", ".agent-harness/**", "crates/**/*.md"]
+SPDX-FileCopyrightText = "2026 Ikki Nishihara and the kamoku contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# 事務処理規程の雛形は、国税庁の例（公共データ利用規約 第1.0版）を参考にしているので、国税庁も表示する。
+[[annotations]]
+path = "templates/**"
+SPDX-FileCopyrightText = [
+    "2026 Ikki Nishihara and the kamoku contributors",
+    "National Tax Agency of Japan (source material, Public Data License 1.0)",
+]
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# 設定ファイル類。
+[[annotations]]
+path = [
+    ".gitignore",
+    ".gitattributes",
+    "Cargo.toml",
+    "Cargo.lock",
+    "rust-toolchain.toml",
+    "deny.toml",
+    "REUSE.toml",
+    ".github/ISSUE_TEMPLATE/**",
+    ".github/pull_request_template.md",
+    ".github/dependabot.yml",
+]
+SPDX-FileCopyrightText = "2026 Ikki Nishihara and the kamoku contributors"
+SPDX-License-Identifier = "CC0-1.0"
