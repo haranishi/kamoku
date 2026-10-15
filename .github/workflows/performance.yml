@@ -24,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      CARGO_TARGET_DIR: ${{ runner.temp }}/kamoku-performance-target
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
@@ -40,6 +39,7 @@ jobs:
           persist-credentials: false
       - name: Build both revisions with the same toolchain and flags
         run: |
+          export CARGO_TARGET_DIR="$RUNNER_TEMP/kamoku-performance-target"
           mkdir -p results
           rustc -Vv > results/toolchain.txt
           printf 'base=%s\nhead=%s\n' "$BASE_SHA" "$HEAD_SHA" > results/revisions.txt
