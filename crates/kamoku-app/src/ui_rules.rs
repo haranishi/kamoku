@@ -32,6 +32,7 @@ pub(crate) fn content_type(rel: &str) -> &'static str {
     match ext.as_str() {
         "html" => "text/html; charset=utf-8",
         "js" | "mjs" => "text/javascript; charset=utf-8",
+        "wasm" => "application/wasm",
         "css" => "text/css; charset=utf-8",
         "svg" => "image/svg+xml",
         "png" => "image/png",

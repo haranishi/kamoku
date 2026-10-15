@@ -37,3 +37,7 @@ __pycache__/
 
 # Codexをオフラインで動かすための作業用の置き場所(コミットしない)
 /.cargo-target
+
+# Generated Rust/WASM preview bindings. Build before embedding the preview.
+/ui/rust/pkg/
+/e2e/rust-ui-results/

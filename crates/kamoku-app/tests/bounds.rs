@@ -113,6 +113,10 @@ fn inbox_out_amount_stops_at_the_safe_integer() {
         "{}",
         d.text()
     );
+    assert_eq!(
+        d.json()["error"]["message"],
+        "未確認の出金の合計が大きすぎます。"
+    );
 }
 
 // B7（api-inbox.md）: 取込の履歴は offset と limit で区切る。total は全件数。

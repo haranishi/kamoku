@@ -105,6 +105,19 @@ mod tests {
         }
     }
 
+    #[test]
+    fn wasm_assets_have_streaming_compilation_mime_type() {
+        let dir = tempfile::tempdir().unwrap();
+        let pkg = dir.path().join("rust/pkg");
+        std::fs::create_dir_all(&pkg).unwrap();
+        let header = b"\0asm\x01\0\0\0";
+        std::fs::write(pkg.join("kamoku_ui_bg.wasm"), header).unwrap();
+        let statics = Statics::Dir(dir.path().canonicalize().unwrap());
+        let (mime, bytes) = lookup(&statics, "/rust/pkg/kamoku_ui_bg.wasm").unwrap();
+        assert_eq!(mime, "application/wasm");
+        assert_eq!(bytes, header);
+    }
+
     // フォルダの中のリンクで、配らないファイル（dev/・隠しファイル・README.md）を別名で配らない。
     // 正規化したあとの場所にも、同じ決まりを掛ける。中を指す普通のリンクは配る。
     #[cfg(unix)]

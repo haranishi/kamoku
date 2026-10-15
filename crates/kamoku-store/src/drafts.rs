@@ -6,7 +6,7 @@ use crate::{
     NewPartner, Page, Store, StoreError, masters,
 };
 use kamoku_ledger::{Entry, EntryId, EventKind};
-use rusqlite::params;
+use rusqlite::{OptionalExtension, params};
 use serde_json::json;
 
 const UPDATE_DRAFT: &str = "
@@ -107,6 +107,41 @@ impl Store {
             .collect::<Result<_, _>>()?;
         Ok(Page { items, total })
     }
+
+    /// 未確認の出金額の合計。金額の列だけを順に読み、全行をメモリに持ちません。
+    ///
+    /// # Errors
+    /// 合計が帳票の金額上限を超えるか、`SQLite`の読み取りに失敗した場合。
+    pub fn pending_out_amount(&self) -> Result<i64, StoreError> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT amount FROM drafts WHERE status='draft' AND direction='out'")?;
+        let mut rows = stmt.query([])?;
+        let mut total = 0i64;
+        while let Some(row) = rows.next()? {
+            total = total
+                .checked_add(row.get(0)?)
+                .filter(|sum| *sum <= kamoku_books::MAX_REPORT_AMOUNT)
+                .ok_or(StoreError::AmountRange)?;
+        }
+        Ok(total)
+    }
+
+    /// 指定したIDの未確認行。入力と同じ順・件数で、重複も残します。
+    /// 存在しない行・確定済み・無視済みは同じ位置の`None`になります。
+    /// 確定時は`confirm_drafts`がトランザクション内で改めて検査します。
+    ///
+    /// # Errors
+    /// `SQLite`の読み取りの失敗。
+    pub fn pending_drafts(&self, ids: &[DraftId]) -> Result<Vec<Option<Draft>>, StoreError> {
+        let mut stmt = self
+            .conn
+            .prepare_cached(&format!("{DRAFT_SELECT} WHERE id=? AND status='draft'"))?;
+        ids.iter()
+            .map(|id| Ok(stmt.query_row([id], draft_row).optional()?))
+            .collect()
+    }
+
     /// 状態ごとの全件数。
     ///
     /// # Errors

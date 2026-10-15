@@ -33,6 +33,7 @@ Rustの出力先は `CARGO_TARGET_DIR`、ブラウザの保存先は `PLAYWRIGHT
 | Rustの計算 | `cargo test -p <変更したcrate> --locked`。台帳の符号化は `python3 tools/verify-ledger-golden.py` も |
 | API・保存・取込 | 関連crateのRust試験と `e2e/run-real.sh flows <対象>.spec.mjs`、`e2e/run-real.sh contract` |
 | 画面・キー操作 | `node --test ui/tests/`、`node ui/dev/check-contrast.mjs`、`node ui/dev/check-policy.mjs`、対象のflows |
+| Rust/WASMの仕訳帳 | [専用のビルド・ブラウザ試験](rust-ui-preview.md)。通常の画面の通し試験も残す |
 | 実行スクリプト | `python3 -m unittest discover -s tools/tests -v` と `bash -n tools/check-all.sh e2e/run-real.sh` |
 | RustやPlaywrightの依存 | 下のPR前の手順。古いブラウザを流用せず、上の準備も実行 |
 

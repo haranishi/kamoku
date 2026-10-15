@@ -1,0 +1,49 @@
+# Build and exercise the optional authored-Rust UI without changing default UI.
+name: rust-ui
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wasm-browser:
+    name: Rust UI (WASM, Rust 1.88, browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: rustup target add wasm32-unknown-unknown
+      - run: rustup toolchain install 1.88 --profile minimal --target wasm32-unknown-unknown
+      - run: cargo +1.88 check -p kamoku-ui --target wasm32-unknown-unknown --locked
+      - run: cargo clippy -p kamoku-ui --target wasm32-unknown-unknown --locked -- -D warnings
+      - run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - run: bash tools/build-rust-ui.sh
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      # Builds the server only after WASM generation and serves embedded assets.
+      - run: python3 tools/test-rust-ui.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: success()
+        with:
+          name: rust-ui-synthetic-screens-and-metrics
+          if-no-files-found: error
+          path: |
+            e2e/rust-ui-results/journal-390.png
+            e2e/rust-ui-results/journal-768.png
+            e2e/rust-ui-results/journal-1440.png
+            e2e/rust-ui-results/metrics.json
