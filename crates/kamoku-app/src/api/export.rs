@@ -63,7 +63,6 @@ pub(crate) fn export_journal(state: &mut State, call: &Call<'_>) -> Result<Reply
     };
     let chart = state.store.chart();
     let mut rows: Vec<Current<'_>> = all_current(&state.store)
-        .into_iter()
         .filter(|c| include_voided || !c.voided())
         .filter(|c| {
             from.is_none_or(|d| c.entry.date() >= d) && to.is_none_or(|d| c.entry.date() <= d)

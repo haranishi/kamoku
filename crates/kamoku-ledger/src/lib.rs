@@ -20,7 +20,7 @@ pub use entry::{Entry, Line, Side};
 pub use error::{ChainError, EntryError, HashError, IdError, LedgerError};
 pub use hash::Hash;
 pub use ids::{AccountCode, EntryId};
-pub use ledger::{Balance, Event, EventKind, Ledger};
+pub use ledger::{Balance, EntryState, Event, EventKind, Ledger};
 pub use money::Yen;
 
 #[cfg(test)]

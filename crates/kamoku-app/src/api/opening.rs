@@ -21,7 +21,6 @@ const REASON_NONE: &str = "期首残高なし";
 // いま有効な期首残高の仕訳（取消済みは除く）。あれば最後に登録したもの。
 fn active_opening(store: &Store) -> Option<Current<'_>> {
     all_current(store)
-        .into_iter()
         .filter(|c| !c.voided() && c.meta("kind") == "opening")
         .max_by_key(|c| c.no)
 }

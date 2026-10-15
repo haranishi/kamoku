@@ -9,6 +9,7 @@ use crate::query::Query;
 use crate::state::State;
 use kamoku_books::{Chart, MAX_REPORT_AMOUNT};
 use serde_json::{Value, json};
+use std::cmp::Reverse;
 use time::Date;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -125,6 +126,33 @@ fn text_matches(c: &Current<'_>, chart: &Chart, needle: &str) -> bool {
             .any(|amount| amount.get().to_string().contains(&digits))
 }
 
+fn page_rows<'a, 'entry>(
+    rows: &'a mut [Current<'entry>],
+    limit: u32,
+    offset: u64,
+) -> &'a mut [Current<'entry>] {
+    let start = usize::try_from(offset)
+        .unwrap_or(usize::MAX)
+        .min(rows.len());
+    if start == rows.len() {
+        return &mut rows[start..];
+    }
+    let key = |row: &Current<'_>| Reverse((row.entry.date(), row.no));
+    if start > 0 {
+        rows.select_nth_unstable_by_key(start, key);
+    }
+    let remaining = &mut rows[start..];
+    let count = usize::try_from(limit)
+        .unwrap_or(usize::MAX)
+        .min(remaining.len());
+    if count < remaining.len() {
+        remaining.select_nth_unstable_by_key(count, key);
+    }
+    let page = &mut remaining[..count];
+    page.sort_unstable_by_key(key);
+    page
+}
+
 /// `GET /entries`。日付の新しい順、同じ日は番号の大きい順。`state` の既定は `active`。
 /// `sum_amount` は、絞り込んだ全件（ページの外も含む）の合計。
 pub(crate) fn entries_list(state: &mut State, call: &Call<'_>) -> Result<Reply, ApiError> {
@@ -132,10 +160,9 @@ pub(crate) fn entries_list(state: &mut State, call: &Call<'_>) -> Result<Reply, 
     let (limit, offset) = call.query.page()?;
     let chart = state.store.chart();
     let mut rows: Vec<Current<'_>> = all_current(&state.store)
-        .into_iter()
         .filter(|c| filter.matches(c, chart))
         .collect();
-    rows.sort_by_key(|c| std::cmp::Reverse((c.entry.date(), c.no)));
+    let total = rows.len();
     let sum = rows
         .iter()
         .try_fold(0i64, |sum, c| sum.checked_add(c.entry.total().get()))
@@ -147,13 +174,11 @@ pub(crate) fn entries_list(state: &mut State, call: &Call<'_>) -> Result<Reply, 
                 "合計が大きすぎて、正確に表示できません。期間を短くしてください。",
             )
         })?;
-    let items: Vec<Value> = rows
+    let items: Vec<Value> = page_rows(&mut rows, limit, offset)
         .iter()
-        .skip(usize::try_from(offset).unwrap_or(usize::MAX))
-        .take(usize::try_from(limit).unwrap_or(usize::MAX))
         .map(|c| entry_json(c, chart))
         .collect();
-    ok(json!({ "items": items, "total": rows.len(), "sum_amount": sum }))
+    ok(json!({ "items": items, "total": total, "sum_amount": sum }))
 }
 
 /// `GET /entries/{id}`。表現に、組み立て直した入力（`input`）と履歴（`history`）を足す。
@@ -161,3 +186,7 @@ pub(crate) fn entry_detail(state: &mut State, call: &Call<'_>) -> Result<Reply, 
     let id = entry_id(call.param(0))?;
     ok(detail_json(&state.store, &id, true)?)
 }
+
+#[cfg(test)]
+#[path = "entry_list_tests.rs"]
+mod tests;
