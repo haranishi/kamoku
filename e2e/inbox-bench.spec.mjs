@@ -39,14 +39,15 @@ test('AC-05.6 の材料: 100行をキーボードだけで確定候補にして�
   };
   const started = Date.now();
   await press('/');
-  for (let i = 0; i < 3; i += 1) await press('Tab');
+  // 検索欄 → 見出しの「すべて選ぶ」→ 候補の欄 → 日付の欄 → 科目の欄。
+  for (let i = 0; i < 4; i += 1) await press('Tab');
   for (let i = 0; i < ROWS; i += 1) {
     const [reading, name] = PICKS[i % PICKS.length];
     await type(reading);
     await expect(page.getByRole('option', { name: new RegExp(name) }).first()).toHaveAttribute('aria-selected', 'true');
     await press('Enter');
   }
-  await expect(page.locator('.inbox-bar')).toContainText(`確定候補${ROWS}件`);
+  await expect(page.locator('.inbox-bar')).toContainText(`確定する行${ROWS}件`);
   await press('ControlOrMeta+Enter');
   await expect(page.getByRole('dialog', { name: `${ROWS}件を確定しますか` })).toBeVisible();
   await press('Enter');

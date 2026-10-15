@@ -1,39 +1,158 @@
 /* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
 /* SPDX-License-Identifier: MIT OR Apache-2.0 */
 
-/* 取引の登録と訂正。広い画面では、左に入力、右に仕訳のプレビュー。仕訳で入力・訂正の差分・テンプレートは screens-entry-more.css。 */
+/*
+ * 取引の登録と訂正。仕訳で入力・訂正の差分・テンプレートは screens-entry-more.css。
+ * 1280px以上: 左に入力、右の列にプレビューと保存を重ねる（右の列は画面の上に付いてくる。保存のボタンが、保存される仕訳のすぐ下）。
+ * 1280px未満: 1列（入力 → プレビュー → 保存の帯）。保存の帯は画面の下（768px未満は下のバーの真上）に付ける（AC-11.8 と同じ決まり）。
+ * 右の列の入れ物（.entry-rail）は、1列のときは箱を作らない（帯が .entry-layout の中で下に付けるように）。
+ */
 
 .entry-layout {
-  display: grid;
-  grid-template-areas:
-    "main side"
-    "actions side";
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
-  grid-template-rows: auto 1fr;
-  gap: var(--sp-4) var(--sp-5);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.entry-rail {
+  display: contents;
 }
 
 .entry-main {
-  grid-area: main;
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
 }
 
 .entry-side {
-  position: sticky;
-  top: var(--sp-5);
-  grid-area: side;
   min-width: 0;
 }
 
 .entry-actions-card {
-  grid-area: actions;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-5);
+  gap: var(--sp-2);
+}
+
+@media (min-width: 1280px) {
+  .entry-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+    gap: var(--sp-4) var(--sp-5);
+    align-items: start;
+  }
+
+  .entry-rail {
+    --pv-foot-h: 36px;
+    position: sticky;
+    top: var(--sp-5);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: var(--sp-4);
+    min-width: 0;
+  }
+
+  /*
+   * 「テンプレートに登録」（.pv-foot）は、DOM では保存の帯の後ろにある（Tab の順で、最後の欄の次が保存の組になるように）。
+   * 見た目は、今までどおりプレビューの枠の右下に置く: 枠と同じ升目に重ね、枠の下の余白をボタンの分だけ広げる。
+   */
+  .entry-rail > .entry-side,
+  .entry-rail > .pv-foot {
+    grid-area: 1 / 1;
+  }
+
+  .entry-rail > .entry-actions-card {
+    grid-area: 2 / 1;
+  }
+
+  .entry-rail > .pv-foot {
+    align-self: end;
+    justify-self: end;
+    height: var(--pv-foot-h);
+    /* 枠の線（1px）の内側の余白にそろえる。 */
+    margin: 0 calc(var(--sp-5) + 1px) calc(var(--sp-5) + 1px) 0;
+  }
+
+  .entry-rail:has(> .pv-foot:not([hidden])) .pv-card {
+    padding-bottom: calc(var(--sp-5) + var(--pv-foot-h) + var(--sp-3));
+  }
+
+  .entry-actions-card {
+    padding: var(--sp-4) var(--sp-5);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-m);
+    background: var(--c-surface);
+  }
+
+  /* 右の列は1段に収まらないので、やめる・保存を1段目に、主な操作（保存して続ける）を2段目の幅いっぱいに置く
+     （並び＝Tabの順と、見た目の読む順を同じにする）。 */
+  .entry-rail .entry-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entry-rail .entry-actions .save-main {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 下に付ける保存の帯。下の端にぴったり・不透明・上に区切りの線（地の色と線は、本文の左右の端まで伸ばす）。 */
+@media (max-width: 1279px) {
+  /* 帯は DOM では「テンプレートに登録」の前だが、見た目はいちばん下（プレビュー → テンプレートに登録 → 帯）。 */
+  .entry-actions-card {
+    order: 1;
+    position: sticky;
+    bottom: var(--bar-bottom);
+    z-index: var(--z-sticky);
+    padding: var(--sp-3) var(--sp-5);
+    border-top: 1px solid var(--c-border-strong);
+    background: var(--c-surface);
+    border-image: linear-gradient(var(--c-border-strong) 0 1px, var(--c-surface) 1px) fill 0 / 0 / 0 100vmax;
+  }
+
+  /*
+   * 「テンプレートに登録」（.pv-foot）は、プレビューの枠の続き（枠の下の段）に見せる。DOM では保存の帯の後ろ（Tab の順）。
+   * 要約の下に大きな空白が残り、テンプレートの操作まで遠かった（2026-10-15 の見た目の採点、幅390）。
+   */
+  .entry-layout:has(> .entry-rail > .pv-foot:not([hidden])) .pv-card {
+    padding-bottom: 0;
+    border-bottom-width: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  .entry-rail > .pv-foot {
+    margin-top: calc(var(--sp-4) * -1);
+    padding: var(--sp-2) var(--sp-5) var(--sp-4);
+    border: 1px solid var(--c-border);
+    border-top: 0;
+    border-radius: 0 0 var(--radius-m) var(--radius-m);
+    background: var(--c-surface);
+  }
+
+  /* 帯が本文のいちばん下に来ても、帯と下のバー（画面の端）の間に隙間を作らない。帯の高さぶんは、帯そのものが埋める。
+     --bar-bottom は下の余白（セーフエリア）を含む（tokens.css。F1 の第2回）ので、ここで足し直さない。 */
+  .main:has(> .entry-layout .entry-actions-card) {
+    padding-bottom: var(--bar-bottom);
+  }
+}
+
+/*
+ * 768px未満は、上の帯が画面の上に付く。帯の高さ＋8pxは、ページ全体の scroll-padding-top（layout-narrow.css）が空ける。
+ * 入力欄には、欄の名前（文字の高さと、名前と欄の間）の分だけを足し、名前ごと見せる（帯の分を二重に空けない）。
+ */
+@media (max-width: 767px) {
+  .entry-form .field .input,
+  .entry-form .field .select {
+    scroll-margin-top: calc(var(--fs-sm) * var(--lh-body) + 6px);
+  }
+
+  /* 枠の続きの左右の余白は、狭い幅の枠（.card）と同じ。 */
+  .entry-rail > .pv-foot {
+    padding-right: var(--sp-4);
+    padding-left: var(--sp-4);
+  }
 }
 
 .entry-form,
@@ -54,8 +173,13 @@
   grid-column: 1 / -1;
 }
 
+/*
+ * 入力欄の補足（取引先の足し方、事業の割合と事業主貸、科目の既定の割合など）。小さく淡いと読み落とした
+ * （2026-10-15 の見た目の採点）ので、本文の色にする（大きさで欄の名前・値と分ける）。
+ */
+.entry-main .field-hint,
 .field-note {
-  color: var(--c-muted);
+  color: var(--c-text);
 }
 
 .detail-cell .btn {
@@ -68,7 +192,7 @@
 }
 
 .pct-out {
-  color: var(--c-muted);
+  color: var(--c-text);
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
 }
@@ -79,18 +203,75 @@
   display: none;
 }
 
+/* 保存のボタンの並び: やめる・保存・保存して続ける（主な操作は右の端）。 */
 .entry-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
+  justify-content: flex-end;
+  gap: var(--sp-2);
 }
 
-.entry-actions-main {
+/* 種別（支出・収入・振替）の切り替えは、入力欄と同じく幅いっぱい（幅の約3分の2で止まり、右に半端な余白が残った）。 */
+.entry-form > .seg .seg-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.entry-form > .seg .seg-option {
+  justify-content: center;
+}
+
+/* プレビューの下の「テンプレートに登録」。 */
+.pv-foot {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding-top: var(--sp-1);
+}
+
+/* プレビューの見出しの行。開閉のボタンは、狭い幅（640px未満）で表があるときだけ出す。 */
+.pv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--sp-2);
+}
+
+.pv-toggle,
+.pv-summary {
+  display: none;
+}
+
+.pv-summary {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* 名前と金額の間でも折り、名前自体が枠より長いときだけ中で折って収める。 */
+.pv-sum-side,
+.pv-sum-name,
+.pv-sum-side > .num {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.pv-sum-label {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.pv-sum-sep {
+  margin: 0 var(--sp-1);
+  color: var(--c-muted);
+}
+
+.pv-toggle svg {
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.pv-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
 }
 
 /* ---- 仕訳のプレビュー ---- */
@@ -174,22 +355,12 @@
   gap: var(--sp-2);
 }
 
-@media (max-width: 1279px) {
-  .entry-layout {
-    grid-template-areas:
-      "main"
-      "side"
-      "actions";
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto;
-  }
-
-  .entry-side {
-    position: static;
-  }
-}
-
 @media (max-width: 639px) {
+  /* 見出しの右の「テンプレートから入力」は、見出しの下の行へ（狭い幅では、横に並ぶと見出しより目立った）。 */
+  .entry-head .page-head-actions {
+    flex-basis: 100%;
+  }
+
   .entry-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -198,11 +369,34 @@
     gap: var(--sp-4);
   }
 
-  .entry-actions-main {
-    width: 100%;
+  /* 帯は1段: やめる・保存・保存して続ける（主な操作が残りの幅を使う）。 */
+  .entry-actions {
+    flex-wrap: nowrap;
   }
 
-  .entry-actions-main .btn--primary {
-    flex: 1 1 100%;
+  .entry-actions .save-main {
+    flex: 1 1 auto;
+  }
+
+  .entry-actions-card {
+    padding: var(--sp-2) var(--sp-4);
+  }
+
+  /* プレビューは、表の代わりに1行の要約。表は「くわしく」で開く（警告は畳まずに出す）。 */
+  .pv-card.has-lines .pv-toggle {
+    display: inline-flex;
+  }
+
+  .pv-card.has-lines:not(.is-open) .pv-summary {
+    display: block;
+  }
+
+  .pv-card.has-lines:not(.is-open) .pv-wrap {
+    display: none;
+  }
+
+  /* 表を畳んだとき、警告も無ければ、中身の入れ物ごと畳む（空の入れ物と間隔の分、要約の下に空白が残った）。 */
+  .pv-card.has-lines:not(.is-open) .pv-body:not(:has(.pv-warnings)) {
+    display: none;
   }
 }

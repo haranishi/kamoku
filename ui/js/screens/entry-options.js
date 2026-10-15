@@ -22,10 +22,29 @@ function rank(a, kind) {
   return 2;
 }
 
-/** 科目の候補（combobox の形）。 */
-export function accountItems(accounts, kind) {
+/**
+ * 口座の親の資産科目（現金・預金）のコード。口座を足してあるのに親へ直接記帳すると、ホームの口座の残高に載らず、
+ * 貸借対照表の現金とずれる（「現金」が科目と口座で2つ並ぶ）。カードの親（未払金）は、口座の無い未払いにも使うので入れない。
+ */
+export function walletParentCodes(accounts) {
+  const out = new Set();
+  for (const a of accounts) {
+    if (a.enabled && a.wallet && a.wallet.type !== 'card' && a.parent) out.add(a.parent);
+  }
+  return out;
+}
+
+/**
+ * 科目の候補（combobox の形）。
+ * @param {{ forEntry?: boolean, keep?: Array<string|null> }} [opts]
+ *   forEntry: 記帳の欄の候補。口座の親の科目（現金・預金）を外す。絞り込みの欄などは、親も選べるままにする。
+ *   keep: 外さずに残す科目（訂正で、元の仕訳が親の科目を使っているときなど）
+ */
+export function accountItems(accounts, kind, { forEntry = false, keep = [] } = {}) {
+  const hide = forEntry ? walletParentCodes(accounts) : new Set();
+  for (const code of keep) hide.delete(code);
   return accounts
-    .filter((a) => a.enabled)
+    .filter((a) => a.enabled && !hide.has(a.code))
     .map((a) => ({ a, r: rank(a, kind) }))
     .sort((x, y) => x.r - y.r || x.a.sort - y.a.sort)
     .map(({ a }) => ({

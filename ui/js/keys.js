@@ -31,6 +31,44 @@ export function modLabel() {
 
 const G_TARGETS = { h: '#/', n: '#/entry', i: '#/inbox', j: '#/journal', r: '#/reports', w: '#/wallets', s: '#/settings' };
 
+// 1文字のショートカット（修飾キーを伴わない1文字で、画面全体に働くキー）を切れるようにする（WCAG 2.1.4）。
+// 音声入力で話した言葉の1文字や、押し間違いで画面が移ってしまうため。既定は使う。
+const SINGLE_KEY = 'kamoku.singleKeys';
+let single = null;
+const singleListeners = new Set();
+
+/** 1文字のショートカットを使うなら真（既定）。保存した設定を読めなければ、使う。 */
+export function singleKeysEnabled() {
+  if (single === null) {
+    try {
+      single = localStorage.getItem(SINGLE_KEY) !== 'off';
+    } catch {
+      single = true;
+    }
+  }
+  return single;
+}
+
+/** 1文字のショートカットを使うか切るかを決めて、覚えておく。保存できなくても、この画面を開いている間は効く。 */
+export function setSingleKeys(on) {
+  single = Boolean(on);
+  try {
+    localStorage.setItem(SINGLE_KEY, single ? 'on' : 'off');
+  } catch {
+    // 保存できない（プライベートな窓など）。
+  }
+  for (const fn of singleListeners) fn(single);
+}
+
+/** 切り替わったら fn(使うか) を呼ぶ。止める関数を返す。 */
+export function onSingleKeysChange(fn) {
+  singleListeners.add(fn);
+  return () => singleListeners.delete(fn);
+}
+
+/** 文字のキー（1文字の e.key）。Esc・Enter・Tab・矢印は名前が長いので当たらない。 */
+const isCharKey = (e) => typeof e.key === 'string' && e.key.length === 1;
+
 /**
  * 文書全体のキー操作を見張る。main.js が1回だけ作る。
  * @param {{ navigate: (hash: string) => void, openPalette: () => void, togglePalette?: () => void, openHelp: () => void, focusSearch: () => boolean }} actions
@@ -58,6 +96,11 @@ export function createKeys(actions) {
     if (document.querySelector('dialog[open]')) return;
     if (e.altKey || mod) return;
     if (isTypingTarget(e.target)) {
+      clearG();
+      return;
+    }
+    // 切ってあるときは、g＋文字・画面の1文字のキー・n / ? を働かせず、ブラウザの既定の動き（空白でのスクロールなど）に任せる。
+    if (isCharKey(e) && !singleKeysEnabled()) {
       clearG();
       return;
     }

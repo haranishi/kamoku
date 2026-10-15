@@ -13,7 +13,9 @@ import { textInput, button } from '../components/fields.js';
 import { banner } from '../components/banner.js';
 import { emptyState } from '../components/empty.js';
 import { skeletonBlock, delayedSkeleton } from '../components/skeleton.js';
+import { emptyValue } from '../components/money.js';
 import { partnerDialog } from './master-forms.js';
+import { phrase } from '../components/phrase.js';
 
 /** @param {HTMLElement} root */
 export function mount(root, ctx) {
@@ -35,9 +37,11 @@ export function mount(root, ctx) {
   });
   search.addEventListener('change', commitSearch);
   const body = h('div', { class: 'masters' });
+  // 件数は、未確認の画面と同じく見出しの下に置く。
+  const countText = h('span', { class: 'page-count', 'aria-live': 'polite' });
   root.append(
-    h('div', { class: 'page-head' }, h('div', { class: 'page-head-text' }, h('h1', { tabindex: '-1' }, '取引先'), h('p', { class: 'muted small' }, '取引の登録で新しい名前を打つと、ここに足されます。')), h('div', { class: 'page-head-actions' }, button({ label: '取引先を足す', variant: 'primary', iconName: 'plus', onClick: () => edit(null) }))),
-    h('div', { class: 'card masters-tools', role: 'search', 'aria-label': '取引先の絞り込み' }, h('div', { class: 'search-box' }, icon('search', { size: 18 }), search, h('kbd', { 'aria-hidden': 'true' }, '/'))),
+    h('div', { class: 'page-head' }, h('div', { class: 'page-head-text' }, h('h1', { tabindex: '-1' }, '取引先'), countText, h('p', { class: 'muted small' }, phrase('取引の登録で新しい名前を打つと、ここに足されます。'))), h('div', { class: 'page-head-actions' }, button({ label: '取引先を足す', variant: 'primary', iconName: 'plus', onClick: () => edit(null) }))),
+    h('div', { class: 'masters-tools', role: 'search', 'aria-label': '取引先の絞り込み' }, h('div', { class: 'search-box' }, icon('search', { size: 18 }), search, h('kbd', { 'aria-hidden': 'true' }, '/'))),
     body,
   );
 
@@ -50,12 +54,14 @@ export function mount(root, ctx) {
   }
 
   function render() {
+    countText.textContent = '';
     if (!partners.length) {
       replace(body, h('div', { class: 'card' }, emptyState({ iconName: 'building', title: '取引先はまだありません', body: '取引の登録で取引先の名前を打つと、自動で足されます。先に足しておくこともできます。', actions: [{ label: '取引先を足す', onClick: () => edit(null), primary: true }] })));
       return;
     }
     const items = partners.map((p) => ({ ...p, value: String(p.id), label: p.name, keywords: p.invoice_number || '' }));
     const hits = q ? filterItems(items, q) : items;
+    countText.textContent = q ? `${hits.length}件（全${partners.length}件）` : `${partners.length}件`;
     if (!hits.length) {
       replace(body, h('div', { class: 'card' }, emptyState({ iconName: 'search', title: '当てはまる取引先はありません', body: '探す言葉を変えてください。' })));
       return;
@@ -67,14 +73,16 @@ export function mount(root, ctx) {
       rowClass: (p) => (p.enabled === false ? 'is-off' : null),
       onOpen: (p) => edit(partners.find((x) => x.id === p.id)),
       columns: [
-        { key: 'name', label: '名前', stackLabel: '', className: 'wrap', render: (p) => [h('span', { class: 'acct-name' }, p.name), p.enabled === false ? h('span', { class: 'badge badge--muted' }, '使っていない') : null] },
-        { key: 'reading', label: '読み', render: (p) => p.reading || '' },
-        { key: 'invoice_number', label: '登録番号', render: (p) => (p.invoice_number ? h('code', { class: 'mono' }, p.invoice_number) : h('span', { class: 'muted' }, 'なし')) },
-        { key: 'note', label: 'メモ', className: 'wrap', render: (p) => p.note || '' },
+        { key: 'name', label: '名前', stackLabel: '', className: 'wrap', render: (p) => [h('span', { class: 'acct-name keep' }, p.name), p.enabled === false ? h('span', { class: 'badge badge--muted' }, '使っていない') : null] },
+        { key: 'reading', label: '読み', render: (p) => (p.reading ? h('span', { class: 'keep' }, p.reading) : emptyValue()) },
+        { key: 'invoice_number', label: '登録番号', render: (p) => (p.invoice_number ? h('code', { class: 'mono' }, p.invoice_number) : emptyValue()) },
+        { key: 'note', label: 'メモ', className: 'wrap', render: (p) => p.note || emptyValue() },
+        // 行を押すと直せることを、行の右端の印で示す（印が無く、押せるのか分からなかった）。
+        { key: 'go', label: '', stackLabel: '', className: 'row-go', headClass: 'row-go', render: () => h('span', { class: 'row-go-mark' }, h('span', null, '直す'), icon('chevron-right', { size: 16 })) },
       ],
       rows: hits,
     });
-    replace(body, h('p', { class: 'list-summary' }, h('span', null, `${hits.length}件`)), t.el);
+    replace(body, t.el);
   }
 
   async function load() {

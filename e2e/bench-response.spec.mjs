@@ -27,7 +27,8 @@ test(`NFR 未確認${ROWS}行の一覧で、科目の欄に打ってから候補
 
   // 検索の欄から、最初の行の科目の欄へ（キーボードだけの流れ。inbox-bench.spec.mjs と同じ）。
   await page.keyboard.press('/');
-  for (let i = 0; i < 3; i += 1) await page.keyboard.press('Tab');
+  // 検索欄 → 見出しの「すべて選ぶ」→ 候補の欄 → 日付の欄 → 科目の欄（inbox-bench.spec.mjs と同じ）。
+  for (let i = 0; i < 4; i += 1) await page.keyboard.press('Tab');
 
   // 打つ前に、入力イベントの時刻と、候補が出て次の描画の枠に入った時刻を、ページの中で記録する。
   const arm = () =>

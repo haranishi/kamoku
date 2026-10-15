@@ -9,13 +9,13 @@
   gap: var(--sp-4);
 }
 
+/* 探す欄と切り替えの帯。カードで囲むと、欄の枠と二重に見えたので、枠を付けない。 */
 .masters-tools {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-3) var(--sp-5);
   margin-bottom: var(--sp-4);
-  padding: var(--sp-3) var(--sp-5);
 }
 
 .masters-section {
@@ -38,22 +38,47 @@
 }
 
 /* ---- 口座 ---- */
+/* 合計のカード: 2つの合計を、枠いっぱいに半分ずつ並べる（左に寄って、右が大きく空いた）。 */
 .wallet-totals {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: var(--sp-3) var(--sp-6);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3) var(--sp-5);
   margin-top: 0;
   padding: var(--sp-4) var(--sp-5);
 }
 
 .wallet-totals div {
   flex-direction: column;
+  justify-content: flex-start;
   gap: 2px;
+  min-width: 0;
+  container-type: inline-size;
 }
 
+.wallet-totals div + div {
+  padding-left: var(--sp-5);
+  border-left: 1px solid var(--c-border);
+}
+
+/* 桁の多い金額でも枠からはみ出さない大きさにする（--chars は wallets.js。決め方は screens.css の .kpi-value と同じ）。 */
 .wallet-totals dd {
-  font-size: var(--fs-h2);
+  font-size: min(var(--fs-kpi), calc(100cqi / (var(--chars, 9) * 0.64 + 1.1)));
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 640px未満は、2つの合計を縦に積む（横に並べると、大きな金額が隣の列に重なり、「合計」が「合／計」と割れた）。 */
+@media (max-width: 639px) {
+  .wallet-totals {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .wallet-totals div + div {
+    padding: var(--sp-3) 0 0;
+    border-top: 1px solid var(--c-border);
+    border-left: 0;
+  }
 }
 
 .wallet-list {
@@ -62,12 +87,32 @@
   gap: var(--sp-3);
 }
 
+/* 並び: 「印・名前・残高」の段と、その下の操作の段（名前の左端にそろえる）。 */
 .wallet-item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icon main balance"
+    ". links links";
   align-items: start;
-  gap: var(--sp-3);
+  gap: var(--sp-2) var(--sp-3);
   padding: var(--sp-4);
+}
+
+.wallet-icon {
+  grid-area: icon;
+}
+
+.wallet-main {
+  grid-area: main;
+}
+
+.wallet-balance {
+  grid-area: balance;
+}
+
+.wallet-links {
+  grid-area: links;
 }
 
 .wallet-item.is-off {
@@ -93,23 +138,18 @@
   gap: var(--sp-2);
   font-size: 16px;
   font-weight: 700;
-  overflow-wrap: anywhere;
 }
 
+/* 口座の操作は、押せる大きさのボタンの並び（文字だけのリンクは押す所が小さく、「直す」だけ下線が無かった）。 */
 .wallet-links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-1) var(--sp-4);
-  margin-top: var(--sp-2);
-  font-size: var(--fs-sm);
+  gap: var(--sp-2);
 }
 
-.wallet-links a {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  font-weight: 600;
+.wallet-link .badge {
+  margin-left: 2px;
 }
 
 .wallet-balance {
@@ -126,19 +166,21 @@
   white-space: nowrap;
 }
 
-.wallet-amount .unit {
-  margin-left: 2px;
-  color: var(--c-muted);
-  font-size: var(--fs-sm);
+/* ---- 勘定科目・取引先 ---- */
+.acct-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-left: calc(var(--depth, 0) * 1.5em);
 }
 
-/* ---- 勘定科目・取引先 ---- */
+/* 名前の右に「口座」などの札。名前は語の途中で折らない（「普通預／金」と割れた）。 */
 .acct-name {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
-  padding-left: calc(var(--depth, 0) * 1.5em);
+  gap: var(--sp-1) var(--sp-2);
   font-weight: 600;
 }
 
@@ -146,9 +188,75 @@
   font-weight: 700;
 }
 
+/*
+ * 読みとコードの小さな2行目。広い幅（1280px以上）では、それぞれの列に出すので隠す。
+ * 読みとコードの間は広めに空け、細い縦線で区切る（小さな文字が近接して、境目を拾いにくかった。見た目の採点 第2回 幅768）。
+ */
+.acct-sub {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--sp-3);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.acct-sub > code {
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--c-border-strong);
+}
+
+.acct-sub > code:only-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
 .accounts-table tr.is-off td,
 .partners-table tr.is-off td {
   color: var(--c-muted);
+}
+
+/* 取引先の行の右端の「直す ›」。行を押す（Enter）と直せることを示す印で、押す場所は行の全体。 */
+.partners-table .row-go {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-go-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--c-primary);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+@media (max-width: 639px) {
+  .partners-table tbody tr {
+    position: relative;
+    padding-right: 72px;
+  }
+
+  .partners-table tbody td.row-go {
+    position: absolute;
+    top: 50%;
+    right: var(--sp-4);
+    width: auto;
+    padding: 0;
+    transform: translateY(-50%);
+  }
+
+  .partners-table tbody td:has(> .empty-value:only-child) {
+    display: none;
+  }
+}
+
+/* 表の文字は「…」で切らずに、語の切れ目で折り返す（税区分の「課税仕入10%」が「課税仕入…」になった）。 */
+.accounts-table td,
+.accounts-table .acct-cell {
+  white-space: normal;
 }
 
 /* 分類ごとの表の列を、どの表でも同じ幅にそろえる（縦に見比べやすいように）。積み上げ表示（640px未満）には当てない。 */
@@ -176,23 +284,92 @@
   .accounts-table th:nth-child(5) {
     width: 12%;
   }
+}
+
+/* 1279px以下は、読みとコードを名前の下に畳んで、名前・既定の税区分・既定の割合の3列にする。 */
+@media (min-width: 640px) and (max-width: 1279px) {
+  .accounts-table .acct-col-wide {
+    display: none;
+  }
+
+  .accounts-table th:nth-child(1) {
+    width: auto;
+  }
+
+  .accounts-table th:nth-child(4) {
+    width: 11em;
+  }
+
+  .accounts-table th:nth-child(5) {
+    width: 7em;
+  }
+
+  .accounts-table .acct-sub {
+    display: flex;
+  }
 
   .accounts-table td {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    height: auto;
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
   }
 }
 
-/* 積み上げ表示では、空の欄（読み・メモなど）の見出しだけが並ばないようにする。 */
+/* 640px未満のカード: 名前（読みとコードは小さく1行）と、税区分・割合を横に並べた2段。科目ごとの4行の並びをやめる。 */
 @media (max-width: 639px) {
+  .accounts-table .acct-col-wide {
+    display: none;
+  }
+
+  .accounts-table .acct-sub {
+    display: flex;
+  }
+
+  .accounts-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px var(--sp-5);
+  }
+
+  .accounts-table tbody td.acct-cell {
+    flex: 1 1 100%;
+  }
+
+  .accounts-table tbody td.acct-tax,
+  .accounts-table tbody td.acct-pct {
+    width: auto;
+    justify-content: flex-start;
+    gap: var(--sp-2);
+    color: var(--c-muted);
+    font-size: var(--fs-sm);
+  }
+
+  /* 毎行の「既定の税区分」「既定の割合」の見出しは太字にしない（科目の名前より強く見え、長い一覧が重く見えた）。 */
+  .accounts-table tbody td.acct-tax::before,
+  .accounts-table tbody td.acct-pct::before {
+    font-weight: 400;
+  }
+
+  /* 資産・負債・資本の科目は、税区分と割合を使わない。「—」の行を並べない。 */
+  .accounts-table tbody td:has(> .empty-value:only-child) {
+    display: none;
+  }
+
   .accounts-table td:empty,
   .partners-table td:empty {
     display: none;
   }
 }
 
-.accounts-table .acct-cell {
-  white-space: normal;
+/* 640px未満は、操作を1段に収める（「この口座の」を省き、3つのボタンで段を埋める）。 */
+@media (max-width: 639px) {
+  .wallet-link-long {
+    display: none;
+  }
+
+  .wallet-links .wallet-link {
+    flex: 1 1 auto;
+  }
 }
 
 /* ---- ダイアログ ---- */
@@ -205,34 +382,42 @@
   .wallet-list {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  /* 指で触る幅では、口座の操作のボタンも44px以上（AC-11.7）。 */
+  .wallet-link {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 1023px) {
+  /* 「使っていない科目も出す」のチェックは、包むラベルごと44px以上（AC-11.7）。 */
+  .masters-tools .check {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 767px) {
-  .masters-tools {
-    padding: var(--sp-3) var(--sp-4);
-  }
-
   .masters-tools .search-box {
     flex: 1 1 100%;
   }
 
+  /* 狭い幅: 「印・名前」、その下に残高の行、いちばん下に操作の段（幅いっぱい）。 */
   .wallet-item {
     grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "icon main"
+      "balance balance"
+      "links links";
   }
 
   .wallet-balance {
-    grid-column: 1 / -1;
     flex-direction: row;
     align-items: baseline;
     justify-content: space-between;
   }
 
-  .wallet-links a {
-    min-height: 44px;
-  }
-
-  .acct-name {
-    padding-left: 0;
+  .acct-main {
+    padding-left: calc(var(--depth, 0) * 0.75em);
   }
 }
 

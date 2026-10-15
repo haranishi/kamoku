@@ -44,6 +44,20 @@
   padding: var(--sp-4) var(--sp-5);
 }
 
+/* 「ラベル：値」の行（件数・合計など）は、文字の大きさが違っても、下の線（ベースライン）でそろえる。 */
+.dialog-body dl > div {
+  align-items: baseline;
+}
+
+/*
+ * 開いたときに最初に置くフォーカス（autofocus）は、マウスで開いたときも輪を出す。
+ * Enter で何が起きるかを、開いた瞬間に見せるため（AC-10.3）。
+ */
+.dialog [autofocus]:focus {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
 .dialog-error {
   padding: 0 var(--sp-5);
 }
@@ -116,16 +130,27 @@
 }
 
 /* ---- 通知 ---- */
+/*
+ * 入れ物はポップオーバー（popover="manual"）。ブラウザの既定（真ん中に寄せる・枠・余白・背景・閉じている間は隠す）を打ち消し、
+ * 閉じている間（通知が無いとき・ポップオーバーの無いブラウザ）も、今までと同じ右下の固定の位置に置く。
+ */
 .toasts {
   position: fixed;
-  right: var(--sp-5);
-  bottom: var(--sp-5);
+  inset: auto var(--sp-5) calc(var(--sp-5) + var(--toast-lift, 0px)) auto;
   z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: var(--sp-2);
+  width: auto;
+  height: auto;
   max-width: min(440px, calc(100vw - 32px));
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: inherit;
   pointer-events: none;
 }
 
@@ -179,12 +204,21 @@
 }
 
 @media (max-width: 767px) {
+  /* --bar-bottom は下の余白（safe-area）を含むので、ここで足し直さない。 */
   .toasts {
-    right: var(--sp-4);
-    bottom: calc(var(--bottomnav-h) + var(--sp-3) + env(safe-area-inset-bottom, 0px));
-    left: var(--sp-4);
+    inset: auto var(--sp-4) calc(var(--bar-bottom) + var(--sp-3) + var(--toast-lift, 0px));
     max-width: none;
   }
+}
+
+/*
+ * 置き場所を toast.js が決めたとき（data-place。候補は toast-place.js）。下の位置（このすぐ上の既定）に戻すときは、印を外す。
+ * 左右の両方を決めた候補は、その間の真ん中に置く（幅は --toast-maxw まで）。
+ */
+.toasts[data-place] {
+  inset: var(--toast-top, auto) var(--toast-right, auto) var(--toast-bottom, auto) var(--toast-left, auto);
+  max-width: var(--toast-maxw, none);
+  margin-inline: auto;
 }
 
 /* ---- コマンド一覧 ---- */
@@ -242,4 +276,24 @@
 .keys-table th[scope="row"] {
   width: 40%;
   font-weight: 400;
+}
+
+/* ショートカットの一覧の上の、1文字のショートカットを使うかの欄。表と分けて、設定だと分かるように枠で囲む。 */
+.keys-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-s);
+  background: var(--c-surface-2);
+}
+
+.keys-toggle .check {
+  font-weight: 600;
+}
+
+.keys-off-mark {
+  margin-left: var(--sp-2);
+  vertical-align: middle;
 }

@@ -1,9 +1,41 @@
 /* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
 /* SPDX-License-Identifier: MIT OR Apache-2.0 */
 
-/* 取込（SC-04）の(3): 判定の件数、行ごとの判定と理由、「この行も取り込む」。 */
+/* 取込（SC-04）の(3): 判定の件数、取り込む行の期間と合計、行ごとの判定と理由、「この行も取り込む」。 */
 
 /* ---- (3) 取り込む前の確認 ---- */
+.check-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* 全部が重複のときの1行（行ごとに同じ長い理由を並べる代わり）。 */
+.check-all-dup {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.check-all-dup svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--c-warn);
+}
+
+/* 取り込む行の期間と、出金・入金の件数と合計。 */
+.check-summary {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.check-summary:empty {
+  display: none;
+}
+
 .check-counts {
   display: flex;
   flex-wrap: wrap;
@@ -78,5 +110,98 @@
 @media (max-width: 639px) {
   .check-table td.reason-cell:empty {
     display: none;
+  }
+}
+
+/*
+ * 640px以上でも、カードの中が720px未満（768pxの画面）だと、6列の表が枠に入らず右が隠れた（AC-11.6）。
+ * そのときは1行を3段のかたまりにする（1段目: 行・判定・日付・金額、2段目: 摘要、3段目: 理由と選択）。
+ * 640px未満は、表の部品の積み上げの形（components-data.css）に任せる。
+ */
+@media (min-width: 640px) {
+  @container importcard (max-width: 719px) {
+    .check-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    .check-table,
+    .check-table tbody {
+      display: block;
+      width: 100%;
+    }
+
+    .check-table tbody tr {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "line status date amount"
+        "desc desc desc desc"
+        "reason reason reason reason";
+      gap: var(--sp-1) var(--sp-3);
+      align-items: center;
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .check-table tbody tr:last-child {
+      border-bottom: 0;
+    }
+
+    .check-table td,
+    .check-table td.wrap,
+    .check-table .reason-cell {
+      display: block;
+      min-width: 0;
+      height: auto;
+      padding: 0;
+      border: 0;
+      white-space: normal;
+    }
+
+    .check-table td:nth-child(1) {
+      grid-area: line;
+      color: var(--c-muted);
+      font-size: var(--fs-xs);
+    }
+
+    .check-table td:nth-child(1)::before {
+      content: "ファイルの";
+    }
+
+    .check-table td:nth-child(1)::after {
+      content: "行目";
+    }
+
+    .check-table td:nth-child(2) {
+      grid-area: status;
+    }
+
+    .check-table td:nth-child(3) {
+      grid-area: date;
+      color: var(--c-muted);
+      font-size: var(--fs-sm);
+    }
+
+    .check-table td:nth-child(4) {
+      grid-area: desc;
+      font-weight: 600;
+    }
+
+    .check-table td:nth-child(5) {
+      grid-area: amount;
+      text-align: right;
+    }
+
+    .check-table td:nth-child(6) {
+      grid-area: reason;
+    }
+
+    .check-table td.reason-cell:empty {
+      display: none;
+    }
   }
 }

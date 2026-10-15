@@ -1,34 +1,36 @@
 /* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
 /* SPDX-License-Identifier: MIT OR Apache-2.0 */
 
-/* 未確認（SC-03）の下の固定バー（確定候補の件数・入金と出金の合計・保存の状態・確定する）と、確定の前の確認。 */
+/* 未確認（SC-03）の下の固定バー（確定する行の件数・入金と出金の合計・保存の状態・確定する）と、確定の前の確認。 */
 
 /* ---- 下の固定バー ---- */
-/* Enterで次の行へ移ったとき、フォーカスした欄が固定のバーの下に隠れないよう、スクロールの余白を取る。 */
-:root:has(.inbox-bar) {
-  scroll-padding-bottom: 140px;
-}
+/* フォーカスした欄が、固定のバーや上の帯の裏に隠れないための、スクロールの余白は、ページ全体の側（layout.css・layout-narrow.css）にある。 */
 
-@media (max-width: 767px) {
-  :root:has(.inbox-bar) {
-    scroll-padding-top: calc(var(--topbar-h) + var(--sp-2));
-    scroll-padding-bottom: calc(var(--bottomnav-h) + 200px);
-  }
-}
-
+/*
+ * 固定バーの決まり（AC-11.8）: 下の端（幅767px以下は下のバーの真上）に隙間なく付け、背景は不透明、上に区切りの線。
+ * 浮いたカードにすると、下の隙間と角の外から後ろの行がのぞいた。地の色と線は border-image で本文の左右の端まで伸ばす
+ * （border-image の外側への広がりは描くだけで、横のスクロールを生まない。サイドバーの下には潜る）。
+ */
 .inbox-bar {
   position: sticky;
-  bottom: var(--sp-3);
+  bottom: var(--bar-bottom);
   z-index: var(--z-sticky);
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
   margin-top: var(--sp-3);
   padding: var(--sp-3) var(--sp-5);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--radius-m);
+  border-top: 1px solid var(--c-border-strong);
   background: var(--c-surface);
-  box-shadow: var(--shadow-1);
+  border-image: linear-gradient(var(--c-border-strong) 0 1px, var(--c-surface) 1px) fill 0 / 0 / 0 100vmax;
+}
+
+/*
+ * バーが本文のいちばん下に来ても、バーと下のバー（画面の端）の間に、本文の下の余白を出さない（下まで送ると、隙間から地が見えた）。
+ * --bar-bottom は下の余白（セーフエリア）を含む（tokens.css。F1 の第2回）ので、ここで足し直さない。
+ */
+.main:has(.inbox-bar:not([hidden])) {
+  padding-bottom: var(--bar-bottom);
 }
 
 .inbox-bar-main {
@@ -66,12 +68,6 @@
   white-space: nowrap;
 }
 
-.inbox-sum .unit {
-  margin-left: 2px;
-  color: var(--c-muted);
-  font-size: var(--fs-sm);
-}
-
 .inbox-bar-foot {
   display: flex;
   flex-wrap: wrap;
@@ -100,14 +96,36 @@
   display: none;
 }
 
+/* 案内の文は、幅で出し分ける（inbox-bar.js の update の narrow）。指で操作する幅には、Enter の案内は通じない。 */
+.inbox-note .note-narrow {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .inbox-note .note-wide {
+    display: none;
+  }
+
+  .inbox-note .note-narrow {
+    display: inline;
+  }
+
+  /* 確定する行が0件のときは、帯を案内の1行に縮める（0件・0円の数字と押せないボタンで、幅390の画面の約25%を占めていた）。 */
+  .inbox-bar.is-empty .inbox-bar-main {
+    display: none;
+  }
+}
+
 .confirm-sums {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
 }
 
+/* ラベルと大きな値は、文字の下の線（ベースライン）でそろえる（上にずれて見えた）。 */
 .confirm-sums div {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-4);
   padding-bottom: var(--sp-2);
@@ -126,7 +144,6 @@
 
 @media (max-width: 767px) {
   .inbox-bar {
-    bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px) + var(--sp-2));
     padding: var(--sp-3) var(--sp-4);
   }
 
@@ -136,5 +153,57 @@
 
   .inbox-confirm {
     flex: 1 1 100%;
+  }
+}
+
+/*
+ * 高さの低い画面（520px以下。文字を200%に拡大した画面に近い）では、帯を1行（約56px）にする: 件数・合計と「確定する」を横に並べ、
+ * 「保存済み」は見えない読み上げの文にする（保存の失敗は見せる）。確定する行が0件なら、案内の1行だけ。640×450で、上の帯・
+ * 確定の帯（約106〜130px）・下のメニューで画面の半分が固定になり、本文が約200pxしか見えなかった（E4 第2回）。
+ * 下のメニューを隠すのは、ページ全体の側（layout-narrow.css）。大きな金額で入りきらないときは、件数と合計の側だけが折り返す。
+ */
+@media (max-height: 520px) {
+  .inbox-bar {
+    gap: 0;
+    padding: 6px var(--sp-4);
+  }
+
+  .inbox-bar-main {
+    flex-wrap: nowrap;
+    gap: var(--sp-3);
+  }
+
+  .inbox-sums {
+    flex: 1 1 auto;
+    gap: 0 var(--sp-3);
+  }
+
+  .inbox-sum {
+    gap: var(--sp-1);
+  }
+
+  .inbox-sum dt {
+    font-size: var(--fs-xs);
+  }
+
+  .inbox-sum dd {
+    font-size: 16px;
+  }
+
+  .inbox-confirm {
+    flex: none;
+  }
+
+  .inbox-save:not([data-state="failed"]) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .inbox-bar.is-empty .inbox-bar-main {
+    display: none;
   }
 }

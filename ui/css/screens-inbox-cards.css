@@ -1,16 +1,20 @@
 /* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
 /* SPDX-License-Identifier: MIT OR Apache-2.0 */
 
-/* 未確認（SC-03）の表を、入れ物が狭いとき（1080px未満・600px未満）に、1件を数段のカードにする形。 */
+/*
+ * 未確認（SC-03）の表を、入れ物が1080px未満のときに、1件ずつのカードにする形。
+ * 1件を要約（日付・摘要・金額・口座）と科目の欄だけにし、残り（日付・税区分・取引先・メモ・割合）は「くわしく」で開く
+ * （全部の欄を開いたカードが25件並び、ページが幅390で約11,700px、幅768で約8,400pxあった）。
+ * 畳んだカードも、まだ長かった（25件で幅390が5,650px、幅768が4,180px。見た目の採点 第2回）。上下の余白と段の間を詰め、
+ * 「科目なし」の札を小さな行の中へ移し、600px未満は2段にした（段の数を3から2へ）。
+ * 欄の並び（Tabの順）は、見た目の順に並べ替える（inbox-row-parts.js の orderCells。境目は同じ1080pxと600px）。
+ */
 
-/* ---- 数段のカード（狭い入れ物） ---- */
-@container inbox (max-width: 1079px) {
+/* ---- カードの並び（入れ物が1080px未満） ---- */
+@container inbox (width < 1080px) {
+  /* 表の見出しは隠す（欄ごとの小さな見出しを、カードの中に出す）。「すべて選ぶ」は、表の外の1行（screens-inbox.css）。 */
   .inbox-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
+    display: none;
   }
 
   .inbox-table,
@@ -19,32 +23,40 @@
     width: 100%;
   }
 
+  /* 並び: 「摘要・金額」／「科目・くわしく・無視」。開くと「日付・税区分」／「取引先・メモ・割合」。 */
   .inbox-table tr.inbox-row {
     display: grid;
-    grid-template-columns: 44px repeat(3, minmax(0, 1fr));
+    grid-template-columns: 44px repeat(2, minmax(0, 1fr)) auto;
     grid-template-areas:
       "cand desc desc amount"
-      "cand date account account"
-      "cand tax partner pct"
-      "cand memo memo ops";
-    gap: var(--sp-2) var(--sp-3);
+      "cand account more ops";
+    gap: var(--sp-1) var(--sp-3);
     align-items: end;
-    padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-2);
+    padding: 6px var(--sp-4) 6px var(--sp-2);
     border-bottom: 1px solid var(--c-border);
   }
 
-  .inbox-table.is-exempt tr.inbox-row {
+  .inbox-table tr.inbox-row:not(.is-folded) {
     grid-template-areas:
       "cand desc desc amount"
-      "cand date account account"
-      "cand partner partner pct"
-      "cand memo memo ops";
+      "cand account more ops"
+      "cand date tax tax"
+      "cand partner memo pct";
+  }
+
+  .inbox-table.is-exempt tr.inbox-row:not(.is-folded) {
+    grid-template-areas:
+      "cand desc desc amount"
+      "cand account more ops"
+      "cand date partner partner"
+      "cand memo memo pct";
   }
 
   .inbox-table tr.inbox-row.has-msg {
     border-bottom: 0;
   }
 
+  /* 表の行の高さ（--row-h の最小の高さ）は持ち込まない（金額だけの欄が40pxになり、段が高くなった）。 */
   .inbox-table tr.inbox-row > td {
     display: flex;
     flex-direction: column;
@@ -52,6 +64,7 @@
     width: auto;
     min-width: 0;
     height: auto;
+    min-height: 0;
     padding: 0;
     border: 0;
     white-space: normal;
@@ -64,8 +77,20 @@
     font-weight: 700;
   }
 
+  /* 科目の欄は、仮の文字（科目）で何の欄か分かるので、上の小さな見出しを省いて詰める。 */
   .inbox-table tr.inbox-row > td[data-label=""]::before,
-  .inbox-table tr.inbox-row > td.c-cand::before {
+  .inbox-table tr.inbox-row > td.c-cand::before,
+  .inbox-table tr.inbox-row > td.c-more::before,
+  .inbox-table tr.inbox-row > td.c-amount::before,
+  .inbox-table tr.inbox-row > td.c-account::before {
+    display: none;
+  }
+
+  .inbox-table tr.inbox-row.is-folded > td.c-date,
+  .inbox-table tr.inbox-row.is-folded > td.c-tax,
+  .inbox-table tr.inbox-row.is-folded > td.c-partner,
+  .inbox-table tr.inbox-row.is-folded > td.c-memo,
+  .inbox-table tr.inbox-row.is-folded > td.c-pct {
     display: none;
   }
 
@@ -78,6 +103,7 @@
   .inbox-table .c-desc {
     grid-area: desc;
     align-self: center;
+    align-items: flex-start;
   }
 
   .inbox-table .c-amount {
@@ -86,16 +112,19 @@
     align-items: flex-end;
   }
 
-  .inbox-table .c-amount::before {
-    display: none;
-  }
-
   .inbox-table .c-date {
     grid-area: date;
   }
 
   .inbox-table .c-account {
     grid-area: account;
+  }
+
+  .inbox-table tr.inbox-row > td.c-more {
+    display: flex;
+    grid-area: more;
+    align-self: center;
+    align-items: flex-start;
   }
 
   .inbox-table .c-tax {
@@ -116,11 +145,33 @@
 
   .inbox-table .c-ops {
     grid-area: ops;
+    align-self: center;
     align-items: flex-end;
   }
 
   .inbox-table .c-date .input {
     width: 100%;
+  }
+
+  /* 要約の行の日付（日付の欄は「くわしく」の中）。 */
+  .inbox-table .sum-date {
+    display: inline;
+  }
+
+  .inbox-table .sum-date::after {
+    content: "・";
+  }
+
+  .more-btn {
+    padding: 0 var(--sp-2);
+  }
+
+  .more-btn svg {
+    transition: transform var(--dur-fast) var(--ease);
+  }
+
+  .more-btn[aria-expanded="true"] svg {
+    transform: rotate(180deg);
   }
 
   .inbox-table tr.inbox-row.is-candidate {
@@ -134,59 +185,133 @@
     box-shadow: none;
   }
 
-  .inbox-table tr.inbox-row.is-candidate .cand-text {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip: auto;
-    color: var(--c-primary);
-    font-size: var(--fs-xs);
+  /*
+   * 確定する行には、本文の側（小さな行の頭）に「確定する」の札を出す（色と帯だけに頼らない）。前はチェックの下に小さな字で
+   * 出していて、本文の字との差が大きく、状態として弱かった（見た目の採点 第2回）。チェックの列は、押せる場所の44pxだけ。
+   * 第3回の採点でも「札が小さい」と2組に言われたので、枠だけの札をやめて藍で塗り、字を一段大きくした（高さは2pxだけ増える）。
+   */
+  .inbox-table tr.inbox-row.is-candidate .cand-badge {
+    display: inline-block;
+    margin-right: var(--sp-2);
+    padding: 0 8px;
+    border: 1px solid var(--c-primary);
+    border-radius: 999px;
+    background: var(--c-primary);
+    color: var(--c-on-primary);
+    font-size: var(--fs-sm);
     font-weight: 700;
+    line-height: 20px;
+    white-space: nowrap;
   }
 
   .inbox-table .cand {
-    flex-direction: column;
+    min-width: 44px;
     min-height: 44px;
+  }
+
+  /* 見出しの無いカードでは、金額の後ろに単位を出す（一覧の中で単位が分からなかった）。 */
+  .inbox-table .amount-unit {
+    display: inline;
+    margin-left: 1px;
+    font-size: var(--fs-xs);
+  }
+
+  /*
+   * Enter で次のカードの科目へ移ったとき、そのカードの摘要と金額（科目の欄の上の段）まで見える位置で止める
+   * （摘要と金額が上の帯の裏に隠れた。E4 第2回）。上の帯の分は、ページ全体の scroll-padding が足す。
+   */
+  .inbox-table tr.inbox-row td.c-account .input {
+    scroll-margin-top: 60px;
   }
 
   .inbox-table tr.inbox-msg {
     display: block;
   }
 
+  /* 行の下の文は、カードのすぐ下（科目の欄の段の下）に、科目の欄の左の端からそろえて出す。 */
   .inbox-table tr.inbox-msg > td {
     display: block;
-    padding: 0 var(--sp-4) var(--sp-3) 56px;
+    padding: 0 var(--sp-4) var(--sp-2) 64px;
     border-bottom: 1px solid var(--c-border);
   }
 }
 
-@container inbox (max-width: 599px) {
+/*
+ * ---- 600px未満の入れ物: 2段に積む ----
+ * 摘要の右に、金額と「無視」を縦に積み、次の段に科目と「くわしく」を並べる（前は「摘要・金額」「科目」「くわしく・無視」の3段で、
+ * 25件で5,650pxあった）。「くわしく」は開く欄（日付から下）のすぐ上に来る。
+ */
+@container inbox (width < 600px) {
   .inbox-table tr.inbox-row,
   .inbox-table.is-exempt tr.inbox-row {
-    grid-template-columns: 44px minmax(0, 1fr) minmax(5.5em, auto);
+    grid-template-columns: 44px minmax(0, 1fr) auto;
     grid-template-areas:
       "cand desc amount"
-      "date date pct"
-      "account account account"
-      "tax tax tax"
-      "partner partner partner"
-      "memo memo ops";
-    padding: var(--sp-3) var(--sp-3) var(--sp-4);
+      "cand desc ops"
+      "cand account more";
+    padding: 6px var(--sp-3) 6px var(--sp-1);
+  }
+
+  .inbox-table tr.inbox-row:not(.is-folded) {
+    grid-template-areas:
+      "cand desc amount"
+      "cand desc ops"
+      "cand account more"
+      "cand date date"
+      "cand tax tax"
+      "cand partner partner"
+      "cand memo pct";
+  }
+
+  .inbox-table.is-exempt tr.inbox-row:not(.is-folded) {
+    grid-template-areas:
+      "cand desc amount"
+      "cand desc ops"
+      "cand account more"
+      "cand date date"
+      "cand partner partner"
+      "cand memo pct";
+  }
+
+  .inbox-table .c-desc,
+  .inbox-table .c-amount {
+    align-self: start;
+  }
+
+  .inbox-table tr.inbox-row > td.c-more {
+    align-items: flex-end;
+  }
+
+  /* 科目の欄の上に、摘要と金額・「無視」の2つの段がある。 */
+  .inbox-table tr.inbox-row td.c-account .input {
+    scroll-margin-top: 88px;
   }
 
   .inbox-table tr.inbox-msg > td {
-    padding: 0 var(--sp-3) var(--sp-3);
+    padding: 0 var(--sp-3) var(--sp-2) 60px;
+  }
+}
+
+/* 指で触る幅（1024px未満）では、表の中の欄とボタンも44px以上にする（AC-11.7）。 */
+@media (max-width: 1023px) {
+  .inbox-table .input,
+  .inbox-table .select {
+    height: 44px;
+    font-size: var(--fs-input);
+  }
+
+  .inbox-table .ignore-btn,
+  .inbox-table .more-btn {
+    min-height: 44px;
+  }
+
+  .cand {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
 @media (max-width: 767px) {
-  .inbox-table .input,
-  .inbox-table .select {
-    height: var(--control-h);
-    font-size: var(--fs-input);
-  }
-
   .inbox-tools {
     padding: var(--sp-2) var(--sp-4) var(--sp-3);
   }

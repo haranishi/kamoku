@@ -9,7 +9,9 @@ export const PREVIEW_DELAY_MS = 150;
 
 /**
  * @param {{ api: any, preview: ReturnType<import('./entry-preview.js').createPreviewPanel>, build: () => any|null,
- *           onLines?: (lines: any[]) => void, onFailedChange?: (failed: boolean) => void, idleText: string }} opts
+ *           onLines?: (lines: any[]) => void, onFailedChange?: (failed: boolean) => void, idleText: string,
+ *           blocked?: () => string }} opts
+ *   blocked: 誤りの文を返すと、問い合わせずに、仕訳の代わりにその誤りを出す（範囲外の割合で、前の割合の仕訳を見せないため）。
  */
 export function createPreviewRunner(opts) {
   let timer = null;
@@ -28,8 +30,15 @@ export function createPreviewRunner(opts) {
     if (!active) return;
     clearTimeout(timer);
     if (ctrl) ctrl.abort();
-    const input = opts.build();
     const my = ++seq;
+    const problem = opts.blocked ? opts.blocked() : '';
+    if (problem) {
+      setFailed(false);
+      opts.preview.blocked(problem);
+      if (opts.onLines) opts.onLines([]);
+      return;
+    }
+    const input = opts.build();
     if (!input) {
       setFailed(false);
       opts.preview.idle(opts.idleText);
