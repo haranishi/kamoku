@@ -86,7 +86,9 @@ function walk(dir, base, acc) {
 
 /** 画面のソース（index.html、favicon.svg、css/、js/）の一覧。dev/ と tests/ は Node の道具なので対象外。 */
 export function uiSources(uiRoot) {
-  const files = ['index.html', 'favicon.svg'];
+  // Generated wasm-bindgen bindings have their own toolchain provenance. Scan
+  // authored preview assets, while keeping generated third-party code separate.
+  const files = ['index.html', 'favicon.svg', 'rust/index.html', 'rust/boot.js', 'rust/preview.css'];
   walk(path.join(uiRoot, 'css'), uiRoot, files);
   walk(path.join(uiRoot, 'js'), uiRoot, files);
   return files;
