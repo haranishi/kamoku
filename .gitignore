@@ -30,7 +30,7 @@ __pycache__/
 /.cargo-home
 
 # 画面の自動試験の生成物（コミットしない）
-/e2e/node_modules/
+/e2e/node_modules
 /e2e/test-results/
 /e2e/playwright-report/
 /screens-out/
@@ -38,6 +38,6 @@ __pycache__/
 # Codexをオフラインで動かすための作業用の置き場所(コミットしない)
 /.cargo-target
 
-# Generated Rust/WASM preview bindings. Build before embedding the preview.
+# Generated Rust/WASM application bindings. Build before embedding the UI.
 /ui/rust/pkg/
 /e2e/rust-ui-results/

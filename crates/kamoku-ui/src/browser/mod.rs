@@ -27,8 +27,7 @@ struct State {
     focus: Option<String>,
 }
 
-#[wasm_bindgen(start)]
-fn start() -> Result<(), JsValue> {
+pub(crate) fn start() -> Result<(), JsValue> {
     let view = layout::create()?;
     let filters = navigation::read()?;
     view.sync(&filters);

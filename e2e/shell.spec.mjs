@@ -545,25 +545,23 @@ test('SC-03 幅390の下のバーの「未確認」にも、サイドバーと�
 
 // AC-10.2 キーの表示（kbd）は、ボタンやリンクの読み上げの名前に混ぜない。キーは aria-keyshortcuts で伝える（「g i」のように
 // 続けて押すキーは表せないので付けない）。必須は欄の aria-required で伝え、見える「必須」の札は名前に入れない。
-// 共通の部品（fields.js）を画面に置いて確かめ、実際の画面（ホーム・サイドバー）でも確かめる。
+// Rustの実際の画面（登録・ダイアログ・ホーム・サイドバー）で確かめる。
 test('AC-10.2 ボタンとリンクの読み上げの名前にキーの文字が混ざらず、キーは aria-keyshortcuts で伝える。「必須」は名前に入れない', async ({ page }) => {
   await open(page, '#/');
-  await page.evaluate(async () => {
-    const { button, field } = await import('/js/components/fields.js');
-    const host = document.createElement('div');
-    host.id = 'e2e-parts';
-    const input = document.createElement('input');
-    host.append(button({ label: '保存して続ける', kbd: '⌘ Enter' }), button({ label: 'やめる', kbd: 'Esc' }), button({ label: '未確認を開く', kbd: 'g i' }), field({ label: '日付', control: input, required: true }).el);
-    document.querySelector('main').append(host);
-  });
-  const parts = page.locator('#e2e-parts');
-  await expect(parts.getByRole('button', { name: '保存して続ける', exact: true })).toHaveAttribute('aria-keyshortcuts', 'Meta+Enter');
-  await expect(parts.getByRole('button', { name: 'やめる', exact: true })).toHaveAttribute('aria-keyshortcuts', 'Escape');
-  await expect(parts.getByRole('button', { name: '未確認を開く', exact: true })).not.toHaveAttribute('aria-keyshortcuts', /./);
-  await expect(parts.locator('kbd').first()).toBeVisible();
-  await expect(parts.getByRole('textbox', { name: '日付', exact: true })).toHaveAttribute('aria-required', 'true');
-  await expect(parts.locator('.req')).toHaveText('必須');
-
+  // Exercise the Rust components through the production form and dialog.
+  await page.goto('/#/entry');
+  const form = page.locator('form.entry-form');
+  const save = page.getByRole('button', { name: '保存して続ける', exact: true });
+  const modifier = await page.evaluate(() => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? 'Meta' : 'Control');
+  await expect(save).toHaveAttribute('aria-keyshortcuts', `${modifier}+Enter`);
+  await expect(save.locator('kbd')).toBeVisible();
+  await expect(form.getByRole('textbox', { name: '日付', exact: true })).toHaveAttribute('aria-required', 'true');
+  await expect(form.getByRole('textbox', { name: '日付', exact: true }).locator('..').locator('.req')).toHaveText('必須');
+  await page.locator('.sidebar').getByRole('button', { name: 'ショートカット', exact: true }).click();
+  const help = page.getByRole('dialog', { name: 'ショートカット' });
+  await expect(help.locator('.dialog-head').getByRole('button', { name: '閉じる', exact: true })).toHaveAttribute('aria-keyshortcuts', 'Escape');
+  await page.keyboard.press('Escape');
+  await page.goto('/#/');
   await page.reload();
   await expect(page.locator('.next-card')).toBeVisible();
   await expect(page.locator('.page-head').getByRole('link', { name: '取引を登録', exact: true })).toHaveAttribute('aria-keyshortcuts', 'n');
@@ -620,31 +618,26 @@ test('AC-10.6 欄を出た時点の誤りは、空のうちから在る読み上
   await expect(amount).not.toBeFocused();
   expect(await page.evaluate(() => window.e2eMutations)).toEqual([]);
 
-  // 保存の検査のように、消してすぐ同じ文を入れ直しても、読み上げの木の文の節は同じもの（作り直すと、新しい文として読み直される）。
-  // 部品（fields.js）をその場に置いて確かめる。
+  // Clear and revalidate the real Rust field within one browser task. The
+  // retained Text node must keep its accessibility ID through both updates.
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Accessibility.enable');
-  await page.evaluate(async () => {
-    const { field } = await import('/js/components/fields.js');
-    const input = document.createElement('input');
-    const f = field({ label: 'E2E の欄', control: input });
-    f.el.id = 'e2e-field';
-    document.querySelector('main').append(f.el);
-    f.setError('E2E の誤りの文です。');
-    window.e2eField = f;
-  });
-  const before = await axTextId(cdp, 'E2E の誤りの文です。');
+  const message = await region.textContent();
+  const before = await axTextId(cdp, message);
   expect(before, '誤りの文が読み上げの木にある').not.toBeNull();
-  await page.evaluate(() => {
-    window.e2eField.setError('');
-    window.e2eField.setError('E2E の誤りの文です。');
+  await amount.evaluate((el) => {
+    el.value = '123';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.value = '12a3';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('blur'));
   });
-  expect(await axTextId(cdp, 'E2E の誤りの文です。')).toBe(before);
-  // 消したままなら、文は読み上げの木から消え、入れ物は見えない形に戻る。
-  await page.evaluate(() => window.e2eField.setError(''));
-  await expect.poll(() => axTextId(cdp, 'E2E の誤りの文です。')).toBeNull();
-  await expect(page.locator('#e2e-field .field-error')).toHaveAttribute('aria-live', 'polite');
-  expect(await page.locator('#e2e-field .field-error').evaluate((el) => getComputedStyle(el).position)).toBe('absolute');
+  expect(await axTextId(cdp, message)).toBe(before);
+  await amount.fill('123');
+  await expect.poll(() => axTextId(cdp, message)).toBeNull();
+  await expect(region).toHaveAttribute('aria-live', 'polite');
+  expect(await region.evaluate((el) => getComputedStyle(el).position)).toBe('absolute');
+
 });
 
 // SC-01 グラフ（ホーム）: 「表で見る」は名前だけで状態を伝える（押下の状態 aria-pressed を付けない。名前と一緒に変わると
@@ -708,23 +701,15 @@ test('AC-11.6 表の入れ物は、横にスクロールできるときだけ Ta
   const wraps = page.locator('main .table-wrap');
   expect(await wraps.count()).toBeGreaterThan(0);
   await expect.poll(() => wraps.evaluateAll((els) => els.filter((e) => e.hasAttribute('tabindex')).length)).toBe(0);
-  // 部品そのもの: 中が広くて横に動くときは止まり、狭くなって動かなくなったら止まらない。
-  await page.evaluate(async () => {
-    const { focusWhenScrollable } = await import('/js/components/table.js');
-    const wrap = document.createElement('div');
-    wrap.className = 'table-wrap';
-    wrap.id = 'e2e-wrap';
-    const inner = document.createElement('div');
-    inner.id = 'e2e-inner';
-    inner.style.width = '3000px';
-    inner.style.height = '10px';
-    wrap.append(inner);
-    document.querySelector('main').append(wrap);
-    focusWhenScrollable(wrap, inner);
-  });
-  await expect(page.locator('#e2e-wrap')).toHaveAttribute('tabindex', '0');
-  await page.evaluate(() => document.getElementById('e2e-inner').style.setProperty('width', '10px'));
-  await expect(page.locator('#e2e-wrap')).not.toHaveAttribute('tabindex', /./);
+  // Resize the actual Rust-rendered table. Its ResizeObserver must follow
+  // content width changes as well as viewport changes.
+  const table = page.locator('.accounts-table').first();
+  const wrap = table.locator('..');
+  await table.evaluate((el) => el.style.setProperty('width', '3000px'));
+  await expect(wrap).toHaveAttribute('tabindex', '0');
+  await table.evaluate((el) => el.style.removeProperty('width'));
+  await expect(wrap).not.toHaveAttribute('tabindex', /./);
+
 });
 
 // AC-10.2 ショートカットの一覧の「未確認」は、画面の言葉（確定する行・無視）と動き（税区分の ↑↓、検索の欄の Esc、⌘Z で戻す）に合わせる。

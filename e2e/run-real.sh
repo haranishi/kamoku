@@ -9,7 +9,7 @@
 #   e2e/run-real.sh contract   模擬サーバーと本物の応えの形を比べる契約試験だけ
 #   e2e/run-real.sh docs-images READMEと「画面の紹介」の画像を docs/images/ に作る（all には含まれない）
 # flows / screens / docs-images の追加引数は、その段階へ渡す。
-# 既定ではcargo buildで再ビルドし、Cargoが返す実行ファイルを使う。
+# 既定ではRust UIのWASMを生成してからcargo buildで再ビルドし、Cargoが返す実行ファイルを使う。
 # KAMOKU_BINを明示した場合だけ、既存の実行ファイルをそのまま使う。
 #
 # 127.0.0.1 の Cookie は、ポートが違っても共有される。そのため、段階ごとにサーバーを起動し直し、
@@ -19,7 +19,7 @@ set -euo pipefail
 usage() {
   echo "使い方: e2e/run-real.sh [all | flows | contract | screens | docs-images | --help]"
   echo "  flows / screens / docs-images だけ、後ろにその段階の引数を追加できます。"
-  echo "  既定で再ビルドします。KAMOKU_BINを指定すると既存の実行ファイルを使います。"
+  echo "  既定でWASMと本体を再ビルドします。KAMOKU_BINを指定すると既存の実行ファイルと埋込UIを使います。"
 }
 
 WHICH="${1-all}"
@@ -52,6 +52,20 @@ if [ "${KAMOKU_BIN+x}" = x ]; then
   fi
 else
   command -v cargo >/dev/null 2>&1 || missing+=("cargo をPATHに追加")
+  if command -v wasm-bindgen >/dev/null 2>&1; then
+    if ! wasm_version="$(wasm-bindgen --version 2>/dev/null)" || [ "$wasm_version" != "wasm-bindgen 0.2.129" ]; then
+      missing+=("wasm-bindgen 0.2.129: cargo install wasm-bindgen-cli --version 0.2.129 --locked")
+    fi
+  else
+    missing+=("wasm-bindgen 0.2.129: cargo install wasm-bindgen-cli --version 0.2.129 --locked")
+  fi
+  if command -v rustup >/dev/null 2>&1; then
+    if ! targets="$(rustup target list --installed 2>/dev/null)" || ! [[ "$targets" =~ (^|$'\n')wasm32-unknown-unknown($|$'\n') ]]; then
+      missing+=("WASMターゲット: rustup target add wasm32-unknown-unknown")
+    fi
+  else
+    missing+=("rustup をPATHに追加し、rustup target add wasm32-unknown-unknown")
+  fi
 fi
 if [ "$WHICH" = all ] || [ "${KAMOKU_BIN+x}" != x ]; then
   command -v python3 >/dev/null 2>&1 || missing+=("python3 をPATHに追加（Cargoの出力の読取・スモーク試験）")
@@ -92,9 +106,13 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 if [ "${KAMOKU_BIN+x}" = x ]; then
-  echo "== 実行ファイル: KAMOKU_BINの指定（ビルドを省略）"
+  echo "== 実行ファイル: KAMOKU_BINの指定（ビルドを省略）: 埋込UIを使用"
 else
-  echo "== 実行ファイル: cargo buildで再ビルド（既定）"
+  echo "== 実行ファイル: WASM生成とcargo buildで再ビルド（既定）"
+  if ! (cd .. && bash tools/build-rust-ui.sh); then
+    echo "Rust UIのWASM生成に失敗しました。試験を開始しません。" >&2
+    exit 1
+  fi
   if ! (cd .. && cargo build -p kamoku-app --bin kamoku --locked --message-format=json-render-diagnostics > "$TMP/build.jsonl"); then
     echo "Rustのビルドに失敗しました。試験を開始しません。" >&2
     exit 1
@@ -137,8 +155,8 @@ start() {
 
 if [ "$WHICH" = "all" ] || [ "$WHICH" = "flows" ]; then
   echo "== 操作の試験（本物のサーバー）"
-  start DEMO "$BIN" demo --no-open --port 0 --ui-dir ../ui
-  start SETUP "$BIN" serve --data "$TMP/setup" --no-open --port 0 --ui-dir ../ui
+  start DEMO "$BIN" demo --no-open --port 0
+  start SETUP "$BIN" serve --data "$TMP/setup" --no-open --port 0
   KAMOKU_URL="$DEMO_URL" KAMOKU_TOKEN="$DEMO_TOKEN" \
     KAMOKU_SETUP_URL="$SETUP_URL" KAMOKU_SETUP_TOKEN="$SETUP_TOKEN" \
     node "$PLAYWRIGHT" test --project=flows ${EXTRA[@]+"${EXTRA[@]}"}
@@ -147,7 +165,7 @@ fi
 
 if [ "$WHICH" = "all" ] || [ "$WHICH" = "contract" ]; then
   echo "== 契約試験（模擬サーバーと本物の応えの形）"
-  start DEMO "$BIN" demo --no-open --port 0 --ui-dir ../ui
+  start DEMO "$BIN" demo --no-open --port 0
   KAMOKU_URL="$DEMO_URL" KAMOKU_TOKEN="$DEMO_TOKEN" node --test contract.test.mjs
   stop_servers
 fi
@@ -155,15 +173,15 @@ fi
 if [ "$WHICH" = "docs-images" ]; then
   echo "== 文書用の画像（本物のデモを撮る）"
   mkdir -p ../docs/images
-  start DEMO "$BIN" demo --no-open --port 0 --ui-dir ../ui
+  start DEMO "$BIN" demo --no-open --port 0
   KAMOKU_URL="$DEMO_URL" KAMOKU_TOKEN="$DEMO_TOKEN" node docs-images.mjs ${EXTRA[@]+"${EXTRA[@]}"}
   stop_servers
 fi
 
 if [ "$WHICH" = "all" ] || [ "$WHICH" = "screens" ]; then
   echo "== スクリーンショット（本物のサーバー）"
-  start DEMO "$BIN" demo --no-open --port 0 --ui-dir ../ui
-  start SHOTS "$BIN" serve --data "$TMP/shots" --no-open --port 0 --ui-dir ../ui
+  start DEMO "$BIN" demo --no-open --port 0
+  start SHOTS "$BIN" serve --data "$TMP/shots" --no-open --port 0
   KAMOKU_URL="$DEMO_URL" KAMOKU_TOKEN="$DEMO_TOKEN" \
     KAMOKU_SETUP_SHOTS_URL="$SHOTS_URL" KAMOKU_SETUP_SHOTS_TOKEN="$SHOTS_TOKEN" \
     node "$PLAYWRIGHT" test --project=screens ${EXTRA[@]+"${EXTRA[@]}"}

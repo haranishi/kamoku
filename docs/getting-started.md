@@ -5,6 +5,7 @@ v0.1-alpha の手順です。まだ配布用のアプリはなく、ソースか
 ## 必要なもの
 
 - Rust 1.88以上（[rustup](https://rustup.rs/) で入ります）
+- Python 3と、WASMターゲット・wasm-bindgen-cli 0.2.129（下のコマンドで準備）
 - Cのコンパイラ。SQLiteを一緒にビルドするためです。macOSなら `xcode-select --install`、Ubuntuなら `sudo apt install build-essential`、Windowsは Visual Studio の Build Tools
 - ブラウザ（最新のChrome、Safari、Firefox、Edge）。自動の試験は Chromium だけで、Safari と Firefox での確認は残っています。
 
@@ -15,6 +16,9 @@ CIは Linux と macOS で動いています。Windows向けの処理は書いて
 ```
 git clone https://github.com/haranishi/kamoku
 cd kamoku
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129 --locked
+bash tools/build-rust-ui.sh
 cargo run -p kamoku-app -- demo
 ```
 

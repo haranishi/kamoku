@@ -8,15 +8,17 @@
 
 > **English:** Local-first double-entry bookkeeping for Japanese sole proprietors, written in Rust. First alpha: a small local server plus a browser UI over one SQLite file. No cloud, no bank sync. Documentation is in Japanese.
 
-## 3分で試す
-
+## 合成データで試す
 ```
 git clone https://github.com/haranishi/kamoku
 cd kamoku
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129 --locked
+bash tools/build-rust-ui.sh
 cargo run -p kamoku-app -- demo
 ```
 
-ブラウザが開き、架空の事業の2026年の帳簿が見られます。本物の帳簿の置き場所には触りません。Rust 1.88以上と、Cのコンパイラ（macOSはXcodeのコマンドラインツール）が要ります。最初のビルドは数分かかります。自分の帳簿をつけるときは `demo` を `serve` に替えます（[使い方](docs/getting-started.md)）。
+ブラウザが開き、架空の事業の2026年の帳簿が見られます。本物の帳簿の置き場所には触りません。Rust 1.88以上、Python 3と、Cのコンパイラ（macOSはXcodeのコマンドラインツール）が要ります。最初のビルドは数分かかります。自分の帳簿をつけるときは `demo` を `serve` に替えます（[使い方](docs/getting-started.md)）。
 
 ## 設計で大切にしていること
 
@@ -52,10 +54,9 @@ cargo run -p kamoku-app -- demo
 ほかの画面とスマートフォンの幅の見え方は、[画面の紹介](docs/screens.md)にあります。画像は、すべて合成データです。
 
 ## 仕組み
-
 ```mermaid
 flowchart LR
-  B["ブラウザの画面<br/>素のJS（ビルド不要）"] -->|JSON| A["kamoku-app<br/>手元のサーバー"]
+  B["ブラウザの画面<br/>Rust / WebAssembly"] -->|JSON| A["kamoku-app<br/>手元のサーバー"]
   A --> S["kamoku-store<br/>SQLiteへの保存"]
   subgraph pure["入出力を持たない部品"]
     K["kamoku-books<br/>科目・仕訳・帳票"]
@@ -73,7 +74,6 @@ flowchart LR
 計算の部品は、ファイルも通信も持ちません。保存とサーバーは、外側の2つに閉じ込めてあります。
 
 ## 試験と速さ
-
 試験は、Rustの部品とサーバー、画面の単体、本物のサーバーを相手にしたブラウザの通し試験、わざと誤りを入れて試験を確かめる変異試験の層に分けています。どの層が何を確かめ、何を確かめていないかは[試験の地図](docs/testing.md)に書きました。
 
 速さは、台帳の起動時の検証、仕訳の追記、ホームの表示、CSVの取込、画面の操作の5つを測りました。測ったのは1台の Apple M4 Pro だけで、結果と測り方は[速さの測定](docs/benchmarks.md)にあります。

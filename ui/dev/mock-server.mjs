@@ -20,10 +20,11 @@ const UI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const JSON_LIMIT = 1024 * 1024;
 const CSV_LIMIT = 10 * 1024 * 1024;
 const CSP =
-  "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+  "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.wasm': 'application/wasm',
   '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
@@ -120,7 +121,7 @@ async function readBody(req) {
 
 async function serveStatic(res, urlPath) {
   const rel = urlPath === '/' ? 'index.html' : decodeURIComponent(urlPath.slice(1));
-  const allowed = rel === 'index.html' || rel === 'favicon.svg' || rel.startsWith('css/') || rel.startsWith('js/');
+  const allowed = ['index.html', 'favicon.svg', 'boot.js', 'rust/index.html', 'rust/boot.js', 'rust/preview.css', 'rust/pkg/kamoku_ui.js', 'rust/pkg/kamoku_ui_bg.wasm'].includes(rel) || /^css\/[a-z][a-z0-9-]*\.css$/.test(rel);
   const file = path.resolve(UI_ROOT, rel);
   if (!allowed || !file.startsWith(UI_ROOT + path.sep)) {
     res.writeHead(404, baseHeaders({ 'Content-Type': 'text/plain; charset=utf-8' }));

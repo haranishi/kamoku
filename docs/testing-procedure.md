@@ -10,14 +10,17 @@ RustとCのコンパイラに加え、次の道具が必要です。
 |---|---|
 | Rust 1.88以上、rustfmt、clippy | 本体のビルド・試験・静的検査 |
 | Rust 1.88のツールチェーン、cargo-deny | 最小バージョンと依存の検査 |
-| Node 24以上、npm | 画面の単体試験、Playwright |
+| WASMターゲット、wasm-bindgen-cli 0.2.129 | Rust画面の生成 |
+| Node 24以上、npm | 静的検査器の試験、Playwright |
 | Python 3 | 文書・仕様・台帳・実行手順の検査 |
 | uvx | REUSEによるライセンス表示の検査 |
 
 導入後はリポジトリの直下で次を実行します。`npm ci` はlockファイルの版を使い、最後のコマンドは対応するChromiumを取得します。依存やブラウザの更新時にも実行してください。
 
 ```sh
-rustup toolchain install 1.88 --profile minimal
+rustup target add wasm32-unknown-unknown
+rustup toolchain install 1.88 --profile minimal --target wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129 --locked
 uvx --from 'reuse[charset-normalizer]' reuse --version
 npm --prefix e2e ci
 (cd e2e && npx --no-install playwright install chromium)
@@ -32,8 +35,8 @@ Rustの出力先は `CARGO_TARGET_DIR`、ブラウザの保存先は `PLAYWRIGHT
 | 文書だけ | `python3 tools/check-links.py` |
 | Rustの計算 | `cargo test -p <変更したcrate> --locked`。台帳の符号化は `python3 tools/verify-ledger-golden.py` も |
 | API・保存・取込 | 関連crateのRust試験と `e2e/run-real.sh flows <対象>.spec.mjs`、`e2e/run-real.sh contract` |
-| 画面・キー操作 | `node --test ui/tests/`、`node ui/dev/check-contrast.mjs`、`node ui/dev/check-policy.mjs`、対象のflows |
-| Rust/WASMの仕訳帳 | [専用のビルド・ブラウザ試験](rust-ui-preview.md)。通常の画面の通し試験も残す |
+| 画面・キー操作 | `cargo test -p kamoku-ui --locked`、`node ui/dev/check-contrast.mjs`、`node ui/dev/check-policy.mjs`、対象のflows |
+| Rust/WASM | [画面のビルド](rust-ui.md)、WASM clippy、対象flows。互換経路は[専用試験](rust-ui-preview.md)も |
 | 実行スクリプト | `python3 -m unittest discover -s tools/tests -v` と `bash -n tools/check-all.sh e2e/run-real.sh` |
 | RustやPlaywrightの依存 | 下のPR前の手順。古いブラウザを流用せず、上の準備も実行 |
 
@@ -46,7 +49,7 @@ tools/check-all.sh
 e2e/run-real.sh
 ```
 
-前者はRust・画面の単体試験・静的検査・仕様・文書・依存・ライセンスを確認します。後者はRustサーバーをビルドし、スモーク、ブラウザ操作、契約試験、画面撮影を順に流します。各段階で新しい帳簿を使い、サーバーを止めてから次へ進みます。CIも同じ通し試験の入口を使います。
+前者はWASM生成・Rustと画面の単体試験・静的検査・仕様・文書・依存・ライセンスを確認します。後者はWASMを生成してRustサーバーへ組み込み、スモーク、ブラウザ操作、契約試験、画面撮影を順に流します。各段階で新しい帳簿を使い、サーバーを止めてから次へ進みます。CIも同じ通し試験の入口を使います。
 
 Nodeなど必須コマンドが無ければ開始前に失敗します。スクリプトは不足したRustツールやPlaywrightを自動導入しません。REUSEは準備済みの環境をオフラインで使い、未準備なら検査失敗にします。`--quick` はRust 1.88とcargo-denyを明示的に省く作業中の確認用で、完全な検証の代わりにはなりません。
 
@@ -61,7 +64,7 @@ e2e/run-real.sh screens
 
 `flows` と `screens` の追加引数はPlaywrightへ渡します。`all` と `contract` は追加引数を受け付けません。文書用画像の更新だけなら `e2e/run-real.sh docs-images` を使います。
 
-通常の通し試験は、Cargoが今回のビルドで返した実行ファイルを使います。配布物など特定のバイナリを検査するときだけ、`KAMOKU_BIN=/絶対パス/kamoku e2e/run-real.sh` で指定してください。この指定ではビルドを省くため、PRには対象バイナリの由来を残します。
+通常の通し試験は、Cargoが今回のビルドで返した実行ファイルを使います。配布物など特定のバイナリを検査するときだけ、`KAMOKU_BIN=/絶対パス/kamoku e2e/run-real.sh` で指定してください。この指定ではビルドを省くため、PRには対象バイナリの由来を残します。この指定ではディスクのUIへ差し替えず、埋め込まれた画面を検査します。
 
 ## 失敗・省略・未確認を分けて記録する
 

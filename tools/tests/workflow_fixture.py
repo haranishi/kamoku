@@ -34,10 +34,15 @@ def record(event, **detail):
 record("command", executable=sys.argv[0], channel=os.environ.get("KAMOKU_E2E_CHANNEL"))
 failures = json.loads(os.environ.get("KAMOKU_TEST_FAILURES", "{}"))
 failure = failures.get(tool + ":" + (args[0] if args else ""))
+package = args[args.index("-p") + 1] if tool == "cargo" and "-p" in args else None
+if tool == "cargo" and args and args[0] == "build":
+    failure = failures.get("cargo:build:" + str(package), failure)
+if tool == "wasm-bindgen" and args != ["--version"]:
+    failure = failures.get("wasm-bindgen:generate", failure)
 if failure:
     if tool == "cargo" and args and args[0] == "build":
         diagnostic = "error: synthetic Rust compiler failure"
-        if "--message-format=json-render-diagnostics" in args:
+        if "--message-format=json-render-diagnostics" in args or not any(a.startswith("--message-format=") for a in args):
             print(diagnostic, file=sys.stderr)
         else:
             print(json.dumps({"reason": "compiler-message", "message": {"rendered": diagnostic}}))
@@ -50,19 +55,45 @@ if tool == "node":
         if os.environ.get("KAMOKU_TEST_NO_CHROMIUM") and "executablePath" in args[1]:
             sys.exit(2)
 elif tool == "rustup":
-    print(os.environ.get("KAMOKU_TEST_TOOLCHAINS", "1.88.0-test-host\n1.99.0-test-host (default)"))
+    if args == ["toolchain", "list"]:
+        print(os.environ.get("KAMOKU_TEST_TOOLCHAINS", "1.88.0-test-host\n1.99.0-test-host (default)"))
+    elif args[:3] == ["target", "list", "--installed"] and (len(args) == 3 or args[3:4] == ["--toolchain"]):
+        key = "KAMOKU_TEST_MSRV_TARGETS" if len(args) > 3 else "KAMOKU_TEST_TARGETS"
+        print(os.environ.get(key, "test-host\nwasm32-unknown-unknown"))
+    else:
+        sys.exit(99)
+elif tool == "wasm-bindgen":
+    if args == ["--version"]:
+        print(os.environ.get("KAMOKU_TEST_WASM_BINDGEN_VERSION", "wasm-bindgen 0.2.129"))
+    else:
+        source = Path(args[0])
+        if not source.is_file():
+            sys.exit(8)
+        output = Path(args[args.index("--out-dir") + 1])
+        output.mkdir(parents=True, exist_ok=True)
+        (output / "kamoku_ui.js").write_text("// synthetic generated WASM loader\n")
+        (output / "kamoku_ui_bg.wasm").write_bytes(source.read_bytes())
+elif tool == "cargo" and args and args[0] == "metadata":
+    target = os.environ.get("CARGO_TARGET_DIR", str(Path(os.environ["KAMOKU_TEST_ARTIFACT"]).parents[1]))
+    print(json.dumps({"target_directory": str(Path(target).resolve())}))
 elif tool == "cargo" and args and args[0] == "build":
-    mode = os.environ.get("KAMOKU_TEST_ARTIFACT_MODE", "normal")
-    if mode == "invalid":
-        print("invalid JSON")
-    elif mode != "missing":
-        artifact = {"reason": "compiler-artifact", "target": {"name": "kamoku", "kind": ["bin"]},
-                    "executable": os.environ["KAMOKU_TEST_ARTIFACT"]}
-        print(json.dumps(artifact))
-        if mode == "ambiguous":
-            artifact["executable"] += "-other"
+    if package == "kamoku-ui":
+        target = os.environ.get("CARGO_TARGET_DIR", str(Path(os.environ["KAMOKU_TEST_ARTIFACT"]).parents[1]))
+        wasm = Path(target) / "wasm32-unknown-unknown/release/kamoku_ui.wasm"
+        wasm.parent.mkdir(parents=True, exist_ok=True)
+        wasm.write_bytes(b"\0asm\1\0\0\0")
+    else:
+        mode = os.environ.get("KAMOKU_TEST_ARTIFACT_MODE", "normal")
+        if mode == "invalid":
+            print("invalid JSON")
+        elif mode != "missing":
+            artifact = {"reason": "compiler-artifact", "target": {"name": "kamoku", "kind": ["bin"]},
+                        "executable": os.environ["KAMOKU_TEST_ARTIFACT"]}
             print(json.dumps(artifact))
-elif tool == "python3" and args and args[0].endswith("cargo-executable.py"):
+            if mode == "ambiguous":
+                artifact["executable"] += "-other"
+                print(json.dumps(artifact))
+elif tool == "python3" and args and (args[0] == "-c" or args[0].endswith("cargo-executable.py")):
     os.execv(sys.executable, [sys.executable, *args])
 elif tool == "kamoku":
     if os.environ.get("KAMOKU_TEST_SERVER_DIES"):
@@ -92,12 +123,12 @@ class WorkflowFixture(unittest.TestCase):
         self.dispatcher = self.root / "command-stub"
         self.dispatcher.write_text(f"#!{sys.executable}\n" + STUB, encoding="utf-8")
         self.dispatcher.chmod(0o755)
-        for tool in ("cargo", "rustup", "cargo-deny", "node", "python3", "uvx", "git", "npm", "npx"):
+        for tool in ("cargo", "rustup", "cargo-deny", "wasm-bindgen", "node", "python3", "uvx", "git", "npm", "npx"):
             (self.bin / tool).symlink_to(self.dispatcher)
-        for tool in ("dirname", "env", "grep", "head", "mktemp", "rm", "sleep", "mkdir"):
+        for tool in ("bash", "dirname", "env", "grep", "head", "mktemp", "rm", "sleep", "mkdir"):
             (self.bin / tool).symlink_to(shutil.which(tool))
         # Copy the production runners unchanged, with a synthetic repository around them.
-        for relative in ("tools/check-all.sh", "tools/cargo-executable.py", "e2e/run-real.sh"):
+        for relative in ("tools/check-all.sh", "tools/build-rust-ui.sh", "tools/cargo-executable.py", "e2e/run-real.sh"):
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / relative, destination)
@@ -136,3 +167,10 @@ class WorkflowFixture(unittest.TestCase):
     def assert_no_checks(self):
         for tool in ("cargo", "python3", "uvx", "kamoku", "npm", "npx"):
             self.assertEqual(self.commands(tool), [], tool)
+        self.assertEqual([event for event in self.commands("wasm-bindgen") if event["args"] != ["--version"]], [])
+
+    def assert_no_tool_installs(self):
+        self.assertEqual(self.commands("npm") + self.commands("npx"), [])
+        self.assertFalse(any(event["args"][:2] in (["target", "add"], ["toolchain", "install"])
+                             for event in self.commands("rustup")))
+        self.assertFalse(any(event["args"] and event["args"][0] == "install" for event in self.commands("cargo")))

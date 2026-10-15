@@ -26,13 +26,23 @@ fi
 
 cd "$(dirname "$0")/.." || exit 2
 missing=()
-for tool in cargo node python3 uvx git; do
+for tool in cargo rustup wasm-bindgen node python3 uvx git; do
   command -v "$tool" >/dev/null 2>&1 || missing+=("$tool をPATHに追加")
 done
 if command -v node >/dev/null 2>&1; then
   version="$(node --version 2>/dev/null)"
   if ! [[ "$version" =~ ^v([0-9]+)\. ]] || [ "${BASH_REMATCH[1]:-0}" -lt 24 ]; then
     missing+=("Node 24以上を導入（現在: ${version:-取得できません}）")
+  fi
+fi
+if command -v wasm-bindgen >/dev/null 2>&1; then
+  if ! wasm_version="$(wasm-bindgen --version 2>/dev/null)" || [ "$wasm_version" != "wasm-bindgen 0.2.129" ]; then
+    missing+=("wasm-bindgen 0.2.129: cargo install wasm-bindgen-cli --version 0.2.129 --locked")
+  fi
+fi
+if command -v rustup >/dev/null 2>&1; then
+  if ! targets="$(rustup target list --installed 2>/dev/null)" || ! [[ "$targets" =~ (^|$'\n')wasm32-unknown-unknown($|$'\n') ]]; then
+    missing+=("WASMターゲット: rustup target add wasm32-unknown-unknown")
   fi
 fi
 msrv=""
@@ -47,6 +57,11 @@ if [ "$quick" = 0 ]; then
       done <<< "$toolchains"
     fi
     [ -n "$msrv" ] || missing+=("Rust 1.88: rustup toolchain install 1.88 --profile minimal")
+    if [ -n "$msrv" ]; then
+      if ! targets="$(rustup target list --installed --toolchain "$msrv" 2>/dev/null)" || ! [[ "$targets" =~ (^|$'\n')wasm32-unknown-unknown($|$'\n') ]]; then
+        missing+=("Rust 1.88のWASMターゲット: rustup target add wasm32-unknown-unknown --toolchain $msrv")
+      fi
+    fi
   else
     missing+=("rustup をPATHに追加し、rustup toolchain install 1.88 --profile minimal")
   fi
@@ -54,8 +69,9 @@ if [ "$quick" = 0 ]; then
 fi
 if [ "${#missing[@]}" -gt 0 ]; then
   echo "必要な前提が不足しています。検査を開始しません。" >&2
-  echo "必要なコマンド: cargo node (24以上) python3 uvx git" >&2
-  [ "$quick" = 1 ] || echo "完全モードでは rustup / Rust 1.88 / cargo-deny も必要です。" >&2
+  echo "必要なコマンド: cargo rustup wasm-bindgen (0.2.129) node (24以上) python3 uvx git" >&2
+  echo "使用中のRustにwasm32-unknown-unknownターゲットが必要です。" >&2
+  [ "$quick" = 1 ] || echo "完全モードでは Rust 1.88 / cargo-deny も必要です。" >&2
   printf '  - %s\n' "${missing[@]}" >&2
   exit 2
 fi
@@ -71,11 +87,14 @@ step() {
 }
 
 step "Rust: 書式" cargo fmt --all -- --check
+step "Rust UI: WASM生成" bash tools/build-rust-ui.sh
+step "Rust UI: WASM clippy" cargo clippy -p kamoku-ui --target wasm32-unknown-unknown --locked -- -D warnings
 step "Rust: clippy" cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 step "Rust: 試験" cargo test --workspace --locked
 step "Rust: 文書" env RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --locked
 if [ "$quick" = 0 ]; then
   step "Rust: 最小の1.88" cargo "+$msrv" check --workspace --locked
+  step "Rust UI: 最小の1.88" cargo "+$msrv" check -p kamoku-ui --target wasm32-unknown-unknown --locked
   step "依存: cargo deny" cargo deny --locked check
 fi
 step "画面: 単体試験" node --test ui/tests/

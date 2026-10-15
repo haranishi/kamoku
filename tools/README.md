@@ -4,7 +4,7 @@
 
 ## まとめて流す: check-all.sh
 
-書式、clippy、Rustの試験、文書の警告、最小のRust（1.88）、依存の検査、画面と実行手順の回帰試験、文書のリンク、台帳の固定値、受け入れ条件の対応、ライセンス表示を順に流し、失敗した検査の名前を最後に一覧します。必須ツールの不足は開始前にエラーにし、quickで省く項目は結果にも明記します。REUSEは準備済みの環境をオフラインで使います。
+書式、WASM生成・clippy、Rustの試験、文書の警告、最小のRust（1.88）、依存の検査、画面と実行手順の回帰試験、文書のリンク、台帳の固定値、受け入れ条件の対応、ライセンス表示を順に流し、失敗した検査の名前を最後に一覧します。必須ツールの不足は開始前にエラーにし、quickで省く項目は結果にも明記します。REUSEは準備済みの環境をオフラインで使います。
 
 ```
 tools/check-all.sh          # 全部
@@ -62,6 +62,7 @@ python3 tools/mutate.py tools/mutations/books.json --only 按分  # ラベルに
 `smoke-demo.py` は、できあがった `kamoku` を `demo` で起動し、HTTPで一通りたたきます。合言葉・Cookie・Host・Originの扱い、帳票の貸借の一致、CSVの書き出し、巨大なContent-Lengthやでたらめなバイト列を送ったあとも生きていることを確かめます。
 
 ```
+bash tools/build-rust-ui.sh
 cargo build -p kamoku-app
 python3 tools/smoke-demo.py --bin target/debug/kamoku
 ```
