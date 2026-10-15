@@ -38,6 +38,15 @@ test('AC-02.3 金額: 円記号・円・空白・全角カンマを除く', () =
   assert.equal(ok('\\1650').value, 1650);
 });
 
+test('AC-02.3 金額: 桁区切りの位置が違う（1,2,3 など）ときは断る。正しい区切りと全角は通す', () => {
+  for (const bad of ['1,2,3', '1,0000', '10,00', ',100', '100,', '1,000,00']) assert.match(ng(bad).error, /桁区切りの位置が違います。/, bad);
+  assert.equal(ok('1,234').value, 1234);
+  assert.equal(ok('12,345,678').value, 12345678);
+  assert.equal(ok('１，２３４').value, 1234);
+  assert.equal(ok('1,000+2,500').value, 3500);
+  assert.equal(ok('(1,200)*2').value, 2400);
+});
+
 test('AC-02.3 金額: 四則と丸括弧、演算子の優先順位', () => {
   assert.equal(ok('(1200+300)*2').value, 3000);
   assert.equal(ok('1200+300*2').value, 1800);

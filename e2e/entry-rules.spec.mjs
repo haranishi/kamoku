@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// 取引の登録の決まり: 再送防止、プレビューの失敗、免税、口座が相手科目、経過措置の案内、仕訳で入力、テンプレート、読み取り専用。
+// 取引の登録の決まり: 再送防止、プレビューの失敗、免税、口座が相手科目、経過措置の案内、仕訳で入力、テンプレート、読み取り専用、
+// 取引先の候補と新しい取引先、候補が0件のときの一言、候補を選んだら誤りを消す、課税で「対象外」のままの一言。
 
 import { test, expect } from '@playwright/test';
-import { open, apiCall, uniqueText, entryFields, withSettings, walletOf } from './helpers.mjs';
+import { open, apiCall, uniqueText, entryFields, withSettings, withAccountDefaults, walletOf } from './helpers.mjs';
 
 async function fillSupplies(page, desc, amount = '1100') {
   const f = entryFields(page);
@@ -147,6 +148,9 @@ test('SC-02 仕訳で入力: 貸借の差を出し、0のときだけ保存で�
   await form.getByLabel('摘要').fill(desc);
   const rows = form.locator('.jl-table tbody tr');
   await expect(rows).toHaveCount(2);
+  // 何も入れていないうちは、「合っています」と言わない（体験の評価 第3回 E4）。
+  await expect(form).toContainText('金額を入れると、貸借の差を確かめます');
+  await expect(form).not.toContainText('貸借が合っています');
   await rows.nth(0).getByRole('combobox', { name: '科目' }).click();
   await page.keyboard.insertText('工具器具備品');
   await page.keyboard.press('Enter');
@@ -218,7 +222,187 @@ test('読み取り専用（台帳の検証に失敗）のときは、上に帯�
   const save = page.getByRole('button', { name: /保存して続ける/ });
   await expect(save).toBeDisabled();
   await expect(save).toHaveAttribute('aria-describedby', /banner-readonly/);
+  // 保存できなくても、入力があるので、離れる前に確認が出る（SC-02。捨てて仕訳帳へ移る）。
   await open(page, '#/journal');
+  await page.getByRole('dialog', { name: '入力中の内容を捨てますか' }).getByRole('button', { name: '捨てて離れる' }).click();
   await page.locator('.journal-table tbody tr').first().click();
   await expect(page.getByRole('dialog').getByRole('button', { name: /取り消す/ })).toBeDisabled();
+});
+
+test('SC-02 取引先の欄は、Enterで先頭の候補を選ぶ。打った名前は、一覧の最後の行を選んだときだけ新しい取引先になる', async ({ page }) => {
+  const tag = Date.now().toString(36);
+  const known = `E2E商店${tag}`;
+  expect((await apiCall(page, 'POST', '/partners', { name: known, reading: '', invoice_number: null, note: '' })).status).toBe(201);
+  const desc = uniqueText('E2E 新しい取引先');
+  await open(page, '#/entry');
+  const f = await fillSupplies(page, desc);
+  const list = page.getByRole('listbox', { name: '取引先の候補' });
+
+  // 名前の一部でEnter: 先頭の候補（印あり）を選び、次の欄へ。末尾には「新しい取引先として足す」の行がある。
+  await f.partner.click();
+  await page.keyboard.insertText(`商店${tag}`);
+  await expect(list.getByRole('option').first()).toHaveText(known);
+  await expect(list.getByRole('option').first()).toHaveAttribute('aria-selected', 'true');
+  await expect(list.getByRole('option').last()).toHaveText(`「商店${tag}」を新しい取引先として足す`);
+  await page.keyboard.press('Enter');
+  await expect(f.partner).toHaveValue(known);
+  await expect(f.description).toBeFocused();
+  await expect(f.form).not.toContainText('新しい取引先:');
+
+  // 候補に無い名前を、選ばずに欄を離れたら、保存の前に止める（黙って新しい取引先にしない）。
+  const fresh = `E2E新しい店${tag}`;
+  await f.partner.click();
+  await page.keyboard.insertText(fresh);
+  await expect(list.getByRole('option')).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await f.description.click();
+  await page.getByRole('button', { name: /保存して続ける/ }).click();
+  await expect(f.partner).toBeFocused();
+  await expect(f.partner).toHaveAttribute('aria-invalid', 'true');
+  await expect(f.form).toContainText(`「${fresh}」は候補にありません。`);
+  expect((await apiCall(page, 'GET', `/entries?q=${encodeURIComponent(desc)}`)).json.total).toBe(0);
+
+  // 一覧の最後の行を選ぶと、新しい取引先として使い、欄の下に名前を出す。誤りの表示は消える。
+  await page.keyboard.press('ArrowDown');
+  await expect(list.getByRole('option')).toHaveText(`「${fresh}」を新しい取引先として足す`);
+  await page.keyboard.press('Enter');
+  await expect(f.partner).toHaveValue(fresh);
+  await expect(f.partner).not.toHaveAttribute('aria-invalid', /./);
+  await expect(f.form).toContainText(`新しい取引先: ${fresh}`);
+  await expect(f.partner).toHaveAttribute('aria-describedby', /note/);
+  await page.getByRole('button', { name: /保存して続ける/ }).click();
+  await expect(page.locator('.toast').filter({ hasText: 'を登録しました' })).toBeVisible();
+  const saved = (await apiCall(page, 'GET', `/entries?q=${encodeURIComponent(desc)}`)).json.items[0];
+  expect(saved.partner).toBe(fresh);
+});
+
+test('SC-02 科目に合う候補が無いときは、空の一覧を開かず、探し方の一言を出す。Esc は一言を閉じるだけ', async ({ page }) => {
+  await open(page, '#/entry');
+  const f = entryFields(page);
+  await f.account.click();
+  await page.keyboard.insertText('ぞぞぞ');
+  // 一言は、科目の欄の入れ物（.combo）の中にある。
+  const msg = f.account.locator('xpath=..').locator('.combo-msg');
+  await expect(f.account).toHaveAttribute('aria-expanded', 'false');
+  await expect(msg).toBeVisible();
+  await expect(msg).toHaveText('合う科目がありません。ひらがなの読みか、科目の名前で探せます。');
+  await page.keyboard.press('Escape');
+  await expect(msg).toBeHidden();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(f.account).toBeFocused();
+  // 打ち直して合えば、一覧が開き、一言は消える。
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.insertText('しょうもう');
+  await expect(f.account).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('option', { name: /消耗品費/ })).toBeVisible();
+  await expect(msg).toBeHidden();
+});
+
+test('SC-02 候補を選んだ瞬間に、その欄の誤り（赤枠・文・aria-invalid）を消す', async ({ page }) => {
+  await open(page, '#/entry');
+  const f = entryFields(page);
+  await f.amount.fill('1100');
+  // 口座を空にしてから保存を押し、科目と口座の両方に誤りを出す。
+  await f.wallet.click();
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.press('Backspace');
+  await page.getByRole('button', { name: /保存して続ける/ }).click();
+  await expect(f.account).toBeFocused();
+  await expect(f.account).toHaveAttribute('aria-invalid', 'true');
+  await expect(f.form).toContainText('科目を選んでください。');
+  await expect(f.wallet).toHaveAttribute('aria-invalid', 'true');
+  await expect(f.form).toContainText('口座を選んでください。');
+  await page.keyboard.insertText('消耗品費');
+  await page.keyboard.press('Enter');
+  await expect(f.account).not.toHaveAttribute('aria-invalid', /./);
+  await expect(f.form).not.toContainText('科目を選んでください。');
+  const cash = await walletOf(page, 'cash');
+  await f.wallet.click();
+  await page.keyboard.insertText(cash.name);
+  await page.getByRole('option', { name: new RegExp(cash.name) }).first().click();
+  await expect(f.wallet).not.toHaveAttribute('aria-invalid', /./);
+  await expect(f.form).not.toContainText('口座を選んでください。');
+});
+
+test('AC-01.4 課税事業者で、既定が「対象外」の費用の科目を選ぶと、税区分の欄の下に一言出す。税区分を選ぶと消え、免税では出さない', async ({ page }) => {
+  const note = 'この科目の既定は「対象外」です。課税の取引なら、税区分を選んでください。';
+  await open(page, '#/');
+  // 標準の科目表の既定（旅費交通費は対象外）は変えない。試験の間だけ、合成データの値を同じ形にそろえる。
+  await withAccountDefaults(page, 'exp_travel', { default_tax: null, default_pct: 100 }, async () => {
+    await withSettings(page, { tax_mode: 'taxable' }, async () => {
+      await open(page, '#/entry');
+      const f = entryFields(page);
+      await f.account.click();
+      await page.keyboard.insertText('旅費交通費');
+      await page.keyboard.press('Enter');
+      await expect(f.tax).toHaveValue('');
+      await expect(f.form).toContainText(note);
+      await expect(f.tax).toHaveAttribute('aria-describedby', /note/);
+      await f.tax.selectOption('P10');
+      await expect(f.form).not.toContainText(note);
+    });
+    await withSettings(page, { tax_mode: 'exempt', invoice_number: null }, async () => {
+      // 同じアドレスのままなので、読み込み直して、免税の設定で開き直す。
+      await page.reload();
+      await expect(page.locator('main h1')).toBeVisible();
+      const f = entryFields(page);
+      await f.account.click();
+      await page.keyboard.insertText('旅費交通費');
+      await page.keyboard.press('Enter');
+      await page.getByRole('button', { name: '詳細: 税区分を出す' }).click();
+      await expect(f.tax).toBeVisible();
+      await expect(f.form).not.toContainText(note);
+    });
+  });
+});
+
+// 締めた期間（2026-10-15 の体験の評価 E3 の9）: 断りの文に締めた日が無く、保存して初めて断られた。
+test('AC-06.3 締めた日以前の日付は、欄を確定したときに締めた日つきで出す。保存で断られた文にも締めた日を入れる。締めていなければ出さない', async ({ page }) => {
+  await open(page, '#/entry');
+  const f = entryFields(page);
+  const dateError = page.locator('form.entry-form .field').filter({ has: page.getByLabel('日付') }).locator('.field-error');
+  // 締めていないときは何も出ない。
+  await f.date.fill('2026-09-15');
+  await f.date.blur();
+  await expect(dateError).toHaveText('');
+  await withSettings(page, { locked_until: '2026-09-30' }, async () => {
+    await page.reload();
+    await expect(page.locator('main h1')).toBeVisible();
+    await f.date.fill('2026-09-15');
+    await f.date.blur();
+    await expect(dateError).toHaveText('2026年9月30日まで締めてあるため、この日付には登録できません。');
+    // 締めた日その日も締めの中。
+    await f.date.fill('2026-09-30');
+    await f.date.blur();
+    await expect(dateError).toHaveText('2026年9月30日まで締めてあるため、この日付には登録できません。');
+    // 保存すると、サーバーが断る。その文にも締めた日を入れ、日付の欄へ移る。
+    await f.amount.fill('1000');
+    await f.account.click();
+    await page.keyboard.insertText('消耗品費');
+    await page.keyboard.press('Enter');
+    await f.description.fill(uniqueText('E2E 締めた日'));
+    await page.keyboard.press('ControlOrMeta+Enter');
+    await expect(dateError).toHaveText('2026年9月30日まで締めてあるため、この日付には登録できません。日付を直すか、設定の「締め」で締めた日を見直してください。');
+    await expect(f.date).toBeFocused();
+    // 締めた日より後にすると消える。
+    await f.date.fill('2026-10-01');
+    await f.date.blur();
+    await expect(dateError).toHaveText('');
+  });
+});
+
+test('AC-06.3 仕訳で入力でも、締めた日以前の日付は、欄を確定したときに締めた日つきで出す', async ({ page }) => {
+  await open(page, '#/entry');
+  await withSettings(page, { locked_until: '2026-09-30' }, async () => {
+    await page.reload();
+    await page.getByRole('tab', { name: '仕訳で入力' }).click();
+    const date = page.locator('form.entry-form').getByLabel('日付');
+    const dateError = page.locator('form.entry-form .field').filter({ has: page.getByLabel('日付') }).locator('.field-error');
+    await date.fill('2026-09-01');
+    await date.blur();
+    await expect(dateError).toHaveText('2026年9月30日まで締めてあるため、この日付には登録できません。');
+    await date.fill('2026-10-02');
+    await date.blur();
+    await expect(dateError).toHaveText('');
+  });
 });

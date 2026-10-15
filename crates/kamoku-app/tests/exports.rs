@@ -34,11 +34,22 @@ fn journal_csv_rows_encodings_and_states() {
     );
     let resp = c.api("/export/journal.csv");
     assert_eq!(resp.header("Content-Type"), Some("text/csv; charset=utf-8"));
+    // 期間を決めなければ、書き出した日（JST）が名前に入る。
+    let disposition = resp.header("Content-Disposition").unwrap();
     assert!(
-        resp.header("Content-Disposition")
-            .unwrap()
-            .starts_with("attachment; filename=\"kamoku-journal")
+        disposition.starts_with("attachment; filename=\"kamoku-journal-")
+            && disposition.contains(".csv"),
+        "{disposition}"
     );
+    let stamp = disposition
+        .split("kamoku-journal-")
+        .nth(1)
+        .unwrap()
+        .split('.')
+        .next()
+        .unwrap();
+    assert_eq!(stamp.len(), 8, "{disposition}");
+    assert!(stamp.chars().all(|ch| ch.is_ascii_digit()), "{disposition}");
     assert_eq!(resp.header("Cache-Control"), Some("no-store"));
     let text = utf8_body(&resp);
     let lines: Vec<&str> = text.split("\r\n").filter(|l| !l.is_empty()).collect();

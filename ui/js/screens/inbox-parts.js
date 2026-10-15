@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// 未確認の画面の部品: 「無視した行」の表（元に戻す）と、空の状態（AC-05.7、SC-03）。
+// 未確認の画面の部品: 「無視した行」の表（戻す）と、空の状態（AC-05.7、SC-03）。
+// 同じ操作を「無視」と「取り込まない」の2つの言葉で呼んでいたので、画面の言葉は「無視」にそろえる。
 
 import { h } from '../dom.js';
 import { formatSigned } from '../format.js';
@@ -9,14 +10,15 @@ import { createTable } from '../components/table.js';
 import { emptyState } from '../components/empty.js';
 import { button } from '../components/fields.js';
 import { shortDate } from './inbox-row.js';
+import { rowLabel } from './inbox-rules.js';
 
 /**
- * 取り込まないことにした行の一覧。行ごとに「戻す」。
+ * 無視した行の一覧。行ごとに「戻す」（class は restore-btn。戻した後に、次の行の「戻す」へフォーカスを移すため）。
  * @param {{ items: any[], thisYear: string, readOnly: boolean, onRestore: (draft: object) => void }} p
  */
 export function ignoredTable({ items, thisYear, readOnly, onRestore }) {
   const t = createTable({
-    caption: '取り込まない行（「戻す」で未確認に戻る）',
+    caption: '無視した行（「戻す」で未確認に戻る）',
     className: 'ignored-table',
     rowKey: (d) => d.id,
     columns: [
@@ -28,7 +30,7 @@ export function ignoredTable({ items, thisYear, readOnly, onRestore }) {
         label: '操作',
         stackLabel: '',
         render: (d) => {
-          const b = button({ label: '戻す', iconName: 'refresh', small: true, 'aria-label': `未確認に戻す: ${d.description}`, onClick: () => onRestore(d) });
+          const b = button({ label: '戻す', iconName: 'refresh', small: true, className: 'restore-btn', 'aria-label': `未確認に戻す: ${rowLabel(d, thisYear)}`, onClick: () => onRestore(d) });
           b.disabled = readOnly;
           return b;
         },
@@ -48,7 +50,7 @@ export function inboxEmpty({ status, filtered, onClear }) {
     return h('div', { class: 'card' }, emptyState({ iconName: 'search', title: '条件に合う明細はありません', body: '口座や探す言葉を変えるか、「条件を消す」で全部の明細に戻してください。', actions: [{ label: '条件を消す', onClick: onClear }] }));
   }
   if (status === 'ignored') {
-    return h('div', { class: 'card' }, emptyState({ iconName: 'ban', title: '取り込まない行はありません', body: '未確認の表で x を押した行が、ここに並びます。「戻す」で未確認に戻せます。' }));
+    return h('div', { class: 'card' }, emptyState({ iconName: 'ban', title: '無視した行はありません', body: '未確認の表で「無視」を押した行（キーは x）が、ここに並びます。「戻す」で未確認に戻せます。' }));
   }
   return h(
     'div',

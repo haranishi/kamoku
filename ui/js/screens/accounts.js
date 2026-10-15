@@ -16,7 +16,9 @@ import { textInput, button } from '../components/fields.js';
 import { banner } from '../components/banner.js';
 import { emptyState } from '../components/empty.js';
 import { skeletonBlock, delayedSkeleton } from '../components/skeleton.js';
+import { emptyValue } from '../components/money.js';
 import { accountDialog, KIND_LABEL } from './master-forms.js';
+import { phrase } from '../components/phrase.js';
 
 /** @param {HTMLElement} root */
 export function mount(root, ctx) {
@@ -42,8 +44,8 @@ export function mount(root, ctx) {
   allBox.addEventListener('change', () => apply({ all: allBox.checked ? '1' : null }));
   const body = h('div', { class: 'masters' });
   root.append(
-    h('div', { class: 'page-head' }, h('div', { class: 'page-head-text' }, h('h1', { tabindex: '-1' }, '勘定科目'), h('p', { class: 'muted small' }, '標準の科目は、国税庁の青色申告決算書の項目名に合わせてあります。')), h('div', { class: 'page-head-actions' }, button({ label: '科目を足す', variant: 'primary', iconName: 'plus', onClick: () => add() }))),
-    h('div', { class: 'card masters-tools', role: 'search', 'aria-label': '科目の絞り込み' }, h('div', { class: 'search-box' }, icon('search', { size: 18 }), search, h('kbd', { 'aria-hidden': 'true' }, '/')), h('label', { class: 'check' }, allBox, h('span', null, '使っていない科目も出す'))),
+    h('div', { class: 'page-head' }, h('div', { class: 'page-head-text' }, h('h1', { tabindex: '-1' }, '勘定科目'), h('p', { class: 'muted small' }, phrase('標準の科目は、国税庁の青色申告決算書の項目名に合わせてあります。'))), h('div', { class: 'page-head-actions' }, button({ label: '科目を足す', variant: 'primary', iconName: 'plus', onClick: () => add() }))),
+    h('div', { class: 'masters-tools', role: 'search', 'aria-label': '科目の絞り込み' }, h('div', { class: 'search-box' }, icon('search', { size: 18 }), search, h('kbd', { 'aria-hidden': 'true' }, '/')), h('label', { class: 'check' }, allBox, h('span', null, '使っていない科目も出す'))),
     body,
   );
 
@@ -74,16 +76,22 @@ export function mount(root, ctx) {
           label: '名前',
           stackLabel: '',
           className: 'acct-cell',
+          // 読みとコードは、狭い幅（1279px以下）では名前の下の小さな2行目に畳む（列にすると「…」で切れた）。
           render: (r) => {
-            const span = h('span', { class: ['acct-name', r.parent && 'is-parent'] }, r.name, r.wallet ? h('span', { class: 'badge badge--muted' }, '口座') : null, r.enabled === false ? h('span', { class: 'badge badge--muted' }, '使っていない') : null);
-            if (r.depth) span.style.setProperty('--depth', String(r.depth));
-            return span;
+            const main = h(
+              'div',
+              { class: 'acct-main' },
+              h('span', { class: ['acct-name', r.parent && 'is-parent'] }, h('span', { class: 'keep' }, r.name), r.wallet ? h('span', { class: 'badge badge--muted' }, '口座') : null, r.enabled === false ? h('span', { class: 'badge badge--muted' }, '使っていない') : null),
+              h('span', { class: 'acct-sub' }, r.reading ? h('span', { class: 'keep' }, r.reading) : null, h('code', { class: 'mono' }, r.code)),
+            );
+            if (r.depth) main.style.setProperty('--depth', String(r.depth));
+            return main;
           },
         },
-        { key: 'reading', label: '読み', render: (r) => r.reading || '' },
-        { key: 'code', label: 'コード', render: (r) => h('code', { class: 'mono' }, r.code) },
-        { key: 'default_tax', label: '既定の税区分', render: (r) => (r.kind === 'revenue' || r.kind === 'expense' ? (r.default_tax ? TAX_LABELS[r.default_tax] || r.default_tax : '対象外') : '—') },
-        { key: 'default_pct', label: '既定の割合', num: true, render: (r) => (r.kind === 'expense' ? `${r.default_pct ?? 100}%` : '—') },
+        { key: 'reading', label: '読み', className: 'acct-col-wide', headClass: 'acct-col-wide', render: (r) => (r.reading ? h('span', { class: 'keep' }, r.reading) : emptyValue()) },
+        { key: 'code', label: 'コード', className: 'acct-col-wide', headClass: 'acct-col-wide', render: (r) => h('code', { class: 'mono' }, r.code) },
+        { key: 'default_tax', label: '既定の税区分', className: 'acct-tax', render: (r) => (r.kind === 'revenue' || r.kind === 'expense' ? h('span', { class: 'keep' }, r.default_tax ? TAX_LABELS[r.default_tax] || r.default_tax : '対象外') : emptyValue()) },
+        { key: 'default_pct', label: '既定の割合', num: true, className: 'acct-pct', render: (r) => (r.kind === 'expense' ? `${r.default_pct ?? 100}%` : emptyValue()) },
       ],
       rows,
     });

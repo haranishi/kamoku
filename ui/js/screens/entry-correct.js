@@ -4,6 +4,7 @@
 // 訂正の差分（AC-06.4 の画面側）。元の値と、いまの入力で変わった欄を「変更前 → 変更後」で並べる。
 // 保存の前に確認の画面で見せ、ほかの場所で更新されたとき（409 stale_revision）も、最新の版との差分として見せる。
 
+import { phrase } from '../components/phrase.js';
 import { h } from '../dom.js';
 import { formatYen, formatDate } from '../format.js';
 import { TAX_LABELS } from '../account-defaults.js';
@@ -90,7 +91,7 @@ export function confirmCorrection({ no, revision, diff, reason }) {
       body: h(
         'div',
         { class: 'stack' },
-        h('p', null, `第${revision}版を残したまま、第${revision + 1}版を追記します。元の記録は履歴に残ります。`),
+        h('p', null, phrase(`第${revision}版を残したまま、第${revision + 1}版を追記します。元の記録は履歴に残ります。`)),
         diffTable(diff),
         h('p', null, h('strong', null, '理由: '), reason),
       ),
@@ -100,6 +101,7 @@ export function confirmCorrection({ no, revision, diff, reason }) {
           label: '訂正を保存',
           variant: 'primary',
           autofocus: true,
+          modEnter: true,
           onClick: (c) => {
             ok = true;
             c.close('ok');

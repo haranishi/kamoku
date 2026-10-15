@@ -11,6 +11,7 @@ import { apiUrl } from '../api.js';
 import { normalizeHash, verifyText, notedText } from '../ledger-check.js';
 import { field, textInput, selectInput, button } from '../components/fields.js';
 import { enhanceDownload } from '../components/download.js';
+import { phrase } from '../components/phrase.js';
 
 function result(kind, title, body) {
   return h('div', { class: ['check-result', `check-result--${kind}`], role: 'status' }, icon(kind === 'ok' ? 'shield-check' : kind === 'ng' ? 'shield-alert' : 'info'), h('div', null, h('p', { class: 'banner-title' }, title), body ? h('p', null, body) : null));
@@ -19,7 +20,7 @@ function result(kind, title, body) {
 async function copyText(text, host, toast) {
   try {
     await navigator.clipboard.writeText(text);
-    toast.success('末尾のハッシュを写し取りました。紙やメモなど、このパソコンの外に控えておいてください。');
+    toast.success('照合用の控えを写し取りました。紙やメモなど、このパソコンの外に残しておいてください。');
   } catch {
     const box = h('input', { class: 'input mono', readonly: true, value: text, 'aria-label': '末尾のハッシュ（全文）' });
     host.replaceChildren(box, h('p', { class: 'field-hint' }, '自動で写せませんでした。選んである文字を Ctrl+C（Macは ⌘+C）で写してください。'));
@@ -58,14 +59,16 @@ export function dataSection(ctx) {
     if (!st || !st.ledger) return;
     headCode.textContent = st.ledger.head_hash;
     headCode.dataset.hash = st.ledger.head_hash;
-    headFacts.textContent = `${st.ledger.events}件の記録の、末尾（${st.ledger.head_seq}番目）のハッシュです。`;
+    headFacts.replaceChildren(phrase(`いちばん新しい記録（${st.ledger.head_seq}番目）までの中身から作った、64文字の控えです。このパソコンの外に書き残しておくと、あとで照合できます。`));
   };
   paintHead(state.peek('status'));
 
-  const notedIn = textInput({ class: 'mono', placeholder: '64文字の英数字（0〜9 と a〜f）', maxlength: 100, spellcheck: 'false' });
-  const notedF = field({ label: '控えたハッシュ', control: notedIn, hint: '前に写し取ったハッシュを貼り付けると、それが台帳の何番目の記録にあたるかを調べます。' });
+  const notedIn = textInput({ class: 'mono', placeholder: '写し取った64文字を貼り付け', maxlength: 100, spellcheck: 'false' });
+  const notedF = field({ label: '控えたハッシュ', control: notedIn, hint: phrase('前に写し取った控えを貼り付けると、台帳の何番目の記録にあたるかを調べます。'), clearOnInput: true });
   const notedOut = h('div', { class: 'check-out' });
   async function compare() {
+    // 照合し直すときは、前の結果を先に消す（形の誤りの下に、前の「一致する記録がありました」が残り、食い違って見えた）。
+    notedOut.replaceChildren();
     const r = normalizeHash(notedIn.value);
     notedF.setError(r.ok ? '' : r.error);
     if (!r.ok) {
@@ -99,9 +102,11 @@ export function dataSection(ctx) {
     { value: 'active', label: '有効な仕訳だけ' },
     { value: 'all', label: '取消済みも入れる' },
   ]);
-  const journalLink = h('a', { class: 'btn', download: '' }, icon('import', { size: 18 }), h('span', null, '仕訳帳のCSV'));
-  const backupLink = h('a', { class: 'btn', href: apiUrl('/export/backup.db'), download: '' }, icon('import', { size: 18 }), 'バックアップ（DBの複製）');
-  const jsonLink = h('a', { class: 'btn', href: apiUrl('/export/all.json'), download: '' }, icon('import', { size: 18 }), '全件のJSON');
+  const journalLink = h('a', { class: 'btn export-wide', download: '' }, icon('import', { size: 18 }), h('span', null, '仕訳帳のCSV'));
+  // 名前は、何に使うファイルかで呼ぶ（「DBの複製」「全件のJSON」は、使う人に通じにくかった）。
+  // 文字は塊で折る（幅1280〜1383pxの2列の設定では、ボタンが細くなり「バックア／ップ」と語の途中で折れた）。
+  const backupLink = h('a', { class: 'btn', href: apiUrl('/export/backup.db'), download: '' }, icon('import', { size: 18 }), phrase('帳簿の控え（バックアップ）'));
+  const jsonLink = h('a', { class: 'btn', href: apiUrl('/export/all.json'), download: '' }, icon('import', { size: 18 }), phrase('全件のデータ（JSON）'));
   // 押したときに受け取ってから保存させる（Shift_JIS で置き換えた文字の数や、失敗の理由を知らせるため）。
   [journalLink, backupLink, jsonLink].forEach((link) => enhanceDownload(link, ctx));
   const paintLink = () => {
@@ -111,19 +116,26 @@ export function dataSection(ctx) {
   scope.addEventListener('change', paintLink);
   paintLink();
 
+  const small = (text) => h('p', { class: 'small muted' }, phrase(text));
   const el = h(
     'div',
     { class: 'settings-data stack' },
-    h('div', { class: 'settings-block' }, h('h3', null, '台帳の整合性'), h('p', { class: 'small muted' }, '記録は追記だけで、1つずつハッシュでつながっています。最初からたどって、壊れていないかを確かめます。'), h('div', null, verifyBtn), verifyOut),
-    h('div', { class: 'settings-block' }, h('h3', null, '末尾のハッシュ'), headFacts, headCode, h('div', null, copyBtn), manual),
-    h('div', { class: 'settings-block' }, h('h3', null, '控えたハッシュと照合する'), notedF.el, h('div', null, button({ label: '照合する', iconName: 'search', onClick: () => compare() })), notedOut),
+    h('div', { class: 'settings-block' }, h('h3', null, '台帳の整合性'), small('記録は書き足すだけで、前の記録と鎖のようにつながっています。最初からたどって、壊れていないかを確かめます。'), h('div', null, verifyBtn), verifyOut),
+    h('div', { class: 'settings-block' }, h('h3', null, '照合用の控え（末尾のハッシュ）'), headFacts, headCode, h('div', null, copyBtn), manual),
+    h('div', { class: 'settings-block' }, h('h3', null, '控えと照合する'), notedF.el, h('div', null, button({ label: '照合する', iconName: 'search', onClick: () => compare() })), notedOut),
+    // 書き出しは、ボタンと選択欄を同じ幅の格子に並べる（幅がばらばらで、凸凹の列になっていた）。
     h(
       'div',
       { class: 'settings-block' },
       h('h3', null, '書き出し'),
-      h('p', { class: 'small muted' }, 'このパソコンの中に、ファイルとして保存します。外へは送りません。'),
-      h('div', { class: 'export-row' }, backupLink, jsonLink),
-      h('div', { class: 'export-row' }, scope, enc, journalLink),
+      small('このパソコンの中に、ファイルとして保存します。外へは送りません。'),
+      h('p', { class: 'export-title' }, '帳簿の控え・全件のデータ'),
+      // 長い1段落を、控えとJSONの2つに分ける（説明・補足・操作のまとまりが続き、目的の操作を拾いにくかった。見た目の採点 第2回 幅768）。
+      small('控えは、取った時点の帳簿を、ファイルごと複製したものです。戻すには、ファイルを置き換えます（手順は「よくある質問」にあります）。'),
+      small('全件のデータ（JSON）は、このソフト独自の形式です。確定した記録と設定が入り、未確認の明細・テンプレート・取込の設定は入りません。ほかのソフトで使うには、変換が必要です。'),
+      h('div', { class: 'export-grid' }, backupLink, jsonLink),
+      h('p', { class: 'export-title' }, '仕訳帳（表計算ソフト向けのCSV）'),
+      h('div', { class: 'export-grid' }, scope, enc, journalLink),
     ),
   );
   return { el, paintHead };
