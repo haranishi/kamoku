@@ -17,7 +17,7 @@ flowchart LR
 
 `kamoku-ledger` `kamoku-jp-tax` `kamoku-books` `kamoku-import` は、ファイルや通信を持たない純粋な計算です。保存とサーバーは外側の2つに閉じ込め、計算の部品だけを他のRustプロジェクトからも使えるようにします。
 
-画面ロジックのRust移行は、任意の[仕訳帳プレビュー](rust-ui-preview.md)から始めています。RustをWASMへコンパイルし、DOMと入力はブラウザに任せます。通常の画面が既定で、生成されるJavaScriptの接続コードは残ります。言語を替えたことだけを速度改善とは扱いません。
+全画面のロジックを[Rust/WASM](rust-ui.md)で実装しています。DOMと入力はブラウザに任せ、生成されるJavaScriptの接続コードと最小ローダーを使います。[移行初期の仕訳帳](rust-ui-preview.md)も互換経路として検証します。言語を替えたことだけを速度改善とは扱いません。
 
 ## 画面は、手元のWebサーバーとブラウザにする
 

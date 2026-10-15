@@ -30,7 +30,26 @@
  * --bar-bottom は下の余白（セーフエリア）を含む（tokens.css。F1 の第2回）ので、ここで足し直さない。
  */
 .main:has(.inbox-bar:not([hidden])) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   padding-bottom: var(--bar-bottom);
+}
+
+/* 読み込み中や行が少ないときも、画面の入れ物から表へ残りの高さを渡し、帯を下の端に置く。 */
+.inbox-page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.inbox-panel {
+  flex: 1;
+}
+
+.inbox-host {
+  flex: 1 0 auto;
 }
 
 .inbox-bar-main {

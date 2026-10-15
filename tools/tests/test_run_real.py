@@ -23,7 +23,7 @@ class RunRealTests(WorkflowFixture):
                 self.assertEqual(self.events(), [])
 
     def test_missing_tools_fail_before_build_and_server_start(self):
-        for tool in ("node", "cargo", "python3"):
+        for tool in ("node", "cargo", "python3", "rustup", "wasm-bindgen"):
             with self.subTest(tool=tool):
                 path = self.bin / tool
                 path.unlink()
@@ -39,6 +39,21 @@ class RunRealTests(WorkflowFixture):
         result = self.run_real("contract", KAMOKU_TEST_NODE_VERSION="v22.0.0")
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assert_no_checks()
+
+    def test_wasm_bindgen_version_and_target_are_checked_before_any_build(self):
+        for environment in [
+            {"KAMOKU_TEST_WASM_BINDGEN_VERSION": "wasm-bindgen 0.2.128"},
+            {"KAMOKU_TEST_WASM_BINDGEN_VERSION": "invalid"},
+            {"KAMOKU_TEST_TARGETS": "test-host"},
+            {"KAMOKU_TEST_TARGETS": "wasm32-unknown-unknown-other"},
+            {"KAMOKU_TEST_FAILURES": json.dumps({"rustup:target": 4})},
+            {"KAMOKU_TEST_FAILURES": json.dumps({"wasm-bindgen:--version": 4})},
+        ]:
+            with self.subTest(environment=environment):
+                result = self.run_real("contract", **environment)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assert_no_checks()
+                self.assert_no_tool_installs()
 
     def test_playwright_must_be_installed_locally(self):
         self.cli.unlink()
@@ -60,11 +75,23 @@ class RunRealTests(WorkflowFixture):
                             for event in self.commands("node")))
 
     def test_build_failure_does_not_fall_back_to_an_old_binary(self):
-        result = self.run_real("all", KAMOKU_TEST_FAILURES=json.dumps({"cargo:build": 7}))
+        result = self.run_real("all", KAMOKU_TEST_FAILURES=json.dumps({"cargo:build:kamoku-app": 7}))
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("error: synthetic Rust compiler failure", result.stderr)
         self.assertEqual(self.commands("kamoku"), [])
-        self.assertEqual(self.commands("python3"), [])
+        self.assertFalse(any(event["args"][0] != "-c" for event in self.commands("python3")))
+        self.assert_no_tool_installs()
+
+    def test_failed_wasm_compile_or_generation_prevents_app_build_smoke_and_servers(self):
+        for failures in ({"cargo:build:kamoku-ui": 7}, {"wasm-bindgen:generate": 8}):
+            with self.subTest(failures=failures):
+                result = self.run_real("all", KAMOKU_TEST_FAILURES=json.dumps(failures))
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn("WASM生成に失敗", result.stderr)
+                self.assertFalse(any("kamoku-app" in event["args"] for event in self.commands("cargo")))
+                self.assertEqual(self.commands("kamoku"), [])
+                self.assertFalse(any(event["args"][0].endswith("smoke-demo.py") for event in self.commands("python3")))
+                self.assert_no_tool_installs()
 
     def test_bad_artifacts_fail_before_starting_a_server(self):
         for mode in ("missing", "invalid", "ambiguous"):
@@ -84,21 +111,49 @@ class RunRealTests(WorkflowFixture):
         self.assertEqual(self.commands("kamoku"), [])
 
     def test_build_uses_the_reported_artifact_with_a_custom_target_and_spaces(self):
+        generated = self.root / "ui/rust/pkg/kamoku_ui_bg.wasm"
+        generated.parent.mkdir(parents=True)
+        generated.write_bytes(b"stale assets must be regenerated")
         result = self.run_real("contract", CARGO_TARGET_DIR=str(self.artifact.parent.parent))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(self.commands("cargo")[0]["args"],
+        cargo = [event["args"] for event in self.commands("cargo")]
+        self.assertIn(["build", "-p", "kamoku-ui", "--target", "wasm32-unknown-unknown", "--release", "--locked"], cargo)
+        self.assertEqual(next(args for args in cargo if "kamoku-app" in args),
                          ["build", "-p", "kamoku-app", "--bin", "kamoku", "--locked", "--message-format=json-render-diagnostics"])
+        generated_events = [(i, event) for i, event in enumerate(self.events()) if event["tool"] == "wasm-bindgen" and event["args"] != ["--version"]]
+        self.assertEqual(len(generated_events), 1)
+        self.assertEqual(generated_events[0][1]["args"][0], str((self.artifact.parent.parent / "wasm32-unknown-unknown/release/kamoku_ui.wasm").resolve()))
+        app_build = next(i for i, event in enumerate(self.events()) if event["tool"] == "cargo" and "kamoku-app" in event["args"])
+        self.assertLess(generated_events[0][0], app_build)
+        self.assertEqual(generated.read_bytes(), b"\0asm\1\0\0\0")
         self.assertEqual(self.commands("kamoku")[0]["executable"], str(self.artifact))
         self.assertIn("再ビルド（既定）", result.stdout)
+        self.assertNotIn("--ui-dir", self.commands("kamoku")[0]["args"])
+        self.assert_no_tool_installs()
 
     def test_explicit_binary_does_not_build_or_require_cargo_or_python_for_contract(self):
-        (self.bin / "cargo").unlink()
-        (self.bin / "python3").unlink()
+        for tool in ("cargo", "python3", "rustup", "wasm-bindgen"):
+            (self.bin / tool).unlink()
         result = self.run_real("contract", KAMOKU_BIN=str(self.artifact))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(self.commands("cargo") + self.commands("python3"), [])
+        self.assertEqual(self.commands("cargo") + self.commands("python3") + self.commands("rustup") + self.commands("wasm-bindgen"), [])
         self.assertEqual(self.commands("kamoku")[0]["executable"], str(self.artifact))
         self.assertIn("KAMOKU_BINの指定（ビルドを省略）", result.stdout)
+        self.assertNotIn("--ui-dir", self.commands("kamoku")[0]["args"])
+
+    def test_explicit_binary_keeps_embedded_assets_without_wasm_tools_or_source_generation(self):
+        for tool in ("cargo", "rustup", "wasm-bindgen"):
+            (self.bin / tool).unlink()
+        generated = self.root / "ui/rust/pkg/kamoku_ui_bg.wasm"
+        generated.parent.mkdir(parents=True)
+        generated.write_bytes(b"source assets must not be regenerated or served")
+        result = self.run_real("all", KAMOKU_BIN=str(self.artifact))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.commands("cargo") + self.commands("rustup") + self.commands("wasm-bindgen"), [])
+        self.assertEqual(generated.read_bytes(), b"source assets must not be regenerated or served")
+        for event in self.commands("kamoku"):
+            self.assertNotIn("--ui-dir", event["args"])
+        self.assert_no_tool_installs()
 
     def test_invalid_explicit_binary_is_rejected(self):
         for binary in ("", str(self.root / "missing"), str(self.artifact.parent)):

@@ -40,6 +40,12 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           path: head
           persist-credentials: false
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - name: Generate each revision's Rust UI before embedding
+        run: |
+          (cd base && CARGO_TARGET_DIR="$RUNNER_TEMP/kamoku-ui-base" bash tools/build-rust-ui.sh)
+          (cd head && CARGO_TARGET_DIR="$RUNNER_TEMP/kamoku-ui-head" bash tools/build-rust-ui.sh)
       - name: Build one benchmark source against each revision independently
         run: |
           mkdir -p results

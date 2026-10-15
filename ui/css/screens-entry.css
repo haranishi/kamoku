@@ -133,7 +133,8 @@
 
   /* 帯が本文のいちばん下に来ても、帯と下のバー（画面の端）の間に隙間を作らない。帯の高さぶんは、帯そのものが埋める。
      --bar-bottom は下の余白（セーフエリア）を含む（tokens.css。F1 の第2回）ので、ここで足し直さない。 */
-  .main:has(> .entry-layout .entry-actions-card) {
+  /* Rust の画面ルートが間に入るため、本文の子孫にある入力レイアウトを対象にする。 */
+  .main:has(.entry-layout .entry-actions-card) {
     padding-bottom: var(--bar-bottom);
   }
 }

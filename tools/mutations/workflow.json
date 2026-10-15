@@ -1,9 +1,24 @@
 {
-  "test_cmd": ["python3", "-m", "unittest", "discover", "-s", "tools/tests", "-v"],
+  "test_cmd": [
+    "python3",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tools/tests",
+    "-v"
+  ],
   "timeout_sec": 60,
   "exclude": [
-    "target", ".git", "node_modules", ".cargo-home", ".cargo-target", "screens-out",
-    "test-results", "playwright-report", "__pycache__"
+    "target",
+    ".git",
+    "node_modules",
+    ".cargo-home",
+    ".cargo-target",
+    "screens-out",
+    "test-results",
+    "playwright-report",
+    "__pycache__"
   ],
   "mutations": [
     {
@@ -29,6 +44,12 @@
       "file": "e2e/run-real.sh",
       "find": "cargo build -p kamoku-app --bin kamoku --locked --message-format=json-render-diagnostics",
       "replace": "cargo build -p kamoku-app --bin kamoku --message-format=json-render-diagnostics"
+    },
+    {
+      "label": "WASM: 生成失敗を成功扱い",
+      "file": "e2e/run-real.sh",
+      "find": "    echo \"Rust UIのWASM生成に失敗しました。試験を開始しません。\" >&2\n    exit 1",
+      "replace": "    echo \"Rust UIのWASM生成に失敗しました。試験を開始しません。\" >&2\n    exit 0"
     }
   ]
 }

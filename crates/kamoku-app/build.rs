@@ -19,10 +19,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     // フォルダを指すと、cargo は中のファイルの変更まで見て作り直す。
     println!("cargo:rerun-if-changed={}", ui.display());
     let mut files = Vec::new();
-    if ui.is_dir() {
-        collect(&ui, &ui, &mut files)?;
-    } else {
-        println!("cargo:warning=ui/ が見つからないため、画面のファイルを埋め込みません");
+    collect(&ui, &ui, &mut files)?;
+    for asset in ["rust/pkg/kamoku_ui.js", "rust/pkg/kamoku_ui_bg.wasm"] {
+        if !files.iter().any(|(rel, _)| rel == asset) {
+            return Err(format!(
+                "Rust UI asset {asset} is missing. Run tools/build-rust-ui.sh before building kamoku-app."
+            )
+            .into());
+        }
     }
     files.sort();
     let mut out = String::from(

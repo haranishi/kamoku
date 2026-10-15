@@ -1,0 +1,2755 @@
+{
+  "schema": 1,
+  "complete": true,
+  "browser": {
+    "version": "156.0.8078.4",
+    "channel": "chromium",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    }
+  },
+  "measurement": {
+    "ordering": "alternating baseline/head; pair order reversed on each iteration",
+    "navigation_warmups": 1,
+    "input_warmups": 3,
+    "input_text": "つうし",
+    "primary_clock": "page performance.now; target DOM or input event through requestAnimationFrame then zero-delay task",
+    "observed_clock": "Node performance.now; includes Playwright IPC, actionability and polling",
+    "cache": "one browser process; new HTTP context per cold navigation; warm OS/files/server; browser-wide WASM/code caches may persist",
+    "transition": "real navigation-link click in an already loaded context",
+    "bytes": "completed ResourceTiming entries at readiness plus navigation document; transfer/encoded/decoded bytes; late/background requests may be omitted; no URLs",
+    "limits": "no CPU/network throttling; Chromium only; rendering opportunity is not actual pixel presentation or INP; insertText does not exercise IME conversion; no traces/videos/screenshots"
+  },
+  "variants": {
+    "baseline": {
+      "cold_home": {
+        "samples": 10,
+        "raw_ms": [
+          62.30000001192093,
+          61,
+          62.5,
+          63.599999994039536,
+          59.70000001788139,
+          59.69999998807907,
+          62.099999994039536,
+          60.69999998807907,
+          60.19999998807907,
+          62.5
+        ],
+        "p50_ms": 61.54999999701977,
+        "p95_ms": 63.599999994039536,
+        "observed_raw_ms": [
+          74.29200000000014,
+          72.30654199999981,
+          74.16520800000035,
+          76.02254200000016,
+          72.16079200000058,
+          72.43712500000038,
+          73.29050000000007,
+          72.76433300000008,
+          71.980458,
+          74.39083300000038
+        ],
+        "observed_p50_ms": 73.02741650000007,
+        "observed_p95_ms": 76.02254200000016,
+        "resource_samples": [
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 124,
+            "requests": 125,
+            "transfer_bytes": 947111,
+            "encoded_bytes": 909611,
+            "decoded_bytes": 909611,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          }
+        ],
+        "bytes": {
+          "transfer_bytes": {
+            "p50": 947111,
+            "p95": 947111
+          },
+          "encoded_bytes": {
+            "p50": 909611,
+            "p95": 909611
+          },
+          "decoded_bytes": {
+            "p50": 909611,
+            "p95": 909611
+          }
+        }
+      },
+      "cold_journal": {
+        "samples": 10,
+        "raw_ms": [
+          60.20000001788139,
+          60,
+          80.19999998807907,
+          63.30000001192093,
+          62.19999998807907,
+          60.599999994039536,
+          63.900000005960464,
+          62.099999994039536,
+          61.80000001192093,
+          60.80000001192093
+        ],
+        "p50_ms": 61.95000000298023,
+        "p95_ms": 80.19999998807907,
+        "observed_raw_ms": [
+          72.37904099999992,
+          73.3741670000004,
+          92.86816700000008,
+          74.01220899999998,
+          72.37529100000029,
+          71.35120800000004,
+          74.87874999999985,
+          72.90641700000015,
+          72.32424999999967,
+          71.92766599999959
+        ],
+        "observed_p50_ms": 72.64272900000003,
+        "observed_p95_ms": 92.86816700000008,
+        "resource_samples": [
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 123,
+            "requests": 124,
+            "transfer_bytes": 974616,
+            "encoded_bytes": 937416,
+            "decoded_bytes": 937416,
+            "document": {
+              "transfer_bytes": 2900,
+              "encoded_bytes": 2600,
+              "decoded_bytes": 2600
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197390,
+                "encoded_bytes": 189590,
+                "decoded_bytes": 189590
+              },
+              "javascript": {
+                "requests": 93,
+                "transfer_bytes": 728677,
+                "encoded_bytes": 700777,
+                "decoded_bytes": 700777
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          }
+        ],
+        "bytes": {
+          "transfer_bytes": {
+            "p50": 974616,
+            "p95": 974616
+          },
+          "encoded_bytes": {
+            "p50": 937416,
+            "p95": 937416
+          },
+          "decoded_bytes": {
+            "p50": 937416,
+            "p95": 937416
+          }
+        }
+      },
+      "home_to_journal": {
+        "samples": 10,
+        "raw_ms": [
+          57.19999998807907,
+          55.20000001788139,
+          57.400000005960464,
+          56.599999994039536,
+          52.900000005960464,
+          52.89999997615814,
+          56.80000001192093,
+          52.400000005960464,
+          51.5,
+          52.599999994039536
+        ],
+        "p50_ms": 54.05000001192093,
+        "p95_ms": 57.400000005960464,
+        "observed_raw_ms": [
+          88.90891600000009,
+          87.57387499999982,
+          90.04595800000016,
+          88.64212499999985,
+          84.85124999999971,
+          84.43133299999954,
+          88.24695799999972,
+          84.12075000000004,
+          83.69387499999993,
+          84.53991700000006
+        ],
+        "observed_p50_ms": 86.21256249999976,
+        "observed_p95_ms": 90.04595800000016,
+        "resource_samples": [
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 125,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          }
+        ],
+        "bytes": {
+          "transfer_bytes": {
+            "p50": 30054,
+            "p95": 30054
+          },
+          "encoded_bytes": {
+            "p50": 29754,
+            "p95": 29754
+          },
+          "decoded_bytes": {
+            "p50": 29754,
+            "p95": 29754
+          }
+        }
+      },
+      "journal_to_home": {
+        "samples": 10,
+        "raw_ms": [
+          33.30000001192093,
+          34.400000005960464,
+          34.19999998807907,
+          34.69999998807907,
+          34,
+          35.39999997615814,
+          34.5,
+          34.19999998807907,
+          34.599999994039536,
+          34.5
+        ],
+        "p50_ms": 34.45000000298023,
+        "p95_ms": 35.39999997615814,
+        "observed_raw_ms": [
+          71.01483299999995,
+          74.0143750000002,
+          70.94916699999976,
+          72.49508300000025,
+          75.50904100000025,
+          75.87062499999956,
+          72.48191700000007,
+          76.55962499999987,
+          77.28733300000022,
+          76.43070799999896
+        ],
+        "observed_p50_ms": 74.76170800000023,
+        "observed_p95_ms": 77.28733300000022,
+        "resource_samples": [
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 127,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          }
+        ],
+        "bytes": {
+          "transfer_bytes": {
+            "p50": 2549,
+            "p95": 2549
+          },
+          "encoded_bytes": {
+            "p50": 1949,
+            "p95": 1949
+          },
+          "decoded_bytes": {
+            "p50": 1949,
+            "p95": 1949
+          }
+        }
+      },
+      "inbox_input": {
+        "samples": 20,
+        "raw_ms": [
+          7.699999988079071,
+          8.700000017881393,
+          8.100000023841858,
+          9.800000011920929,
+          7.700000017881393,
+          9,
+          7.799999982118607,
+          11.099999994039536,
+          9.099999994039536,
+          8.100000023841858,
+          7.200000017881393,
+          7,
+          7.899999976158142,
+          7.699999988079071,
+          7.5,
+          12.300000011920929,
+          7.800000011920929,
+          10.900000005960464,
+          7.5999999940395355,
+          12.800000011920929
+        ],
+        "p50_ms": 8,
+        "p95_ms": 12.300000011920929,
+        "observed_raw_ms": [
+          12.437540999999328,
+          26.591166999998677,
+          12.76879100000042,
+          26.9094159999986,
+          12.278667000000496,
+          27.170207999999548,
+          12.134833000000071,
+          28.84625000000051,
+          14.196791999998823,
+          17.796166000000085,
+          11.933582999999999,
+          11.284999999999854,
+          11.558000000000902,
+          11.392292000000452,
+          12.29516700000022,
+          30.041666999999507,
+          12.652541999999812,
+          28.24170800000138,
+          12.086458000001585,
+          30.977499999999054
+        ],
+        "observed_p50_ms": 12.710666500000116,
+        "observed_p95_ms": 30.041666999999507
+      }
+    },
+    "head": {
+      "cold_home": {
+        "samples": 10,
+        "raw_ms": [
+          58.80000001192093,
+          57,
+          60.5,
+          59,
+          56.19999998807907,
+          60.099999994039536,
+          56.29999998211861,
+          60.5,
+          57,
+          58.5
+        ],
+        "p50_ms": 58.650000005960464,
+        "p95_ms": 60.5,
+        "observed_raw_ms": [
+          75.03449999999998,
+          71.71399999999994,
+          74.8349589999998,
+          72.0537089999998,
+          70.97008399999959,
+          72.14300000000003,
+          72.07216599999992,
+          75.47095799999988,
+          72.08845800000017,
+          73.4740839999995
+        ],
+        "observed_p50_ms": 72.1157290000001,
+        "observed_p95_ms": 75.47095799999988,
+        "resource_samples": [
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          },
+          {
+            "resource_entries": 34,
+            "requests": 35,
+            "transfer_bytes": 2972684,
+            "encoded_bytes": 2962184,
+            "decoded_bytes": 2962184,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 5,
+                "transfer_bytes": 18144,
+                "encoded_bytes": 16644,
+                "decoded_bytes": 16644
+              }
+            }
+          }
+        ],
+        "bytes": {
+          "transfer_bytes": {
+            "p50": 2972684,
+            "p95": 2972684
+          },
+          "encoded_bytes": {
+            "p50": 2962184,
+            "p95": 2962184
+          },
+          "decoded_bytes": {
+            "p50": 2962184,
+            "p95": 2962184
+          }
+        }
+      },
+      "cold_journal": {
+        "samples": 10,
+        "raw_ms": [
+          62.20000001788139,
+          60.19999998807907,
+          61.599999994039536,
+          57.89999997615814,
+          60.69999998807907,
+          60.60000002384186,
+          58.80000001192093,
+          59.30000001192093,
+          58.80000001192093,
+          60.099999994039536
+        ],
+        "p50_ms": 60.1499999910593,
+        "p95_ms": 62.20000001788139,
+        "observed_raw_ms": [
+          74.51091700000006,
+          71.89720800000032,
+          73.4147909999997,
+          70.90545899999961,
+          72.65637499999957,
+          72.20091600000069,
+          71.3222080000005,
+          71.83612499999981,
+          72.3300419999996,
+          72.4210409999996
+        ],
+        "observed_p50_ms": 72.26547900000014,
+        "observed_p95_ms": 74.51091700000006,
+        "resource_samples": [
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          },
+          {
+            "resource_entries": 33,
+            "requests": 34,
+            "transfer_bytes": 3000189,
+            "encoded_bytes": 2989989,
+            "decoded_bytes": 2989989,
+            "document": {
+              "transfer_bytes": 2891,
+              "encoded_bytes": 2591,
+              "decoded_bytes": 2591
+            },
+            "by_type": {
+              "css": {
+                "requests": 26,
+                "transfer_bytes": 197851,
+                "encoded_bytes": 190051,
+                "decoded_bytes": 190051
+              },
+              "javascript": {
+                "requests": 2,
+                "transfer_bytes": 67362,
+                "encoded_bytes": 66762,
+                "decoded_bytes": 66762
+              },
+              "wasm": {
+                "requests": 1,
+                "transfer_bytes": 2686436,
+                "encoded_bytes": 2686136,
+                "decoded_bytes": 2686136
+              },
+              "api": {
+                "requests": 4,
+                "transfer_bytes": 45649,
+                "encoded_bytes": 44449,
+                "decoded_bytes": 44449
+              }
+            }
+          }
+        ],
+        "bytes": {
+          "transfer_bytes": {
+            "p50": 3000189,
+            "p95": 3000189
+          },
+          "encoded_bytes": {
+            "p50": 2989989,
+            "p95": 2989989
+          },
+          "decoded_bytes": {
+            "p50": 2989989,
+            "p95": 2989989
+          }
+        }
+      },
+      "home_to_journal": {
+        "samples": 10,
+        "raw_ms": [
+          50.400000005960464,
+          55.69999998807907,
+          48.900000005960464,
+          52.80000001192093,
+          51.099999994039536,
+          49.599999994039536,
+          50.099999994039536,
+          50.599999994039536,
+          52.79999998211861,
+          50.80000001192093
+        ],
+        "p50_ms": 50.70000000298023,
+        "p95_ms": 55.69999998807907,
+        "observed_raw_ms": [
+          83.83770800000002,
+          89.17370900000014,
+          82.74499999999989,
+          86.33462499999996,
+          83.06174999999985,
+          84.04154199999994,
+          82.67779200000041,
+          83.57779100000062,
+          85.99070799999936,
+          84.59991699999955
+        ],
+        "observed_p50_ms": 83.93962499999998,
+        "observed_p95_ms": 89.17370900000014,
+        "resource_samples": [
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          },
+          {
+            "resource_entries": 35,
+            "requests": 1,
+            "transfer_bytes": 30054,
+            "encoded_bytes": 29754,
+            "decoded_bytes": 29754,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 1,
+                "transfer_bytes": 30054,
+                "encoded_bytes": 29754,
+                "decoded_bytes": 29754
+              }
+            }
+          }
+        ],
+        "bytes": {
+          "transfer_bytes": {
+            "p50": 30054,
+            "p95": 30054
+          },
+          "encoded_bytes": {
+            "p50": 29754,
+            "p95": 29754
+          },
+          "decoded_bytes": {
+            "p50": 29754,
+            "p95": 29754
+          }
+        }
+      },
+      "journal_to_home": {
+        "samples": 10,
+        "raw_ms": [
+          32.69999998807907,
+          33.5,
+          33.900000005960464,
+          33.5,
+          32.70000001788139,
+          32.80000001192093,
+          33.89999997615814,
+          33.599999994039536,
+          33.70000001788139,
+          33.19999998807907
+        ],
+        "p50_ms": 33.5,
+        "p95_ms": 33.900000005960464,
+        "observed_raw_ms": [
+          76.31716700000015,
+          72.46437500000002,
+          80.00162499999988,
+          76.47054200000002,
+          78.31866600000012,
+          78.96854100000019,
+          80.10050000000047,
+          78.6591669999998,
+          76.89370899999994,
+          76.105458
+        ],
+        "observed_p50_ms": 77.60618750000003,
+        "observed_p95_ms": 80.10050000000047,
+        "resource_samples": [
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          },
+          {
+            "resource_entries": 37,
+            "requests": 2,
+            "transfer_bytes": 2549,
+            "encoded_bytes": 1949,
+            "decoded_bytes": 1949,
+            "document": {
+              "transfer_bytes": 0,
+              "encoded_bytes": 0,
+              "decoded_bytes": 0
+            },
+            "by_type": {
+              "api": {
+                "requests": 2,
+                "transfer_bytes": 2549,
+                "encoded_bytes": 1949,
+                "decoded_bytes": 1949
+              }
+            }
+          }
+        ],
+        "bytes": {
+          "transfer_bytes": {
+            "p50": 2549,
+            "p95": 2549
+          },
+          "encoded_bytes": {
+            "p50": 1949,
+            "p95": 1949
+          },
+          "decoded_bytes": {
+            "p50": 1949,
+            "p95": 1949
+          }
+        }
+      },
+      "inbox_input": {
+        "samples": 20,
+        "raw_ms": [
+          7.0999999940395355,
+          7.0999999940395355,
+          10.599999994039536,
+          7.199999988079071,
+          7.199999988079071,
+          6.699999988079071,
+          10,
+          7.0999999940395355,
+          9.699999988079071,
+          8,
+          11.599999994039536,
+          6.5999999940395355,
+          6.300000011920929,
+          6.299999982118607,
+          9.399999976158142,
+          7.5,
+          8.099999994039536,
+          6.5999999940395355,
+          10,
+          6.399999976158142
+        ],
+        "p50_ms": 7.199999988079071,
+        "p95_ms": 10.599999994039536,
+        "observed_raw_ms": [
+          12.434417000000394,
+          12.123999999999796,
+          27.87212499999987,
+          12.069166999999652,
+          11.41424999999981,
+          12.164084000000003,
+          26.579749999998967,
+          12.019249999999374,
+          27.670874999999796,
+          12.76745800000026,
+          28.98962499999834,
+          11.226415999999517,
+          10.95824999999968,
+          10.702374999998938,
+          26.436500000001615,
+          12.874416999999085,
+          24.534084000000803,
+          11.569791999998415,
+          27.097625000000335,
+          11.207000000000335
+        ],
+        "observed_p50_ms": 12.299250500000198,
+        "observed_p95_ms": 27.87212499999987
+      }
+    }
+  },
+  "comparison": {
+    "cold_home": {
+      "p50_ratio_head_over_baseline": 0.95288383442405,
+      "p95_ratio_head_over_baseline": 0.9512578617243701
+    },
+    "cold_journal": {
+      "p50_ratio_head_over_baseline": 0.9709443097363303,
+      "p95_ratio_head_over_baseline": 0.7755610975950973
+    },
+    "home_to_journal": {
+      "p50_ratio_head_over_baseline": 0.938020351374619,
+      "p95_ratio_head_over_baseline": 0.9703832749528769
+    },
+    "journal_to_home": {
+      "p50_ratio_head_over_baseline": 0.9724238025283585,
+      "p95_ratio_head_over_baseline": 0.9576271194574032
+    },
+    "inbox_input": {
+      "p50_ratio_head_over_baseline": 0.8999999985098839,
+      "p95_ratio_head_over_baseline": 0.861788616566359
+    }
+  },
+  "fixture": {
+    "entries": 205,
+    "events": 208,
+    "initial_drafts": 25,
+    "benchmark_drafts": 200
+  },
+  "provenance": {
+    "baseline": {
+      "sha256": "50fd66f4c3db96f30a1dc7cdb8ad456c90cc803b97315fcf7ad7fc18953b079a",
+      "bytes": 5350144,
+      "revision": "9ad343060b821b9d9789c10766664c8689893120"
+    },
+    "head": {
+      "sha256": "ac2e6a35413d1f418a2722393352508e03ffb807d6ce819132eb51a32e77feb5",
+      "bytes": 7412240,
+      "revision": "c857db305b22679027403a4a4c8a111a7ff09df3"
+    },
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.3",
+    "ui_source": "embedded production assets; no ui-dir override",
+    "harness": {
+      "python_sha256": "2f67a0d130e021425bb5197036e483cf570bc222a6545ad8982e83d722e94172",
+      "browser_sha256": "69cab755f996bede9acf82551074b5247cf932dc62cc5a9a6e7dd709f932318a"
+    }
+  }
+}

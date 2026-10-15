@@ -11,7 +11,8 @@
 | 保存層（Rust） | SQLite、追記専用、起動時の検証、下書きの確定、別の接続との競合 | `cargo test -p kamoku-store --locked` |
 | サーバー（Rust） | 実際のソケットでAPIを通す。入口の守り、失敗の形、上限、外へ通信しないこと | `cargo test -p kamoku-app --locked` |
 | 別実装の照合 | 台帳のハッシュを、Pythonで計算し直して比べる | `python3 tools/verify-ledger-golden.py` |
-| 画面の単体試験 | 金額の式、日付、IMEの判定、絞り込み、帳票の親子、取込の列 | `node --test ui/tests/` |
+| 画面の単体試験（Rust） | 金額の式、日付、IMEの判定、絞り込み、帳票の親子、取込の列 | `cargo test -p kamoku-ui --locked` |
+| 検査器の試験（Node） | Rust/HTML/CSSの禁止事項を見つけ、許可した記法を通す | `node --test ui/tests/` |
 | 画面の静的検査 | 色の組のコントラスト（AC-11.2）と、禁止事項の文字列 | `node ui/dev/check-contrast.mjs`、`node ui/dev/check-policy.mjs` |
 | スモーク | 実際のバイナリを起動して、入口・貸借の一致・書き出し・巨大な要求への耐性を外から見る | `e2e/run-real.sh` の最初の段階 |
 | ブラウザの通し試験 | 本物のサーバーを相手に、キーボードだけの流れまで通す | `e2e/run-real.sh flows` |
@@ -38,7 +39,8 @@ PRごとに、次のジョブが流れます（`.github/workflows/ci.yml`）。
 - 試験（Linux と macOS）: 書式、clippy、全試験、文書の警告
 - 最小のRustバージョン（1.88）、依存のライセンスと脆弱性（cargo deny）、ライセンス表示（REUSE）
 - 文書のリンクと行数、台帳の固定値の別計算、受け入れ条件の対応
-- 画面の単体試験と静的検査
+- Rust/WASMの1.88検査、clippy、生成物の作成。生成物を使って本体をビルド
+- 画面の純ロジック試験、検査器の試験と静的検査
 - 本物のサーバーでの通し試験: バイナリのビルド、スモーク、ブラウザの通し試験、契約試験、スクリーンショット
 - 秘密情報の走査（gitleaks）
 

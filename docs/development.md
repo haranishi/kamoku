@@ -5,7 +5,8 @@
 ## 必要なもの
 
 - Rust 1.88以上と、Cのコンパイラ（[使い方](getting-started.md)）
-- Node 24（画面の単体試験と、ブラウザの通し試験）
+- WASMターゲットと wasm-bindgen-cli 0.2.129（[画面のビルド](rust-ui.md)）
+- Node 24（検査器の試験と、ブラウザの通し試験）
 - Python 3（`tools/` の点検の道具。標準ライブラリだけで動きます）
 - PR前の完全検証には `cargo-deny`、Rust 1.88、`uvx` と準備済みの `reuse` も必要です（[試験の実行手順](testing-procedure.md)）。
 
@@ -19,7 +20,8 @@
 | `crates/kamoku-import` | 明細CSVの読み取り（文字コード、列の対応、指紋）。入出力を持たない |
 | `crates/kamoku-store` | SQLiteへの保存、起動時の検証、下書きと確定 |
 | `crates/kamoku-app` | 手元のサーバーとコマンド（`kamoku`）。HTTPの受け口は標準ライブラリだけ |
-| `ui/` | 通常の画面は素のJavaScriptでビルド不要。任意の[Rustプレビュー](rust-ui-preview.md)も置く（[ui/README.md](../ui/README.md)） |
+| `crates/kamoku-ui` | Rust/WASMの全画面、入力、通信、キー操作、通知 |
+| `ui/` | HTML/CSS、最小ローダー、WASM生成先、開発用の検査器（[ui/README.md](../ui/README.md)） |
 | `e2e/` | ブラウザを動かす通し試験（Playwright。開発専用） |
 | `tools/` | 点検の道具（[tools/README.md](../tools/README.md)） |
 | `docs/` | 設計と仕様。`docs/spec/` が、画面とサーバーの約束です |
@@ -29,13 +31,14 @@
 
 ## 動かす
 
-```
+```sh
+bash tools/build-rust-ui.sh
 cargo run -p kamoku-app -- demo --ui-dir ui
 ```
 
-`--ui-dir ui` を付けると、画面のファイルをディスクから読みます。`ui/` の下を直して、ブラウザを再読込するだけで確かめられます（付けないと、ビルド時に埋め込んだ版を使います）。サーバーなしで画面だけ見たいときは、模擬サーバー（`node ui/dev/mock-server.mjs`）があります。
+`--ui-dir ui` を付けると、画面のファイルをディスクから読みます。HTML/CSSは編集後の再読込で、Rustの画面はWASMを再生成してから再読込すると確かめられます（付けないと、ビルド時に埋め込んだ版を使います）。サーバーなしで画面だけ見たいときは、模擬サーバー（`node ui/dev/mock-server.mjs`）があります。
 
-Rustで書く画面の最初の範囲は、別経路の仕訳帳です。[ビルドと専用試験](rust-ui-preview.md)は通常の画面と分けています。
+全画面のソースはRustです。[ビルドと構成](rust-ui.md)、移行初期の[別経路の仕訳帳](rust-ui-preview.md)も参照してください。
 
 ## 試験を通す
 
@@ -46,9 +49,9 @@ tools/check-all.sh           # 書式、clippy、試験、文書、依存、ラ�
 e2e/run-real.sh              # ビルド、スモーク、操作、契約試験、スクリーンショット
 ```
 
-`run-real.sh` はRustサーバーをビルドし、段階ごとに新しく起動します。前の段階のものを止めてから次へ進みます（127.0.0.1 のCookieはポートが違っても共有されるため）。`flows` `contract` `screens` を渡すと、その段階だけ流します。依存とブラウザの準備、変更別のコマンド、失敗時の記録は[試験の実行手順](testing-procedure.md)にあります。
+`run-real.sh` はWASMを生成してからRustサーバーをビルドし、段階ごとに新しく起動します。前の段階のものを止めてから次へ進みます（127.0.0.1 のCookieはポートが違っても共有されるため）。`flows` `contract` `screens` を渡すと、その段階だけ流します。依存とブラウザの準備、変更別のコマンド、失敗時の記録は[試験の実行手順](testing-procedure.md)にあります。
 
-`tools/check-all.sh --quick` は、依存の検査と最小のRustの確認を省き、結果にも省略を明記します。個別に流すなら、`cargo test -p kamoku-books --locked`、`node --test ui/tests/` のように、対象だけを指定します。
+`tools/check-all.sh --quick` は、依存の検査と最小のRustの確認を省き、結果にも省略を明記します。個別に流すなら、`cargo test -p kamoku-books --locked`、`cargo test -p kamoku-ui --locked` のように、対象だけを指定します。
 
 ## 試験が「門番」として働くかを確かめる
 

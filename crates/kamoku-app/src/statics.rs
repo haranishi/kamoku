@@ -67,6 +67,18 @@ mod tests {
                     || name.ends_with("README.md")
                     || name.ends_with("package.json"))
         );
+        for path in [
+            "index.html",
+            "boot.js",
+            "rust/pkg/kamoku_ui.js",
+            "rust/pkg/kamoku_ui_bg.wasm",
+        ] {
+            assert!(
+                UI_FILES.iter().any(|(name, _, _)| *name == path),
+                "missing {path}"
+            );
+        }
+        assert!(!UI_FILES.iter().any(|(name, _, _)| name.starts_with("js/")));
     }
 
     #[test]
@@ -81,6 +93,11 @@ mod tests {
             "/README.md",
             "/.git/config",
             "/js\\main.js",
+            "/js/main.js",
+            "/js/components/fields.js",
+            "/rust/pkg/README.md",
+            "/css/../boot.js",
+            "/rust/pkg/other.js",
             "/%00",
         ] {
             assert!(lookup(&Statics::Embedded, path).is_none(), "{path}");
@@ -100,8 +117,8 @@ mod tests {
         assert!(lookup(&statics, "/%2e%2e/secret.txt").is_none());
         #[cfg(unix)]
         {
-            std::os::unix::fs::symlink(dir.path().join("secret.txt"), ui.join("link.txt")).unwrap();
-            assert!(lookup(&statics, "/link.txt").is_none());
+            std::os::unix::fs::symlink(dir.path().join("secret.txt"), ui.join("boot.js")).unwrap();
+            assert!(lookup(&statics, "/boot.js").is_none());
         }
     }
 
@@ -127,24 +144,27 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let ui = dir.path().join("ui");
         std::fs::create_dir_all(ui.join("dev")).unwrap();
+        std::fs::create_dir_all(ui.join("rust")).unwrap();
+        std::fs::create_dir_all(ui.join("css")).unwrap();
         std::fs::write(ui.join("index.html"), b"<p>ok</p>").unwrap();
         std::fs::write(ui.join("dev/mock-server.mjs"), b"mock").unwrap();
         std::fs::write(ui.join(".env"), b"secret").unwrap();
         std::fs::write(ui.join("README.md"), b"readme").unwrap();
-        symlink(ui.join("dev/mock-server.mjs"), ui.join("app.js")).unwrap();
-        symlink(ui.join(".env"), ui.join("settings.json")).unwrap();
-        symlink(ui.join("README.md"), ui.join("notes.txt")).unwrap();
-        symlink(ui.join("dev"), ui.join("lib")).unwrap();
-        symlink(ui.join("index.html"), ui.join("home.html")).unwrap();
+        symlink(ui.join("dev/mock-server.mjs"), ui.join("boot.js")).unwrap();
+        symlink(ui.join(".env"), ui.join("rust/index.html")).unwrap();
+        symlink(ui.join("README.md"), ui.join("css/notes.css")).unwrap();
+        symlink(ui.join("dev"), ui.join("rust/pkg")).unwrap();
+        std::fs::write(ui.join("css/tokens.css"), b":root{}").unwrap();
+        symlink(ui.join("css/tokens.css"), ui.join("css/alias.css")).unwrap();
         let statics = Statics::Dir(ui.canonicalize().unwrap());
         for path in [
-            "/app.js",
-            "/settings.json",
-            "/notes.txt",
-            "/lib/mock-server.mjs",
+            "/boot.js",
+            "/rust/index.html",
+            "/css/notes.css",
+            "/rust/pkg/kamoku_ui.js",
         ] {
             assert!(lookup(&statics, path).is_none(), "{path}");
         }
-        assert_eq!(lookup(&statics, "/home.html").unwrap().1, b"<p>ok</p>");
+        assert_eq!(lookup(&statics, "/css/alias.css").unwrap().1, b":root{}");
     }
 }

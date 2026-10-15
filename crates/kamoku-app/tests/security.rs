@@ -224,7 +224,7 @@ fn security_headers_on_every_response() {
             &[("Content-Type", "application/json")],
             b"{}",
         ),
-        c.get("/js/main.js"),
+        c.get("/boot.js"),
         c.get("/no-such-file.js"),
         raw(s.port, b"BROKEN\r\n\r\n"),
         raw(

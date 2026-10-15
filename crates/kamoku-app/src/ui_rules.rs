@@ -5,22 +5,37 @@
 // build.rs からも include! で読むので、依存を持たない関数だけを置き、内側の属性や `//!` は書かない。
 // 埋め込み（build.rs）とディスクから読む `--ui-dir` で、同じ決まりを使うため。
 
-/// 中へ降りてよいフォルダか。試験・開発の道具・依存の置き場所・隠しフォルダは配らない。
+/// 配信するアセットのフォルダだけをたどる。
 pub(crate) fn ui_dir_allowed(name: &str) -> bool {
-    !(name.is_empty() || name.starts_with('.') || matches!(name, "tests" | "dev" | "node_modules"))
+    matches!(name, "css" | "rust" | "pkg")
 }
 
 /// 配ってよいファイルか（`ui/` からの相対パス。区切りは `/`）。
-/// `..` や空の区切り、隠しファイル、README.md と package.json は断る。
+/// Rustの生成物、最小のローダー、HTML、CSS、アイコンだけを配る。
+#[allow(
+    clippy::case_sensitive_file_extension_comparisons,
+    reason = "The asset allowlist deliberately requires the exact lowercase CSS extension"
+)]
 pub(crate) fn ui_path_allowed(rel: &str) -> bool {
-    let mut parts: Vec<&str> = rel.split('/').collect();
-    let Some(file) = parts.pop() else {
-        return false;
-    };
-    if file.is_empty() || file.starts_with('.') || matches!(file, "README.md" | "package.json") {
-        return false;
+    if matches!(
+        rel,
+        "index.html"
+            | "favicon.svg"
+            | "boot.js"
+            | "rust/index.html"
+            | "rust/boot.js"
+            | "rust/preview.css"
+            | "rust/pkg/kamoku_ui.js"
+            | "rust/pkg/kamoku_ui_bg.wasm"
+    ) {
+        return true;
     }
-    parts.iter().all(|dir| *dir != ".." && ui_dir_allowed(dir))
+    rel.split('/')
+        .all(|part| !part.is_empty() && !part.starts_with('.'))
+        && rel.split('/').next().is_some_and(ui_dir_allowed)
+        && rel.strip_prefix("css/").is_some_and(|file| {
+            file.ends_with(".css") && !file.starts_with('.') && !file.contains('/')
+        })
 }
 
 /// 拡張子ごとの `Content-Type`。知らない拡張子は、ブラウザに解釈させない種類にする。

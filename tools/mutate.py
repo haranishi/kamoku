@@ -33,10 +33,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 # 作業用の場所へ写さないもの。ほかの担当が同時に書き換える生成物や、Rustの試験に要らない
-# 画面と通し試験の場所を除く。画面のファイルを変異させる仕様は、"exclude" で上書きする。
+# 通し試験の場所を除く。ui/の生成済みWASMは本体の埋め込みに必要なので残す。
 EXCLUDES = (
     "target", ".git", "node_modules", ".cargo-home", ".cargo-target", "screens-out",
-    "test-results", "playwright-report", "e2e", "ui",
+    "test-results", "playwright-report", "e2e",
 )
 
 
