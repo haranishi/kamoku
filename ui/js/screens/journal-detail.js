@@ -8,85 +8,18 @@ import { h, replace } from '../dom.js';
 import { icon } from '../icons.js';
 import { isTypingTarget } from '../keys.js';
 import { shouldIgnoreKey } from '../ime.js';
-import { formatYen, formatDate, formatDateTime, shortHash } from '../format.js';
-import { TAX_LABELS } from '../account-defaults.js';
+import { formatYen, formatDate } from '../format.js';
 import { openDrawer } from '../components/drawer.js';
 import { openModal } from '../components/dialog.js';
 import { field, button } from '../components/fields.js';
-import { previewTable } from './entry-preview.js';
+import { money, emptyValue } from '../components/money.js';
+import { stateBadge, detailLines, historyList, latestChange } from './journal-detail-parts.js';
+import { phrase } from '../components/phrase.js';
+import { lockedDetailNote } from './entry-hints.js';
+
+export { stateBadge };
 
 const KIND = { expense: '支出', income: '収入', transfer: '振替', journal: '仕訳の形', opening: '期首残高' };
-// 履歴の種類の名前は仕様で決まっていない（spec-issues.md の1）。台帳の名前と、別の書き方の両方を読む。
-const EVENT = {
-  posted: ['登録', 'plus'],
-  create: ['登録', 'plus'],
-  created: ['登録', 'plus'],
-  revised: ['訂正', 'edit'],
-  correct: ['訂正', 'edit'],
-  corrected: ['訂正', 'edit'],
-  voided: ['取消', 'ban'],
-  void: ['取消', 'ban'],
-};
-
-/** 状態の札（文字と記号。色だけに頼らない）。 */
-export function stateBadge(e) {
-  if (e.state === 'voided') return h('span', { class: 'badge badge--danger' }, icon('ban'), '取消済み');
-  if (e.revision > 1) return h('span', { class: 'badge badge--warn' }, icon('edit'), `訂正 第${e.revision}版`);
-  // 有効な行は数が多いので、札にせず文字だけにする（取消済みと訂正が目に入りやすいように）。
-  return h('span', { class: 'state-plain' }, '有効');
-}
-
-function linesTable(lines) {
-  return h(
-    'div',
-    { class: 'table-wrap' },
-    h(
-      'table',
-      { class: 'table table--stack detail-lines' },
-      h('caption', null, '明細'),
-      h('thead', null, h('tr', null, ['借方・貸方', '科目', '金額', '税区分', '税額', 'メモ'].map((t, i) => h('th', { scope: 'col', class: i === 2 || i === 4 ? 'num' : null }, t)))),
-      h(
-        'tbody',
-        null,
-        lines.map((l) =>
-          h(
-            'tr',
-            null,
-            h('td', { 'data-label': '借方・貸方' }, l.side === 'debit' ? '借方' : '貸方'),
-            h('td', { 'data-label': '科目' }, l.account_name || l.account),
-            h('td', { class: 'num', 'data-label': '金額' }, formatYen(l.amount)),
-            h('td', { 'data-label': '税区分' }, l.tax_code ? TAX_LABELS[l.tax_code] || l.tax_code : '対象外'),
-            h('td', { class: 'num', 'data-label': '税額' }, l.tax_amount ? formatYen(l.tax_amount) : '—'),
-            h('td', { class: 'wrap', 'data-label': 'メモ' }, l.memo || null),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-function historyList(history) {
-  return h(
-    'ol',
-    { class: 'timeline' },
-    history.map((ev) => {
-      const [label, iconName] = EVENT[ev.kind] || [ev.kind, 'clock'];
-      return h(
-        'li',
-        { class: ['timeline-item', `timeline-item--${iconName}`] },
-        h('span', { class: 'timeline-icon' }, icon(iconName, { size: 16 })),
-        h(
-          'div',
-          { class: 'timeline-body' },
-          h('p', { class: 'timeline-title' }, h('strong', null, label), ` 第${ev.revision}版`, h('span', { class: 'muted small' }, `　${formatDateTime(ev.recorded_at)}`)),
-          ev.reason ? h('p', null, `理由: ${ev.reason}`) : null,
-          h('p', { class: 'muted small' }, '記録のハッシュ ', h('code', { class: 'mono', title: ev.hash }, shortHash(ev.hash)), `（${ev.seq}番目の記録）`),
-          ev.lines ? h('details', { class: 'timeline-lines' }, h('summary', null, 'この版の明細'), previewTable(ev.lines, `第${ev.revision}版の明細`)) : null,
-        ),
-      );
-    }),
-  );
-}
 
 /**
  * 取消のダイアログ。理由（必須）と赤系の確認ボタン。取り消せたら、新しい仕訳の表現を返す（やめたら null）。
@@ -97,13 +30,18 @@ export function openVoidDialog({ ctx, entry }) {
     let current = entry;
     let result = null;
     const reasonIn = h('textarea', { class: 'textarea', rows: 3, maxlength: 200, placeholder: '例: 二重に登録したため' });
-    const reasonF = field({ label: '取消の理由', control: reasonIn, required: true, hint: '履歴に残ります。' });
+    const reasonF = field({ label: '取消の理由', control: reasonIn, required: true, hint: phrase('履歴に残ります。') });
     const summary = h('p');
     const paint = () => {
-      summary.textContent = `No.${current.no}（${formatDate(current.date)}・${current.description || '摘要なし'}・${formatYen(current.total)}円）を取り消します。取り消した仕訳は帳票の集計から外れ、記録は履歴に残ります。`;
+      summary.replaceChildren(
+        `No.${current.no}（${formatDate(current.date)}・${current.description || '摘要なし'}・${formatYen(current.total)}円）を取り消します。`,
+        phrase('取り消すと、元に戻せません。取り消した仕訳は帳票の集計から外れ、記録は履歴に残ります。'),
+      );
     };
     paint();
+    let sending = false;
     const submit = async (c) => {
+      if (sending) return;
       const reason = reasonIn.value.trim();
       if (!reason) {
         reasonF.setError('取消の理由を入れてください。');
@@ -112,6 +50,7 @@ export function openVoidDialog({ ctx, entry }) {
       }
       reasonF.setError('');
       c.setError('');
+      sending = true;
       c.setBusy(true);
       try {
         result = await ctx.api.post(`/entries/${current.id}/void`, { reason, expected_revision: current.revision });
@@ -136,6 +75,8 @@ export function openVoidDialog({ ctx, entry }) {
         } else {
           c.setError(err.message);
         }
+      } finally {
+        sending = false;
       }
     };
     openModal({
@@ -143,7 +84,8 @@ export function openVoidDialog({ ctx, entry }) {
       body: h('div', { class: 'stack' }, summary, reasonF.el),
       actions: [
         { label: 'やめる', onClick: (c) => c.close('cancel') },
-        { label: '取り消す', variant: 'danger', onClick: submit },
+        // 登録・訂正と同じく、Ctrl/Cmd+Enter で取り消す（理由の欄は複数行なので、Enterだけでは改行になる）。
+        { label: '取り消す', variant: 'danger', modEnter: true, onClick: submit },
       ],
       onClose: () => resolve(result),
     });
@@ -152,26 +94,31 @@ export function openVoidDialog({ ctx, entry }) {
 
 /**
  * 詳細の引き出しを開く。
- * @param {{ ctx: any, id: string, onClose: () => void, onChanged: () => void }} opts
+ * @param {{ ctx: any, id: string, onClose: (how: string) => void, onChanged: () => void, editHash?: () => string }} opts
+ *   editHash: 「訂正する」で移る先のアドレス（訂正の後に詳細を閉じたときの戻り先を、アドレスに持たせるため）
  * @returns {{ close: () => void, id: string }}
  */
 export function openEntryDrawer(opts) {
   const { ctx, id } = opts;
   let entry = null;
+  // 設定の締めた日（locked_until）。締めた日以前の仕訳は、訂正も取消もできない。
+  let lockedUntil = null;
   const content = h('div', { class: 'detail' }, h('p', { class: 'muted' }, '読み込んでいます…'));
   const badgeHost = h('div');
   const drawer = openDrawer({ title: '仕訳の詳細', body: content, labelExtra: badgeHost, onClose: opts.onClose });
 
+  // 取り消すは戻せない操作なので、朱の枠のボタンにして、訂正すると見た目を分ける。
   const editBtn = button({ label: '訂正する', iconName: 'edit', kbd: 'e', onClick: () => edit() });
-  const voidBtn = button({ label: '取り消す', iconName: 'ban', kbd: 'v', onClick: () => doVoid() });
+  const voidBtn = button({ label: '取り消す', iconName: 'ban', kbd: 'v', className: 'btn-void', onClick: () => doVoid() });
   const note = h('p', { class: 'field-hint', id: 'detail-note' });
 
   const isOpening = () => Boolean(entry && entry.meta && entry.meta.kind === 'opening');
 
   function edit() {
     if (!entry || editBtn.disabled || isOpening()) return;
+    const hash = opts.editHash ? opts.editHash() : `#/entry/${entry.id}`;
     drawer.close('edit');
-    ctx.navigate(`#/entry/${entry.id}`);
+    ctx.navigate(hash);
   }
 
   async function doVoid() {
@@ -179,7 +126,12 @@ export function openEntryDrawer(opts) {
     const res = await openVoidDialog({ ctx, entry });
     if (res) {
       opts.onChanged();
-      load();
+      await load();
+      // 中身を作り直すと、押したボタン（いまは止めてある）からフォーカスが外れる。板の題名へ置き、読み上げを題名から始める。
+      if (drawer.el.isConnected && !drawer.el.contains(document.activeElement)) {
+        const title = drawer.el.querySelector('h2[tabindex]');
+        if (title) title.focus({ preventScroll: true });
+      }
     }
   }
 
@@ -188,39 +140,51 @@ export function openEntryDrawer(opts) {
     badgeHost.replaceChildren(stateBadge(entry));
     const ro = ctx.state.isReadOnly();
     const voided = entry.state === 'voided';
-    editBtn.disabled = ro || voided;
-    voidBtn.disabled = ro || voided;
-    note.textContent = ro ? ctx.state.readOnlyReason() : voided ? '取消済みの仕訳は、訂正も取消もできません。' : '';
+    const lockedNote = lockedDetailNote(entry.date, lockedUntil);
+    editBtn.disabled = ro || voided || Boolean(lockedNote);
+    voidBtn.disabled = ro || voided || Boolean(lockedNote);
+    note.textContent = ro ? ctx.state.readOnlyReason() : voided ? '取消済みの仕訳は、訂正も取消もできません。' : lockedNote;
     for (const b of [editBtn, voidBtn]) {
       if (note.textContent) b.setAttribute('aria-describedby', 'detail-note');
       else b.removeAttribute('aria-describedby');
     }
     const memo = entry.input && entry.input.memo;
-    replace(content, 
+    // 並び: 金額（大きく）と事実 → 最新の訂正 → 操作 → 明細 → 履歴。第2版の訂正と、訂正・取消の操作が、最初の1画面に入るように。
+    replace(content,
+      h('p', { class: 'detail-total' }, h('span', { class: 'detail-total-label' }, '金額'), money(entry.total)),
       h(
         'dl',
         { class: 'detail-facts' },
         h('div', null, h('dt', null, '日付'), h('dd', null, formatDate(entry.date))),
         h('div', null, h('dt', null, '種別'), h('dd', null, KIND[entry.kind] || entry.kind)),
-        h('div', null, h('dt', null, '摘要'), h('dd', null, entry.description || '（なし）')),
-        h('div', null, h('dt', null, '取引先'), h('dd', null, entry.partner || '（なし）')),
-        h('div', null, h('dt', null, '金額'), h('dd', { class: 'num' }, `${formatYen(entry.total)}円`)),
+        h('div', null, h('dt', null, '摘要'), h('dd', null, entry.description || emptyValue())),
+        h('div', null, h('dt', null, '取引先'), h('dd', null, entry.partner ? h('span', { class: 'keep' }, entry.partner) : emptyValue())),
         memo ? h('div', null, h('dt', null, 'メモ'), h('dd', null, memo)) : null,
       ),
-      linesTable(entry.lines),
-      voided ? h('p', { class: 'small muted' }, '取消済みの仕訳は、最後に有効だった版の明細を出しています。帳票の集計には入りません。') : null,
-      h('section', { class: 'detail-section', 'aria-labelledby': 'history-title' }, h('h3', { id: 'history-title' }, '履歴'), historyList(entry.history || [])),
+      latestChange(entry),
       // 期首残高の仕訳は、仕訳の訂正・取消では直さない。設定の「期首残高」から見直す（2026-10-14 20:10 の決定）。
       isOpening()
-        ? h('p', { class: 'detail-actions detail-opening' }, icon('info', { size: 16 }), h('span', null, '期首残高は、設定の「期首残高」から見直します。'), h('a', { href: '#/settings?section=opening', onclick: () => drawer.close('edit') }, '設定の「期首残高」を開く'))
+        ? h('p', { class: 'detail-actions detail-opening' }, icon('info', { size: 16 }), h('span', null, '期首残高は、設定の「期首残高」から見直します。'), h('a', { class: 'tap', href: '#/settings?section=opening', onclick: () => drawer.close('edit') }, '設定の「期首残高」を開く'))
         : h('div', { class: 'detail-actions' }, editBtn, voidBtn),
       isOpening() ? null : note,
+      h('section', { class: 'detail-section', 'aria-labelledby': 'lines-title' }, h('h3', { id: 'lines-title' }, '明細'), detailLines(entry.lines)),
+      voided ? h('p', { class: 'small muted' }, phrase('取消済みの仕訳は、最後に有効だった版の明細を出しています。帳票の集計には入りません。')) : null,
+      h(
+        'section',
+        { class: 'detail-section', 'aria-labelledby': 'history-title' },
+        h('h3', { id: 'history-title' }, '履歴'),
+        // 履歴のどの版にも出る「記録のハッシュ」が何かを、初めて見る人に1行で（2026-10-15 の体験の評価 E1）。
+        h('p', { class: 'detail-hash-note' }, phrase('「記録のハッシュ」は、記録ごとの印です。設定の「データ」で、台帳が後から書き換えられていないかを確かめるときに使います。')),
+        historyList(entry.history || []),
+      ),
     );
   }
 
   async function load() {
     try {
-      entry = await ctx.api.get(`/entries/${id}`);
+      const [loaded, settings] = await Promise.all([ctx.api.get(`/entries/${id}`), ctx.state.load('settings').catch(() => null)]);
+      entry = loaded;
+      lockedUntil = (settings && settings.locked_until) || null;
       render();
     } catch (err) {
       replace(content, h('p', { class: 'field-error' }, icon('alert', { size: 16 }), h('span', null, err.message)));

@@ -70,6 +70,13 @@
   font-size: var(--fs-table);
 }
 
+/* 選択欄は、右に矢印の場所を残す（共通の36pxを8pxに上書きしていて、「課税仕入8%軽減」が矢印に重なった）。
+   矢印の位置は、同じ表の候補つきの欄（.combo-chevron）と同じ右6px。 */
+.inbox-table .select {
+  padding-right: 28px;
+  background-position: right 6px center;
+}
+
 .inbox-table .combo .input {
   padding-right: 28px;
 }
@@ -78,13 +85,16 @@
   right: 6px;
 }
 
+/* 印の列。見出しの「確定する」（4文字）が1行に入る幅。そのぶん、メモの列を狭くして、表の幅は変えない
+   （取引先の列を狭くすると、「サンプル文具」が欄の矢印の手前で切れた）。 */
 .inbox-table .c-cand {
-  width: 44px;
+  width: 56px;
   text-align: center;
 }
 
+/* 曜日つきの日付（「09/16 (水)」）が入る幅。そのぶん、メモの列を狭くして、表の幅は変えない。 */
 .inbox-table .c-date {
-  width: 96px;
+  width: 104px;
 }
 
 .inbox-table .c-desc {
@@ -92,8 +102,9 @@
   white-space: normal;
 }
 
+/* 7桁の金額（「-1,234,567」約75px）が入る幅。4pxをメモの列へ回した（下の税区分の説明）。 */
 .inbox-table .c-amount {
-  width: 92px;
+  width: 88px;
   text-align: right;
 }
 
@@ -101,8 +112,30 @@
   width: 152px;
 }
 
+/*
+ * 科目は、確定に要る欄。空のあいだは、仮の文字を濃く太くし、枠を藍にして、任意の取引先・メモの欄と見分ける
+ * （見た目の採点 第3回: 「科目（必須）」と書いてあっても、任意の欄と似た淡さで並び、25行から拾いにくかった）。
+ */
+.inbox-table td.c-account .input[aria-required="true"]:placeholder-shown {
+  border-color: var(--c-primary);
+}
+
+.inbox-table td.c-account .input[aria-required="true"]:placeholder-shown::placeholder {
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+/*
+ * 税区分は、登録・訂正の画面と同じ名前にした（「課税仕入8%（軽減）」134px・「経過措置の仕入10%」129px。文字は14px）。
+ * それが矢印の手前で切れずに入る幅（右の余白は、矢印の左の端まで詰める）。表の合計の幅は変えず、そのぶんメモの列（96→76px）と
+ * 金額の列（92→88px）を狭くした（入れ物が1080pxのとき、摘要はもう最小の幅で、ほかから取れない）。
+ */
 .inbox-table .c-tax {
-  width: 148px;
+  width: 184px;
+}
+
+.inbox-table .c-tax .select {
+  padding-right: 24px;
 }
 
 .inbox-table .c-partner {
@@ -110,7 +143,12 @@
 }
 
 .inbox-table .c-memo {
-  width: 116px;
+  width: 76px;
+}
+
+/* 狭めたメモの列でも、3文字（「10月分」46px）までは欠けずに見えるよう、欄の中の左右の余白を詰める。 */
+.inbox-table .c-memo .input {
+  padding: 0 6px;
 }
 
 .inbox-table .c-pct {
@@ -118,8 +156,90 @@
 }
 
 .inbox-table .c-ops {
-  width: 48px;
+  width: 76px;
   text-align: center;
+}
+
+/* 狭い幅でだけ使う「くわしく」の欄と、要約の日付。広い幅の表には出さない。 */
+.inbox-table .c-more,
+.inbox-table .sum-date {
+  display: none;
+}
+
+.ignore-btn {
+  padding: 0 var(--sp-2);
+}
+
+/* 一覧の上の「科目のある行をすべて選ぶ」の1行。どの幅でも同じ文字を見せる（表の見出しの「候補」だけでは、科目のある行に
+   限ることが分からず、5行を選んだだけで全部を選んだように見えた）。 */
+.inbox-all {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--sp-3);
+  padding: 0 var(--sp-3);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface-2);
+}
+
+/*
+ * 指で押す幅（1024px未満）の決まりの44pxを、広い幅でも使う（行の高さをそろえるため）。狭い幅では、名前と件数の文が
+ * それぞれ語の途中で折れたので、塊ごとに折り返す（件数の文が次の行へ回る）。
+ */
+.inbox-all .cand-all {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0 var(--sp-2);
+  min-height: 44px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.inbox-all .cand-all > span {
+  white-space: nowrap;
+}
+
+.cand-all-count {
+  color: var(--c-muted);
+  font-weight: 600;
+}
+
+.cand-all-note {
+  color: var(--c-warn);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.cand-all-note:empty {
+  display: none;
+}
+
+.inbox-table thead th.c-cand {
+  padding-right: 4px;
+  padding-left: 4px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+/*
+ * 科目が空の行は、科目の欄の仮の文字「科目（必須）」で示す（任意の取引先・メモの「取引先」「メモ」と、文字で見分けられる）。
+ * 前は摘要の上に「科目なし」の塗りの札を置いていた。25行のほとんどに並ぶ札が摘要と金額より先に目に入り、行も1行ぶん高くなった
+ * （見た目の採点 第2回）。小さな線の札にして口座の後ろへ移しても、幅1440の摘要の列（約143px）・幅390のカードのどちらでも
+ * 収まらずに1行増えたので、札はやめ、同じことを言う科目の欄に任せた。税区分の仮の値は、薄い字（決まった値に見えないように）。
+ */
+
+/* 「確定する」の札と金額の単位は、カードの並びでだけ出す（screens-inbox-cards.css）。表では、印の列・行の色と、見出しの単位で示す。 */
+.cand-badge,
+.amount-unit {
+  display: none;
+}
+
+.inbox-table .select.is-placeholder {
+  color: var(--c-muted);
+}
+
+.inbox-table .select.is-placeholder option {
+  color: var(--c-text);
 }
 
 .inbox-table .pct-cell {
@@ -131,9 +251,10 @@
   display: none;
 }
 
+/* 摘要（店や取引先の名前が多い）は、語の途中で折らない。入りきらないときだけ、どこでも折る。 */
 .desc-text {
-  display: block;
   font-weight: 600;
+  word-break: keep-all;
   overflow-wrap: anywhere;
 }
 
@@ -182,7 +303,7 @@
   cursor: pointer;
 }
 
-/* 確定候補の行: 色に加えて、左の帯と、候補の欄の印で示す（色だけに頼らない）。 */
+/* 確定する行: 色に加えて、左の帯と、印の欄のチェックで示す（色だけに頼らない）。 */
 .inbox-table tr.inbox-row.is-candidate > td {
   background: var(--c-primary-soft);
 }
@@ -193,6 +314,11 @@
 
 .inbox-table tr.inbox-row.has-msg > td {
   border-bottom: 0;
+}
+
+/* 無視を送っている途中の行（応えが来たら、一覧から外れる）。フォーカスはもう次の行にある。 */
+.inbox-table tr.inbox-row.is-leaving {
+  opacity: 0.5;
 }
 
 .inbox-table tr.inbox-msg > td {
@@ -219,5 +345,70 @@
 
 .row-note svg,
 .row-msg .field-error svg {
+  flex-shrink: 0;
   margin-top: 2px;
+}
+
+/* 注意は、最初の一文（要点）を太字にし、続き（くわしい説明）は一段小さく、次の行に出す。 */
+.row-note .note-head {
+  font-weight: 700;
+}
+
+.row-note .note-detail {
+  display: block;
+  font-size: var(--fs-xs);
+}
+
+/*
+ * 表の並びでは、行の下の文を、その欄の側に寄せる: 税区分から右の欄の話（税区分・取引先・メモ・割合）は税区分の列の下から、
+ * ほか（日付・科目・行全体）は左から。税区分の列の位置（--inbox-right-x）は、表の幅が変わるたびに測る（inbox-table.js）。
+ * 50px は、この行の左の余白（下の tr.inbox-msg > td）。
+ */
+@container inbox (width >= 1080px) {
+  /* dense: 右に寄せた文の後ろに来た左の文も、同じ段の左に入れる（税区分の話の右と、日付の話の左が、上下にずれないように）。 */
+  .inbox-table tr.inbox-msg .row-msg {
+    display: grid;
+    grid-template-columns: minmax(0, calc(var(--inbox-right-x, 560px) - 50px)) minmax(0, 1fr);
+    grid-auto-flow: row dense;
+    gap: var(--sp-1) 0;
+    align-items: start;
+  }
+
+  .inbox-table .row-msg > [data-side="left"] {
+    grid-column: 1;
+    padding-right: var(--sp-4);
+  }
+
+  .inbox-table .row-msg > [data-side="right"] {
+    grid-column: 2;
+  }
+}
+
+/* 向きと逆の科目の注意（出金の行に収益など）。確定は止めないので、誤りの赤ではなく注意の色。印（三角）と文字でも示す。 */
+.row-note--warn {
+  color: var(--c-warn);
+  font-weight: 600;
+}
+
+/* 文字で探す欄: 欄にいる間は、右の「/」の代わりに「Enter で探します」を出す（打つそばからは絞らないため）。 */
+.inbox-search .search-hint {
+  position: absolute;
+  right: 12px;
+  display: none;
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.inbox-search:focus-within .search-hint {
+  display: inline;
+}
+
+.inbox-search:focus-within kbd {
+  display: none;
+}
+
+.inbox-search:focus-within .input {
+  padding-right: 120px;
 }

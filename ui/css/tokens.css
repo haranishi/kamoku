@@ -19,6 +19,8 @@
   --c-primary: #1F4E79;
   --c-on-primary: #FFFFFF;
   --c-primary-soft: #E4EDF6;
+  /* グラフの「選んだ月」の帯。ライトは藍の淡い色と同じ。ダークは、棒と競り合わないよう控えめに。 */
+  --c-chart-band: #E4EDF6;
   --c-income: #17653F;
   --c-warn: #8A4B08;
   --c-danger: #A8301A;
@@ -26,8 +28,14 @@
   --c-pending-bg: #FBEFD5;
   --c-ok-bg: #DDF0E4;
   --c-danger-bg: #F8DDD6;
-  --c-backdrop: rgb(16 21 27 / 0.45);
+  --c-backdrop: rgb(16 21 27 / 0.6);
   --c-shadow: rgb(27 36 48 / 0.08);
+  /* 横に動かせる帯の端の影（続きがあると分かるように）。 */
+  --c-scroll-shadow: rgb(27 36 48 / 0.22);
+  /* 選択欄の矢印。候補つきの入力欄（combobox.js の chevron-down）と同じ形・太さ・色（--c-muted）。 */
+  --icon-select: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none' stroke='%23566170' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><path d='M5.5 8l4.5 4.5L14.5 8'/></svg>");
+  /* チェックの印（塗りの上に --c-on-primary で描く）。 */
+  --icon-check: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none' stroke='%23FFFFFF' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M4.5 10.5l3.5 3.5 7.5-8'/></svg>");
 
   --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -71,7 +79,11 @@
   --sidebar-w: 232px;
   --topbar-h: 56px;
   --bottomnav-h: 60px;
-  /* 下に固定するバーの、下の端からの距離。幅767px以下は、下のバーの真上に隙間なく載せる（AC-11.8）。 */
+  /*
+   * 下に固定するバーの、下の端からの距離。幅767px以下は、下のバーの真上に隙間なく載せる（AC-11.8）。
+   * 下のバーの高さは、iPhone の下の余白（safe-area-inset-bottom）を含む（layout-narrow.css）ので、この値も同じ式にする。
+   * これを使う側（固定バー・通知）は、余白を足し直さない（二重になる）。
+   */
   --bar-bottom: 0px;
 }
 
@@ -80,12 +92,25 @@
   --row-h: 32px;
 }
 
-/* スマホの幅では本文を16pxに、押せる場所を44px以上に（nfr.md）。 */
+/* 指で触る幅（1024px未満）では、押せる場所を44×44px以上にする（nfr.md、AC-11.7）。 */
+@media (max-width: 1023px) {
+  :root {
+    --control-h: 44px;
+  }
+}
+
+/* スマホの幅では本文を16pxに。下に固定するバーは、下のバー（下の余白を含む高さ）の真上に載せる。 */
 @media (max-width: 767px) {
   :root {
     --fs-body: 16px;
-    --control-h: 44px;
-    --bar-bottom: var(--bottomnav-h);
+    --bar-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* 高さの低い画面では下のバーを隠す（layout-narrow.css）ので、下に固定するバーは画面の下の端に付ける。 */
+@media (max-width: 767px) and (max-height: 520px) {
+  :root {
+    --bar-bottom: 0px;
   }
 }
 
@@ -97,12 +122,13 @@
     --c-surface: #18202A;
     --c-surface-2: #1D2733;
     --c-text: #E8ECF1;
-    --c-muted: #A3AEBC;
+    --c-muted: #B4BFCC;
     --c-border: #2E3A48;
-    --c-border-strong: #667587;
+    --c-border-strong: #6D7C8E;
     --c-primary: #8DB9E3;
     --c-on-primary: #0B1722;
     --c-primary-soft: #1F3347;
+    --c-chart-band: #1C2B3B;
     --c-income: #6FCB9A;
     --c-warn: #E5B15C;
     --c-danger: #F29A86;
@@ -110,8 +136,11 @@
     --c-pending-bg: #3A2E14;
     --c-ok-bg: #173626;
     --c-danger-bg: #40201A;
-    --c-backdrop: rgb(0 0 0 / 0.6);
+    --c-backdrop: rgb(0 0 0 / 0.72);
     --c-shadow: rgb(0 0 0 / 0.35);
+    --c-scroll-shadow: rgb(0 0 0 / 0.55);
+    --icon-select: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none' stroke='%23B4BFCC' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><path d='M5.5 8l4.5 4.5L14.5 8'/></svg>");
+    --icon-check: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none' stroke='%230B1722' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M4.5 10.5l3.5 3.5 7.5-8'/></svg>");
   }
 }
 
@@ -122,12 +151,13 @@
   --c-surface: #18202A;
   --c-surface-2: #1D2733;
   --c-text: #E8ECF1;
-  --c-muted: #A3AEBC;
+  --c-muted: #B4BFCC;
   --c-border: #2E3A48;
-  --c-border-strong: #667587;
+  --c-border-strong: #6D7C8E;
   --c-primary: #8DB9E3;
   --c-on-primary: #0B1722;
   --c-primary-soft: #1F3347;
+  --c-chart-band: #1C2B3B;
   --c-income: #6FCB9A;
   --c-warn: #E5B15C;
   --c-danger: #F29A86;
@@ -135,6 +165,9 @@
   --c-pending-bg: #3A2E14;
   --c-ok-bg: #173626;
   --c-danger-bg: #40201A;
-  --c-backdrop: rgb(0 0 0 / 0.6);
+  --c-backdrop: rgb(0 0 0 / 0.72);
   --c-shadow: rgb(0 0 0 / 0.35);
+  --c-scroll-shadow: rgb(0 0 0 / 0.55);
+  --icon-select: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none' stroke='%23B4BFCC' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><path d='M5.5 8l4.5 4.5L14.5 8'/></svg>");
+  --icon-check: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none' stroke='%230B1722' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M4.5 10.5l3.5 3.5 7.5-8'/></svg>");
 }

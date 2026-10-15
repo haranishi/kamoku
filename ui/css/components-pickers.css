@@ -13,6 +13,7 @@
   padding-right: 36px;
 }
 
+/* 選択欄（.select の背景の矢印）と同じ位置・大きさ・色。 */
 .combo-chevron {
   position: absolute;
   top: 50%;
@@ -65,7 +66,49 @@
   font-size: var(--fs-sm);
 }
 
-@media (max-width: 767px) {
+/* 「新しい取引先として足す」の行（一覧の最後）。候補と取り違えないよう、線で分けて、藍の文字と＋の印にする。 */
+.combo-option--new {
+  position: relative;
+  justify-content: flex-start;
+  color: var(--c-primary);
+  font-weight: 600;
+}
+
+.combo-option + .combo-option--new {
+  margin-top: 9px;
+}
+
+.combo-option + .combo-option--new::before {
+  position: absolute;
+  top: -5px;
+  right: 0;
+  left: 0;
+  border-top: 1px solid var(--c-border);
+  content: "";
+}
+
+.combo-option--new .combo-option-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  overflow-wrap: anywhere;
+}
+
+/* 候補が0件のときの一言。一覧と同じ場所に出す（位置と幅は combobox.js）。一覧は開かない。 */
+.combo-msg {
+  position: fixed;
+  z-index: var(--z-overlay);
+  max-width: calc(100vw - 16px);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-1);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 1023px) {
   .combo-option {
     min-height: 44px;
   }
@@ -143,18 +186,37 @@
   color: inherit;
 }
 
-@media (max-width: 767px) {
+/* 指で触る幅（1024px未満）では、選択肢を44px以上の高さにする（AC-11.7）。 */
+@media (max-width: 1023px) {
   .seg-option {
     height: 44px;
   }
 }
 
 /* ---- タブ ---- */
+/* 横に動くとき、キーで移ったタブを端のぼかし（下）の内側に止める。 */
 .tabs {
   display: flex;
   gap: var(--sp-1);
   overflow-x: auto;
+  scroll-padding-inline: 40px;
   border-bottom: 1px solid var(--c-border);
+}
+
+/*
+ * 横に入りきらないタブの並び（tabs.js の data-more）: 続きのある側の端を、文字ごと薄くぼかす（色は使わない。覆いの形だけ）。
+ * スクロールして端まで来たら、その側のぼかしは消える。
+ */
+.tabs[data-more="right"] {
+  mask-image: linear-gradient(to right, var(--c-text) calc(100% - 40px), transparent);
+}
+
+.tabs[data-more="left"] {
+  mask-image: linear-gradient(to left, var(--c-text) calc(100% - 40px), transparent);
+}
+
+.tabs[data-more="left right"] {
+  mask-image: linear-gradient(to right, transparent, var(--c-text) 40px, var(--c-text) calc(100% - 40px), transparent);
 }
 
 .tab {
@@ -179,7 +241,7 @@
   font-weight: 700;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .tab {
     height: 44px;
   }

@@ -5,6 +5,7 @@
 
 import { h } from '../dom.js';
 import { icon } from '../icons.js';
+import { kbd, shortcutKeys } from './fields.js';
 
 /**
  * 例: emptyState({ title: '最初の取引を登録しましょう', body: '...', actions: [{ label: '取引を登録', href: '#/entry', primary: true }] })
@@ -24,7 +25,7 @@ export function emptyState({ title, body, iconName = 'info', actions = [] }) {
           { class: 'empty-actions' },
           actions.map((a) =>
             a.href
-              ? h('a', { href: a.href, class: ['btn', a.primary && 'btn--primary'] }, a.label, a.kbd ? h('kbd', null, a.kbd) : null)
+              ? h('a', { href: a.href, class: ['btn', a.primary && 'btn--primary'], 'aria-keyshortcuts': a.kbd ? shortcutKeys(a.kbd) : null }, a.label, a.kbd ? kbd(a.kbd) : null)
               : h('button', { type: 'button', class: ['btn', a.primary && 'btn--primary'], onclick: a.onClick }, a.label),
           ),
         )

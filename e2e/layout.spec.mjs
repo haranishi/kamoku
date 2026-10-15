@@ -183,7 +183,7 @@ for (const width of WIDTHS) {
     await expect(rows).toHaveCount(N);
     for (let i = 0; i < 3; i += 1) await rows.nth(i).locator('.cand-check').check();
     const bar = page.locator('.inbox-bar');
-    await expect(bar).toContainText('確定候補3件');
+    await expect(bar).toContainText('確定する行3件');
     await expect(bar).toContainText('1,244,444,433,333');
     await expect(bar).toContainText('45,000,000');
     const cut = await page.evaluate(() =>
@@ -232,3 +232,227 @@ for (const width of WIDTHS) {
     expect(focusBottom).toBeLessThanOrEqual(barTop);
   });
 }
+
+// SC-02 キーボードだけで動くとき、フォーカスのある欄は、上に固定した帯の裏にも、下に固定した帯の裏にも隠れない
+// （ページ全体の scroll-padding。layout.css）。Tab で本文の終わりまで進み、Shift+Tab で1つずつ戻る。
+// 640×450 は文字を200%に拡大した画面に近い。高さ520px以下では下のバーを隠す（隠した帯は数えない。見えている帯だけ）。
+const KEY_SCREENS = [
+  { name: '取引を登録', hash: '#/entry', ready: '.entry-actions-card', sizes: [[640, 450], [390, 844]], min: 5 },
+  { name: '未確認', hash: '#/inbox', ready: '.inbox-bar', sizes: [[640, 450]], min: 5 },
+  // 仕訳帳の本文の止まり場所は、期間・絞り込み・検索・表の行（行は1つだけ止まる）など。
+  { name: '仕訳帳', hash: '#/journal', ready: '.journal-table tbody tr', sizes: [[640, 450]], min: 3 },
+];
+for (const s of KEY_SCREENS) for (const [width, height] of s.sizes) {
+  test(`SC-02 幅${width}×${height}で、Tab と Shift+Tab で移った欄が、上下に固定した帯の裏に隠れない（${s.name}）`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await open(page, s.hash);
+    await expect(page.locator(s.ready).first()).toBeVisible();
+    await page.locator('main h1').focus();
+    // フォーカスのある欄（ラジオなどは包むラベル）の四角と、上の帯の下の端・下に固定した帯の上の端。
+    const where = () =>
+      page.evaluate(() => {
+        const el = document.activeElement;
+        const box = (el.matches('input[type="radio"], input[type="checkbox"]') && el.closest('label')) || el;
+        const r = box.getBoundingClientRect();
+        const topbar = document.querySelector('.topbar').getBoundingClientRect().bottom;
+        const bars = [...document.querySelectorAll('[data-bottom-bar], .bottomnav')].filter((b) => !b.contains(el) && b.getBoundingClientRect().height > 0).map((b) => b.getBoundingClientRect().top);
+        return {
+          inMain: Boolean(el.closest('main')),
+          inBar: Boolean(el.closest('[data-bottom-bar]')),
+          name: `${el.tagName.toLowerCase()} ${el.getAttribute('aria-label') || (el.labels && el.labels[0] ? el.labels[0].textContent.trim() : el.textContent.trim()).slice(0, 12)}`,
+          top: r.top,
+          bottom: r.bottom,
+          topbar,
+          floor: Math.min(...bars, window.innerHeight),
+          visible: r.width > 0 && r.height > 0,
+        };
+      });
+    const seen = [];
+    for (let i = 0; i < 80; i += 1) {
+      await page.keyboard.press('Tab');
+      const w = await where();
+      if (!w.inMain) break;
+      if (!w.visible) continue;
+      seen.push(w.name);
+      expect(w.top, `Tab: ${w.name} が上の帯の裏にある`).toBeGreaterThanOrEqual(w.topbar - 0.5);
+      if (!w.inBar) expect(w.bottom, `Tab: ${w.name} が下の帯の裏にある`).toBeLessThanOrEqual(w.floor + 0.5);
+    }
+    expect(seen.length, `本文の欄を Tab でたどれた（${seen.join('、')}）`).toBeGreaterThan(s.min);
+    for (let i = 0; i < seen.length + 5; i += 1) {
+      await page.keyboard.press('Shift+Tab');
+      const w = await where();
+      if (!w.inMain) break;
+      if (!w.visible) continue;
+      expect(w.top, `Shift+Tab: ${w.name} が上の帯（下の端 ${w.topbar}px）の裏にある`).toBeGreaterThanOrEqual(w.topbar - 0.5);
+      if (!w.inBar) expect(w.bottom, `Shift+Tab: ${w.name} が下の帯の裏にある`).toBeLessThanOrEqual(w.floor + 0.5);
+    }
+  });
+}
+
+// 高さの低い画面（520px以下・幅767px以下）では、下のバーを隠し、全部の画面へは上の帯の「メニュー」から行く。
+// 下に固定する帯（確定の帯）は、画面の下の端に付く。高い画面では、今までどおり下のバー（上の帯の「メニュー」は出さない）。
+test('SC-03 高さ450では下のバーを隠し、上の帯の「メニュー」から全部の画面へ行ける。確定の帯は画面の下の端に付く', async ({ page }) => {
+  await page.setViewportSize({ width: 640, height: 450 });
+  await open(page, '#/inbox');
+  await expect(page.locator('.inbox-bar')).toBeVisible();
+  await expect(page.locator('.bottomnav')).toBeHidden();
+  const menu = page.locator('.topbar').getByRole('button', { name: 'メニュー' });
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveAttribute('aria-haspopup', 'dialog');
+  const box = await menu.boundingBox();
+  expect(Math.min(box.width, box.height), '押せる大きさ（44px以上）').toBeGreaterThanOrEqual(44);
+  // 確定の帯の下の端は、画面の下の端（下のバーの分の隙間を空けない）。
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(() => page.evaluate(() => Math.round(document.querySelector('.inbox-bar').getBoundingClientRect().bottom))).toBe(450);
+  await menu.click();
+  const drawer = page.getByRole('dialog', { name: 'メニュー' });
+  await expect(drawer).toBeVisible();
+  await drawer.getByRole('link', { name: '勘定科目' }).click();
+  await expect(drawer).toHaveCount(0);
+  await expect(page).toHaveURL(/#\/accounts$/);
+  // 高い画面では、下のバーに戻り、上の帯の「メニュー」は出さない。
+  await page.setViewportSize({ width: 640, height: 900 });
+  await expect(page.locator('.bottomnav')).toBeVisible();
+  await expect(menu).toBeHidden();
+});
+
+// SC-03 640×450 の未確認で、科目を打って Enter で次の行へ移ると、その行の店名と金額が、上の帯の下・確定の帯の上に見える
+// （下のバーがあった頃は、金額が上の帯に半分隠れた）。科目は保存されるが、未確認のまま（確定はしない）。
+test('SC-03 幅640×450の未確認で、科目を打って Enter で次の行へ移ると、その行の店名と金額が帯に隠れない', async ({ page }) => {
+  await page.setViewportSize({ width: 640, height: 450 });
+  await open(page, '#/inbox');
+  const rows = page.locator('tr.inbox-row');
+  await expect(rows.first()).toBeVisible();
+  test.skip((await rows.count()) < 5, '未確認が少ないデータ');
+  await rows.first().locator('td.c-account input').focus();
+  for (let i = 1; i <= 3; i += 1) {
+    await page.keyboard.insertText('つうしん');
+    await page.keyboard.press('Enter');
+    await expect(rows.nth(i).locator('td.c-account input')).toBeFocused();
+    const m = await rows.nth(i).evaluate((tr) => {
+      const r = (e) => e.getBoundingClientRect();
+      return {
+        desc: r(tr.querySelector('.desc-text')),
+        amount: r(tr.querySelector('.amount')),
+        topbar: r(document.querySelector('.topbar')).bottom,
+        bar: r(document.querySelector('.inbox-bar')).top,
+      };
+    });
+    for (const [what, b] of [['店名', m.desc], ['金額', m.amount]]) {
+      expect(b.top, `${i + 1}行目の${what}が上の帯の裏`).toBeGreaterThanOrEqual(m.topbar);
+      expect(b.bottom, `${i + 1}行目の${what}が確定の帯の裏`).toBeLessThanOrEqual(m.bar);
+    }
+  }
+});
+
+// サイドバーの下の「コマンド」「ショートカット」「表示」は、ほかの項目と同じ大きさと文字の色（控えめな色と小ささが重なっていた）。
+// 768px の細い列の名前は 13px で、1行に収まる。
+test('サイドバーの下の項目はほかの項目と同じ大きさと色。細い列の名前は13pxで1行に収まる', async ({ page }) => {
+  await open(page, '#/');
+  const style = (loc) => loc.evaluate((el) => ({ size: getComputedStyle(el).fontSize, color: getComputedStyle(el).color }));
+  const main = await style(page.locator('.sidebar .nav-item[data-nav="journal"]'));
+  const foot = await style(page.locator('.sidebar-foot [data-action="palette"]'));
+  const text = await page.evaluate(() => getComputedStyle(document.body).color);
+  expect(foot.size).toBe(main.size);
+  expect(foot.color).toBe(text);
+  await page.setViewportSize({ width: 800, height: 900 });
+  await expect(page.locator('#app')).toHaveAttribute('data-rail', 'closed');
+  const labels = await page.evaluate(() =>
+    [...document.querySelectorAll('.sidebar .nav-item .nav-label, .sidebar .rail-toggle-label')]
+      .filter((el) => el.getBoundingClientRect().width > 0)
+      .map((el) => {
+        const s = getComputedStyle(el);
+        return { text: el.textContent.trim(), size: s.fontSize, oneLine: el.getBoundingClientRect().height <= parseFloat(s.fontSize) * 1.6, inside: el.getBoundingClientRect().width <= 64 };
+      }),
+  );
+  expect(labels.length).toBeGreaterThan(10);
+  for (const l of labels) {
+    expect(l.size, l.text).toBe('13px');
+    expect(l.oneLine, `${l.text} が2行に折れる`).toBe(true);
+    expect(l.inside, `${l.text} が列の幅からはみ出す`).toBe(true);
+  }
+});
+
+// 帳票のタブ（幅390）: 横に入りきらない間は、続きのある側の端をぼかす（次のタブの文字が途中で切れて見えるだけでは、気づきにくかった）。
+// 端まで動かすと、その側のぼかしは消える。入りきる幅（1440）では、ぼかさない。
+test('帳票のタブは、横に続きがある側の端をぼかし、入りきる幅ではぼかさない', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, '#/reports/monthly');
+  const tabs = page.getByRole('tablist', { name: '帳票の種類' });
+  await expect(tabs).toBeVisible();
+  await expect(tabs).toHaveAttribute('data-more', 'right');
+  expect(await tabs.evaluate((el) => getComputedStyle(el).maskImage)).toContain('linear-gradient');
+  await tabs.evaluate((el) => el.scrollBy(el.scrollWidth / 3, 0));
+  await expect(tabs).toHaveAttribute('data-more', 'left right');
+  await tabs.evaluate((el) => el.scrollTo(el.scrollWidth, 0));
+  await expect(tabs).toHaveAttribute('data-more', 'left');
+  // キーで端のタブへ移ると、選んだタブは、ぼかしの外（はっきり見える所）にある。
+  await page.getByRole('tab', { name: '月次推移' }).focus();
+  await expect(tabs).toHaveAttribute('data-more', 'right');
+  await page.keyboard.press('ArrowLeft');
+  const last = page.getByRole('tab', { selected: true });
+  await expect(last).toBeFocused();
+  const [t, l] = await Promise.all([tabs.boundingBox(), last.boundingBox()]);
+  expect(l.x + l.width, '選んだタブの右の端が、ぼかしの内側').toBeLessThanOrEqual(t.x + t.width - (await tabs.getAttribute('data-more')).includes('right') * 40 + 1);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(tabs).not.toHaveAttribute('data-more', /./);
+  expect(await tabs.evaluate((el) => getComputedStyle(el).maskImage)).toBe('none');
+});
+
+// SC-02 幅390で、画面の下寄りの科目の欄を押すと、候補の一覧に6件以上が見え、欄は隠れない（下の余白が6件ぶんに足りなければ
+// 上に開く。前は下に開き、画面の下端までの約5件しか見えなかった）。見えるかは、件の真ん中の点でいちばん手前がその件かで数える。
+test('SC-02 幅390で、画面の下寄りの科目の欄を押すと、候補が6件以上見え、欄を隠さない', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, '#/entry');
+  const input = page.locator('form.entry-form').getByRole('combobox', { name: /科目/ });
+  await expect(input).toBeVisible();
+  // 欄の上の端を、評価で見た位置（599px）の近くへ動かす。
+  await input.evaluate((el) => window.scrollBy(0, el.getBoundingClientRect().top - 599));
+  const top = (await input.boundingBox()).y;
+  expect(top, '試験の前提: 欄が画面の下寄り（下に6件ぶんの余白が無い）').toBeGreaterThan(844 - 288 - 60);
+  await input.click();
+  const list = page.locator('.combo-list:not([hidden])');
+  await expect(list).toBeVisible();
+  const m = await list.evaluate((el, inputTop) => {
+    const box = el.getBoundingClientRect();
+    const seen = [...el.querySelectorAll('[role="option"]')].filter((o) => {
+      const r = o.getBoundingClientRect();
+      const y = r.top + r.height / 2;
+      if (y < box.top || y > box.bottom || y < 0 || y > innerHeight) return false;
+      const front = document.elementFromPoint(r.left + r.width / 2, y);
+      return Boolean(front && o.contains(front));
+    }).length;
+    return { seen, listTop: box.top, listBottom: box.bottom, inputTop };
+  }, top);
+  expect(m.seen, '見える候補の数').toBeGreaterThanOrEqual(6);
+  expect(m.listBottom, '一覧が欄を隠さない（上に開いた）').toBeLessThanOrEqual(m.inputTop);
+  await page.keyboard.press('Escape');
+  await expect(list).toHaveCount(0);
+});
+
+// SC-03 未確認の表で、下の行から1行ずつ上へフォーカスを戻すと、1行目の上に表の見出しが見えている（ページの scroll-padding-top。
+// 余白が8pxだと、1行目の欄が画面の上の端に付き、見出しが画面の外に隠れた）。行は、画面の高さを超える数を作る。
+// 遠くの欄へ一度に移ると、ブラウザは欄を真ん中へ寄せるので、↑ と同じく1行ずつ移る。
+test('SC-03 未確認の表で、1行ずつ上へ戻って1行目に着くと、表の見出しが画面の中に見えている（幅1100）', async ({ page }) => {
+  const N = 24;
+  await page.route('**/api/v1/drafts?*', async (route) => {
+    const res = await route.fetch();
+    const body = await res.json();
+    const base = body.items[0];
+    body.items = Array.from({ length: N }, (_, i) => ({ ...base, id: 910000 + i, description: `見出しの確認 ${i + 1}`, amount: 1000 + i, direction: 'out' }));
+    body.total = N;
+    await route.fulfill({ response: res, json: body });
+  });
+  await page.setViewportSize({ width: 1100, height: 700 });
+  await open(page, '#/inbox');
+  const rows = page.locator('tr.inbox-row');
+  await expect(rows).toHaveCount(N);
+  await rows.last().locator('td.c-account input').focus();
+  for (let i = N - 2; i >= 0; i -= 1) await rows.nth(i).locator('td.c-account input').focus();
+  const m = await page.evaluate(() => {
+    const head = document.querySelector('tr.inbox-row').closest('table').querySelector('thead').getBoundingClientRect();
+    return { headTop: head.top, scrollY: window.scrollY };
+  });
+  expect(m.scrollY, '試験の前提: ページが下へ動いている').toBeGreaterThan(0);
+  expect(m.headTop, `表の見出しの上の端 ${m.headTop}px`).toBeGreaterThanOrEqual(0);
+});

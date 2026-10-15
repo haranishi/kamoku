@@ -1,7 +1,10 @@
 /* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
 /* SPDX-License-Identifier: MIT OR Apache-2.0 */
 
-/* 帳票（SC-06）の表: 親子の字下げ、区分の見出し、合計の行、貸借対照表の2列、狭い画面での貼り付いた科目の列。 */
+/*
+ * 帳票（SC-06）の表: 親子の字下げ、区分の見出し、合計の行、貸借対照表の2列、元帳の列の畳み方。
+ * 狭い枠でカードに積み上げる形は screens-reports-cards.css（枠の幅で切り替える）。
+ */
 
 /* ---- 帳票の表 ---- */
 .report-table th[scope="row"] {
@@ -12,6 +15,14 @@
   min-width: 12em;
   padding-left: calc(var(--sp-3) + var(--depth, 0) * 1.5em);
   white-space: normal;
+}
+
+/* 科目・口座の名前は語の途中で折らない。子の口座名（畳んだ親の下）は小さく2行目に。 */
+.rt-name-sub {
+  display: block;
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 400;
 }
 
 .report-table .rt-name.is-parent {
@@ -27,12 +38,26 @@
   font-weight: 700;
 }
 
+/* 左右に並べる表（損益計算書の収益と費用、貸借対照表）の先頭の見出しは、区切りの名前なので本文の色と大きさで。 */
+.rt-pair .report-table thead th:first-child,
+.bs-grid .report-table thead th:first-child {
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+}
+
+/* 表の見出しと数字は折り返さない。 */
+.report-table thead th,
+.report-table td.num {
+  white-space: nowrap;
+}
+
+/* 区分の見出し（収益・費用・負債など）。区切りとして読めるよう、本文の色と大きさで。 */
 .report-table tr.rt-group th {
   height: 32px;
   padding-top: var(--sp-3);
   background: var(--c-surface-2);
-  color: var(--c-muted);
-  font-size: var(--fs-xs);
+  color: var(--c-text);
+  font-size: var(--fs-sm);
   font-weight: 700;
   letter-spacing: 0.06em;
 }
@@ -58,13 +83,28 @@
   background: var(--c-surface-2);
 }
 
+/* 0 は薄く（実際の金額が先に目に入るように）。0は意味のある数字なので「—」にはしない。 */
+.rt-zero {
+  color: var(--c-muted);
+}
+
 .rt-loss {
   margin-left: var(--sp-2);
   vertical-align: 1px;
 }
 
+/* 月の名前（「4月」）と「赤字」の札は、同じ行に置く（行の高さがそろうように）。 */
+.report-table.rt-months .rt-name {
+  min-width: 4em;
+  white-space: nowrap;
+}
+
+/* ---- 科目ごとの月別（表のときは、詰めて全幅に収める） ---- */
 .rt-wide th,
 .rt-wide td {
+  padding-right: var(--sp-2);
+  padding-left: var(--sp-2);
+  font-size: var(--fs-sm);
   white-space: nowrap;
 }
 
@@ -72,7 +112,10 @@
   position: sticky;
   left: 0;
   z-index: var(--z-raised);
+  min-width: 8em;
+  padding-left: calc(var(--sp-2) + var(--depth, 0) * 1em);
   background: var(--c-surface);
+  white-space: nowrap;
 }
 
 .rt-wide tr.rt-grand .rt-name,
@@ -80,146 +123,210 @@
   background: var(--c-surface-2);
 }
 
+/* ---- 貸借対照表: 左右の2列。合計の行は、左右で同じ高さにそろえる ---- */
 .bs-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-4);
-  align-items: start;
+  align-items: stretch;
 }
 
-.ledger-facts,
-.tax-sums {
+/* 表を枠の高さいっぱいに伸ばし、余りを合計の手前の空き（.rt-fill）に回す。 */
+.bs-grid > .table-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.bs-grid .bs-table {
+  flex: 1 0 auto;
+}
+
+.bs-table tr.rt-fill > td {
+  height: auto;
+  padding: 0;
+  border: 0;
+}
+
+/*
+ * 口座をまとめる科目（普通預金など）の元帳の上の一言と、下の口座ごとの元帳へのリンク（report-views2.js の childrenNote）。
+ * 親の科目だけでは動きが無いように見えるので、表より先に目に入る位置に、藍の縁の帯で置く。
+ */
+.ledger-children {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--c-primary);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+}
+
+.ledger-children-text {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.ledger-children-text svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--c-primary);
+}
+
+.ledger-children-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* 口座の名前が長くても、ボタンの枠の中で折り返す（指で触る幅の44pxは components.css の .btn--sm のまま）。 */
+.ledger-child-link {
+  height: auto;
+  padding-block: var(--sp-1);
+  white-space: normal;
+}
+
+@media (min-width: 1024px) {
+  .ledger-child-link {
+    min-height: 32px;
+  }
+}
+
+/* ---- 元帳の数字と、消費税の数字 ---- */
+.ledger-facts {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3) var(--sp-6);
 }
 
-.ledger-facts div,
-.tax-sums div {
+.ledger-facts div {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.ledger-facts dt,
-.tax-sums dt {
+.ledger-facts dt {
   color: var(--c-muted);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   font-weight: 700;
 }
 
-.ledger-facts dd,
-.tax-sums dd {
+.ledger-facts dd {
   font-size: var(--fs-h2);
   font-weight: 700;
   white-space: nowrap;
 }
 
-.tax-sums {
-  padding: var(--sp-4) var(--sp-5);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-m);
-  background: var(--c-surface);
-}
-
-.tax-estimate dd {
-  color: var(--c-primary);
+.ledger-facts .unit {
+  font-size: var(--fs-sm);
 }
 
 .ledger-table td a {
   font-weight: 700;
 }
 
+/* 日付と No の列は中身の幅にする（広い幅で、日付と右寄せの No の間に約100pxのすき間ができていた）。 */
+.ledger-table .lg-date,
+.ledger-table .lg-no {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* 摘要の2行目（No と相手科目）。広い幅では、それぞれの列があるので出さない。 */
+.ledger-table .lg-desc-text {
+  display: block;
+}
+
+.ledger-table .lg-sub {
+  display: none;
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+}
+
 @media (max-width: 1023px) {
   .bs-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-}
 
-@media (max-width: 1023px) {
-  .report-toolbar {
-    grid-template-columns: minmax(0, 1fr);
+  .bs-grid .rt-fill {
+    display: none;
+  }
+
+  /* 640〜1023px: No と相手科目の列を、摘要の2行目に畳み、日付・摘要・借方・貸方・残高の5列にする。 */
+  .ledger-table .col-wide {
+    display: none;
+  }
+
+  .ledger-table .lg-sub {
+    display: block;
+  }
+
+  .ledger-table .lg-sub-date {
+    display: none;
+  }
+
+  /* 摘要は折り返せるので、最小幅を詰めて、金額の3列に幅を回す（9桁の金額でも5列が枠に入るように）。 */
+  .ledger-table td.lg-desc {
+    min-width: 8em;
   }
 }
 
-/* 月ごとの数字の表は、最初の列が「1月」なので、科目の名前の列の最小の幅は要らない（狭い画面で4列が収まるように）。 */
-.report-table.rt-months .rt-name {
-  min-width: 4em;
-}
-
-@media (max-width: 767px) {
-  /* 6つのタブを、横にスクロールさせずに全部見せる（どのタブがあるかが分かるように）。 */
-  .report-tabs {
-    flex-wrap: wrap;
-    overflow-x: visible;
+/*
+ * 640〜1023px（5列の表）: 曜日を日付の下に置き（行は摘要の2行目で、もともと2段）、日付と金額の列の左右の余白を詰めて、
+ * 摘要の列に幅を回す（幅768で、長い相手科目の行の摘要が窮屈に見えた）。カードの形（640px未満）には当てない。
+ */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .ledger-table .lg-dow {
+    display: block;
   }
 
-  /* 年・月の選び方は1行に収める（選択欄が縮む）。自由な期間の行だけは折り返す。 */
-  .period-row:not(.period-range) {
-    flex-wrap: nowrap;
+  .ledger-table .lg-date,
+  .ledger-table th.num,
+  .ledger-table td.num {
+    padding-right: var(--sp-2);
+    padding-left: var(--sp-2);
   }
 
-  .period-row:not(.period-range) .select,
-  .period-row:not(.period-range) .period-date {
-    flex: 1 1 auto;
-    min-width: 0;
+  /* 表の左右の端は、ほかの表と同じ余白のまま。 */
+  .ledger-table tr > :first-child {
+    padding-left: var(--sp-3);
   }
 
-  /* 「2026年」「10月」が欠けない幅は残す。 */
-  .period-row .period-year {
-    min-width: 6.5em;
+  .ledger-table tr > :last-child {
+    padding-right: var(--sp-3);
   }
 
-  .period-row .period-month {
-    min-width: 5em;
-  }
-
-  .period-date .input {
-    width: 100%;
-  }
-
-  /* 表が横にスクロールしても、科目の名前は見えたままにする（行の線は、スクロールしても表の線がそのまま見える。影で足すと二重になる）。 */
-  .report-table .rt-name {
-    position: sticky;
-    left: 0;
-    z-index: var(--z-raised);
-    background: var(--c-surface);
-  }
-
-  .report-table tr.rt-grand .rt-name,
-  .report-table tr.rt-group th {
-    background: var(--c-surface-2);
-  }
-
-  .report-toolbar {
-    padding: var(--sp-3) var(--sp-4);
-  }
-
-  .report-toolbar-main,
-  .period-picker,
-  .report-account {
-    width: 100%;
-  }
-
-  .report-export-row > * {
-    flex: 1 1 auto;
-  }
-
-  .report-table .rt-name {
-    min-width: 9em;
+  /* 金額の列は中身の幅にして、余りを摘要の列へ（日付の列と同じ決まり）。 */
+  .ledger-table th.num,
+  .ledger-table td.num {
+    width: 1%;
   }
 }
 
-/* 積み上げ表示の元帳では、金額の無い借方・貸方の行を出さない（見出しだけが並ばないように）。 */
+/* 640px未満: 1行を1枚のカードに。題は摘要、2行目に日付・No・相手科目、金額と残高は右寄せ（残高は太く）。 */
 @media (max-width: 639px) {
   .ledger-table td:empty {
     display: none;
   }
 
-  /* 月ごとの数字の4列は、7桁の金額でも幅390に収まるよう、セルの左右の余白を詰める。 */
-  .report-table.rt-months th,
-  .report-table.rt-months td {
-    padding-left: var(--sp-2);
-    padding-right: var(--sp-2);
+  .ledger-table td.lg-date {
+    display: none;
+  }
+
+  .ledger-table .lg-sub-date {
+    display: inline;
+  }
+
+  .ledger-table td.lg-desc {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    font-weight: 700;
+  }
+
+  .ledger-table td.lg-balance {
+    font-weight: 700;
   }
 }

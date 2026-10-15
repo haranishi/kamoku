@@ -105,8 +105,13 @@ test('AC-10.4 文字入力の欄にいるとき（変換中を含む）は、n �
   await cdp.send('Input.insertText', { text: 'ん' });
 
   // 文字入力の欄の外なら、g j で仕訳帳へ移る（同じキーが働くことの確かめ）。
+  // 入力が残っていると、離れる前の確認（entry-guard.spec）が出て移らないので、入力を消してから試す。
+  await f.description.fill('');
   await page.locator('main h1').focus();
   await page.keyboard.press('g');
   await page.keyboard.press('j');
   await expect(page).toHaveURL(/#\/journal$/);
+  // アドレスは、離れる前の確認で戻される前の一瞬だけ #/journal になることがある（それを拾って緑になった）。画面が移ったことまで確かめる。
+  await expect(page.locator('main h1')).toHaveText('仕訳帳');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });

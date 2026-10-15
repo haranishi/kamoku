@@ -112,9 +112,10 @@ pub(crate) fn export_journal(state: &mut State, call: &Call<'_>) -> Result<Reply
             ]);
         }
     }
+    // 期間を決めない書き出しも、いつ書き出したかが名前で分かるようにする（バックアップと同じ日付の形）。
     let period = match (from, to) {
         (Some(f), Some(t)) => format!("-{}_{}", format_date(f), format_date(t)),
-        _ => String::new(),
+        _ => format!("-{}", stamp(call.now)),
     };
     Ok(csv_reply(
         w,

@@ -11,6 +11,7 @@ import { formatYen } from '../format.js';
 import { field, textInput } from '../components/fields.js';
 import { openModal } from '../components/dialog.js';
 import { emptyState } from '../components/empty.js';
+import { phrase } from '../components/phrase.js';
 
 const KIND = { expense: '支出', income: '収入', transfer: '振替' };
 
@@ -74,7 +75,7 @@ export function saveTemplateDialog({ api, body, toast }) {
   return new Promise((resolve) => {
     let saved = false;
     const nameIn = textInput({ placeholder: '例: 携帯電話の利用料', maxlength: 60 });
-    const nameF = field({ label: 'テンプレートの名前', control: nameIn, required: true, hint: '日付は入りません。呼び出すと、それ以外の欄が入ります。' });
+    const nameF = field({ label: 'テンプレートの名前', control: nameIn, required: true, hint: phrase('日付は入りません。呼び出すと、それ以外の欄が入ります。') });
     const submit = async (c) => {
       const name = nameIn.value.trim();
       if (!name) {

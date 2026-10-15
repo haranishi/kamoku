@@ -27,7 +27,8 @@ async function fillEntry(page) {
   await page.keyboard.insertText('サンプル通信');
   await f.description.fill('10月分 携帯電話');
   await f.description.blur();
-  await expect(f.preview.locator('table')).toBeVisible();
+  // 幅390では、プレビューの表は畳まれて1行の要約になる。表の有無でなく、仕訳の金額が出たことで、できあがりを見る。
+  await expect(f.preview).toContainText('11,000');
 }
 
 // 未確認の途中の様子: 3行に科目が入り、2行が確定候補。書き込まずに見せるため、一覧の応えを差し替える。

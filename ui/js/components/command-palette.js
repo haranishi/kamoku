@@ -29,6 +29,9 @@ import { openModal } from './dialog.js';
  */
 export function createCommandPalette(opts) {
   let ctrl = null;
+  // 開いているかは、小窓そのもので見る。Esc で閉じた直後（閉じた知らせが届く前）に Ctrl/Cmd+K を押すと、
+  // 開いたままとみなして閉じる側に回り、何も開かなかった。
+  const isOpen = () => Boolean(ctrl && ctrl.el.open);
 
   function compute(q) {
     const text = q.trim();
@@ -46,7 +49,7 @@ export function createCommandPalette(opts) {
   }
 
   function open() {
-    if (ctrl) return;
+    if (isOpen()) return;
     const listId = uid('palette-list');
     const input = h('input', {
       type: 'text',
@@ -137,29 +140,31 @@ export function createCommandPalette(opts) {
       if (o) run(Number(o.dataset.index));
     });
 
-    ctrl = openModal({
+    // 前の小窓の閉じた知らせが、あとから開いた小窓の記録を消さないよう、自分の小窓のときだけ外す。
+    const mine = openModal({
       title: 'コマンド',
       className: 'palette',
       body: h('div', null, input, list),
       initialFocus: input,
       onClose: () => {
-        ctrl = null;
+        if (ctrl === mine) ctrl = null;
       },
     });
+    ctrl = mine;
     render();
   }
 
   return {
     open,
     close() {
-      if (ctrl) ctrl.close('cancel');
+      if (isOpen()) ctrl.close('cancel');
     },
     toggle() {
-      if (ctrl) ctrl.close('cancel');
+      if (isOpen()) ctrl.close('cancel');
       else open();
     },
     get isOpen() {
-      return Boolean(ctrl);
+      return isOpen();
     },
   };
 }

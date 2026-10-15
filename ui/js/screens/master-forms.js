@@ -12,12 +12,14 @@ import { TAX_LABELS } from '../account-defaults.js';
 import { field, textInput, selectInput } from '../components/fields.js';
 import { createSegmented } from '../components/segmented.js';
 import { openModal } from '../components/dialog.js';
+import { phrase } from '../components/phrase.js';
 
+// example は、口座を追加する小窓の欄の例（選んだ種類に合わせて変える。カードを選んでも銀行の例のままだった）。
 export const WALLET_TYPES = [
-  { value: 'cash', label: '現金', parent: 'cash' },
-  { value: 'bank', label: '預金', parent: 'dep_other' },
-  { value: 'card', label: 'クレジットカード', parent: 'accrued' },
-  { value: 'ewallet', label: '電子マネー', parent: 'cash' },
+  { value: 'cash', label: '現金', parent: 'cash', example: { name: '現金', reading: 'げんきん', institution: '空のままでかまいません' } },
+  { value: 'bank', label: '預金', parent: 'dep_other', example: { name: 'サンプル銀行 普通預金', reading: 'さんぷるぎんこう', institution: 'サンプル銀行' } },
+  { value: 'card', label: 'クレジットカード', parent: 'accrued', example: { name: 'サンプルカード', reading: 'さんぷるかーど', institution: 'サンプルカード会社' } },
+  { value: 'ewallet', label: '電子マネー', parent: 'cash', example: { name: 'サンプル電子マネー', reading: 'さんぷるでんしまねー', institution: 'サンプル電子マネーの会社' } },
 ];
 export const KIND_LABEL = { asset: '資産', liability: '負債', equity: '資本', revenue: '収益', expense: '費用' };
 /** 名前を変えられない科目（帳簿の決まりで使う。2026-10-14 20:10 の決定）。 */
@@ -35,7 +37,7 @@ function check(label, checked, hint) {
  * 入力のダイアログを開き、保存できたら値を返す（やめたら null）。
  * save(ctrl) は、保存して応えを返す。欄の誤りは fields[name].setError で出す。
  */
-function formDialog({ title, body, submitLabel, fields, save }) {
+function formDialog({ title, body, submitLabel, fields, save, initialFocus }) {
   return new Promise((resolve) => {
     let result = null;
     // 文字の欄で Enter（変換中を除く）を押したら、保存のボタンを押したのと同じにする。
@@ -49,6 +51,7 @@ function formDialog({ title, body, submitLabel, fields, save }) {
       title,
       body,
       className: 'form-dialog',
+      initialFocus,
       actions: [
         { label: 'やめる', onClick: (c) => c.close('cancel') },
         {
@@ -88,27 +91,37 @@ function readPct(input) {
 }
 
 /**
- * 口座を足す・直す。型は「現金」「預金」「クレジットカード」「電子マネー」から選ぶ（AC-01.2）。型はあとから変えられない。
+ * 口座を追加する・直す。種類は「現金」「預金」「クレジットカード」「電子マネー」から選ぶ（AC-01.2）。種類はあとから変えられない。
  * @param {{ api: any, wallet?: object, defaultType?: string }} o
  * @returns {Promise<object|null>} 保存した科目（口座）
  */
 export function walletDialog({ api, wallet, defaultType = 'bank' }) {
   const editing = Boolean(wallet);
-  const type = editing ? null : createSegmented({ legend: '口座の型', options: WALLET_TYPES.map((t) => ({ value: t.value, label: t.label })), value: defaultType, className: 'seg--grid' });
-  const nameIn = textInput({ value: wallet ? wallet.name : '', maxlength: 60, placeholder: '例: サンプル銀行 普通預金' });
-  const readingIn = textInput({ value: wallet ? wallet.reading : '', maxlength: 60, placeholder: '例: さんぷるぎんこう' });
-  const instIn = editing ? null : textInput({ maxlength: 60, placeholder: '例: サンプル銀行' });
+  const type = editing ? null : createSegmented({ legend: '口座の種類', options: WALLET_TYPES.map((t) => ({ value: t.value, label: t.label })), value: defaultType, className: 'seg--grid', onChange: (v) => paintExamples(v) });
+  const nameIn = textInput({ value: wallet ? wallet.name : '', maxlength: 60 });
+  const readingIn = textInput({ value: wallet ? wallet.reading : '', maxlength: 60 });
+  const instIn = editing ? null : textInput({ maxlength: 60 });
+  function paintExamples(kind) {
+    const ex = (WALLET_TYPES.find((t) => t.value === kind) || WALLET_TYPES[1]).example;
+    nameIn.placeholder = `例: ${ex.name}`;
+    readingIn.placeholder = `例: ${ex.reading}`;
+    if (instIn) instIn.placeholder = kind === 'cash' ? ex.institution : `例: ${ex.institution}`;
+  }
+  paintExamples(editing ? wallet.wallet && wallet.wallet.type : defaultType);
   const fields = {
-    name: field({ label: '名前', control: nameIn, required: true, hint: '画面に出る名前です。自由に付けられます。' }),
-    reading: field({ label: '読み（ひらがな）', control: readingIn, hint: '科目や口座の欄で、読みでも探せるようになります。' }),
+    name: field({ label: '名前', control: nameIn, required: true, hint: phrase('画面に出る名前です。自由に付けられます。') }),
+    reading: field({ label: '読み（ひらがな）', control: readingIn, hint: phrase('科目や口座の欄で、読みでも探せるようになります。') }),
   };
   if (instIn) fields.institution = field({ label: '金融機関の名前（任意）', control: instIn });
   const enabled = editing ? check('この口座を使う', wallet.enabled, '使わなくなった口座は外せます。過去の仕訳は変わりません。口座は消せません。') : null;
-  const body = h('div', { class: 'stack' }, type ? type.el : h('p', { class: 'muted small' }, `型: ${(WALLET_TYPES.find((t) => wallet.wallet && t.value === wallet.wallet.type) || { label: '' }).label}（型はあとから変えられません）`), fields.name.el, fields.reading.el, fields.institution ? fields.institution.el : null, enabled ? enabled.el : null);
+  const body = h('div', { class: 'stack' }, type ? type.el : h('p', { class: 'muted small' }, `種類: ${(WALLET_TYPES.find((t) => wallet.wallet && t.value === wallet.wallet.type) || { label: '' }).label}（種類はあとから変えられません）`), fields.name.el, fields.reading.el, fields.institution ? fields.institution.el : null, enabled ? enabled.el : null);
   return formDialog({
-    title: editing ? `「${wallet.name}」を直す` : '口座を足す',
+    title: editing ? `「${wallet.name}」を直す` : '口座を追加',
     body,
-    submitLabel: editing ? '保存する' : '足す',
+    // 最初の入力欄は、種類の選択の先頭（選ばれていない「現金」）になり、Tab を押しても名前に届かず、打った文字が入らなかった。
+    // 追加するときは、名前の欄から始める（種類は、既定の預金が選ばれている。戻れば変えられる）。
+    initialFocus: editing ? undefined : nameIn,
+    submitLabel: editing ? '保存する' : '追加',
     fields,
     save: async () => {
       const name = nameIn.value.trim();
@@ -145,12 +158,12 @@ export function accountDialog({ api, account, accounts }) {
   const fields = {
     name: field({ label: '名前', control: nameIn, required: true, hint: locked ? 'この科目は帳簿の決まりで使うので、名前を変えられません。' : '標準の科目も、名前を変えられます。過去の仕訳は、科目のコードで残っています。' }),
     reading: field({ label: '読み（ひらがな）', control: readingIn }),
-    default_tax: field({ label: '既定の税区分', control: taxSel, hint: '科目を選んだときに入る初期値です。' }),
-    default_pct: field({ label: '既定の事業割合', control: h('div', { class: 'affix' }, pctIn, h('span', { class: 'affix-text' }, '%')), labelFor: pctIn, hint: '仕事と私用が混ざる科目は、仕事の分の割合を入れておくと、選んだときに入ります。' }),
+    default_tax: field({ label: '既定の税区分', control: taxSel, hint: phrase('科目を選んだときに入る初期値です。') }),
+    default_pct: field({ label: '既定の事業割合', control: h('div', { class: 'affix' }, pctIn, h('span', { class: 'affix-text' }, '%')), labelFor: pctIn, hint: phrase('仕事と私用が混ざる科目は、仕事の分の割合を入れておくと、選んだときに入ります。') }),
   };
   if (kindSel) {
-    fields.kind = field({ label: '分類', control: kindSel, required: true, hint: '分類はあとから変えられません。' });
-    fields.parent = field({ label: '親の科目（任意）', control: parentSel, hint: '帳票で、親の科目の下にまとめて出します。' });
+    fields.kind = field({ label: '分類', control: kindSel, required: true, hint: phrase('分類はあとから変えられません。') });
+    fields.parent = field({ label: '親の科目（任意）', control: parentSel, hint: phrase('帳票で、親の科目の下にまとめて出します。') });
     kindSel.addEventListener('change', fillParents);
     fillParents();
   }
@@ -210,8 +223,8 @@ export function partnerDialog({ api, partner }) {
   const noteIn = textInput({ value: partner ? partner.note : '', maxlength: 200 });
   const fields = {
     name: field({ label: '名前', control: nameIn, required: true }),
-    reading: field({ label: '読み（ひらがな）', control: readingIn, hint: '取引先の欄で、読みでも探せるようになります。' }),
-    invoice_number: field({ label: '登録番号（任意）', control: invIn, hint: '適格請求書発行事業者の番号です。形式（T と13桁の数字）だけを確かめます。' }),
+    reading: field({ label: '読み（ひらがな）', control: readingIn, hint: phrase('取引先の欄で、読みでも探せるようになります。') }),
+    invoice_number: field({ label: '登録番号（任意）', control: invIn, hint: phrase('適格請求書発行事業者の番号です。形式（T と13桁の数字）だけを確かめます。') }),
     note: field({ label: 'メモ', control: noteIn }),
   };
   const enabled = editing ? check('この取引先を使う', partner.enabled !== false, '使わない取引先は、候補に出なくなります。') : null;

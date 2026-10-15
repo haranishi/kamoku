@@ -1,0 +1,246 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/*
+ * 帳票の表を、枠に入りきらないときにカードに積み上げる形（AC-11.6: 横に隠れる列を作らない）。
+ * 切り替えは、表の形で測って枠より広いときだけ（report-table.js が枠に .rt-cards を付ける）。画面の幅や枠の幅の
+ * 決まった線で切り替えると、大きな金額や12か月そろった月別の表で、表が枠より広がって列が隠れたため。
+ * - .rt-fold-cards: 1行を1枚のカードに。見出しは科目（または月）、数字はラベルつきで右寄せ、
+ *   大事な数字（.rt-key。試算表の期末、月ごとの利益）は太く。
+ * - .rt-fold-months: 科目ごとの月別（14列）。科目ごとのカードの中に、月の升目を並べる。
+ * 表とカードのどちらでも、行と列の意味は <table> のまま（読み上げは表として読める）。
+ */
+
+/* ---- 1行を1枚のカードに ---- */
+.rt-cards > .report-table.rt-fold-cards thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.rt-cards > .report-table.rt-fold-cards,
+.rt-cards > .report-table.rt-fold-cards tbody {
+  display: block;
+  width: 100%;
+}
+
+/*
+ * 数字の升目は、入る間は2つずつ等分に並べ（カードをまたいで列がそろう）、大きな金額で入りきらない升目だけ
+ * 次の行へ回す（升目の最小幅は中身の幅。隣の升目に数字が重ならない）。
+ */
+.rt-cards > .report-table.rt-fold-cards tr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--sp-4);
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) calc(var(--sp-4) + var(--depth, 0) * var(--sp-3));
+  border-bottom: 1px solid var(--c-border);
+}
+
+.rt-cards > .report-table.rt-fold-cards tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.rt-cards > .report-table.rt-fold-cards tr > * {
+  height: auto;
+  padding: 0;
+  border: 0;
+}
+
+.rt-cards > .report-table.rt-fold-cards th.rt-name {
+  position: static;
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--sp-2);
+  min-width: 0;
+  padding-bottom: var(--sp-1);
+  background: none;
+  font-weight: 700;
+  white-space: normal;
+}
+
+.rt-cards > .report-table.rt-fold-cards .rt-name-sub {
+  width: 100%;
+}
+
+.rt-cards > .report-table.rt-fold-cards td {
+  display: flex;
+  flex: 1 0 calc((100% - var(--sp-4)) / 2);
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+.rt-cards > .report-table.rt-fold-cards td::before {
+  content: attr(data-label);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.rt-cards > .report-table.rt-fold-cards td:empty {
+  display: none;
+}
+
+/* カードでは、親の行も数字は普通の太さにし、大事な数字（.rt-key）だけを太くする。 */
+.rt-cards > .report-table.rt-fold-cards tr.rt-parent td {
+  font-weight: 400;
+}
+
+/* 親の行の上の決まり（普通の太さ）より後で、同じ強さで書く（親のカードでも大事な数字は太く）。 */
+.rt-cards > .report-table.rt-fold-cards tr td.rt-key {
+  font-weight: 700;
+}
+
+.rt-cards > .report-table.rt-fold-cards tr.rt-group {
+  display: block;
+  padding: 0;
+}
+
+.rt-cards > .report-table.rt-fold-cards tr.rt-group > th {
+  display: block;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--c-surface-2);
+}
+
+.rt-cards > .report-table.rt-fold-cards tr.rt-total {
+  border-top: 1px solid var(--c-border-strong);
+}
+
+.rt-cards > .report-table.rt-fold-cards tr.rt-grand {
+  border-top: 2px solid var(--c-border-strong);
+  background: var(--c-surface-2);
+}
+
+/* 月ごとの数字（売上・経費・利益）は、3つの升目。ラベルを数字の上に置く。 */
+.rt-cards > .report-table.rt-fold-cards.rt-months td {
+  flex-basis: calc((100% - 2 * var(--sp-4)) / 3);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.rt-cards > .report-table.rt-fold-cards.rt-months td::before {
+  font-size: var(--fs-xs);
+}
+
+/* ---- 科目ごとの月別: 科目のカードの中に、月の升目 ---- */
+.rt-cards > .report-table.rt-fold-months thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.rt-cards > .report-table.rt-fold-months,
+.rt-cards > .report-table.rt-fold-months tbody {
+  display: block;
+  width: 100%;
+}
+
+/* 月の升目は、幅84px以上で並べ、大きな金額の升目は中身の幅まで広げる（隣に重ならない）。 */
+.rt-cards > .report-table.rt-fold-months tr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) calc(var(--sp-4) + var(--depth, 0) * var(--sp-3));
+  border-bottom: 1px solid var(--c-border);
+}
+
+.rt-cards > .report-table.rt-fold-months tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.rt-cards > .report-table.rt-fold-months tr > * {
+  height: auto;
+  padding: 0;
+  border: 0;
+}
+
+.rt-cards > .report-table.rt-fold-months th.rt-name {
+  position: static;
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--sp-2);
+  min-width: 0;
+  background: none;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  white-space: normal;
+}
+
+.rt-cards > .report-table.rt-fold-months td {
+  display: flex;
+  flex: 1 0 84px;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: max-content;
+}
+
+.rt-cards > .report-table.rt-fold-months td::before {
+  content: attr(data-label);
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.rt-cards > .report-table.rt-fold-months td.rt-key {
+  font-weight: 700;
+}
+
+.rt-cards > .report-table.rt-fold-months tr.rt-group {
+  display: block;
+  padding: 0;
+}
+
+.rt-cards > .report-table.rt-fold-months tr.rt-group > th {
+  display: block;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--c-surface-2);
+}
+
+.rt-cards > .report-table.rt-fold-months tr.rt-total {
+  border-top: 1px solid var(--c-border-strong);
+}
+
+.rt-cards > .report-table.rt-fold-months tr.rt-grand {
+  border-top: 2px solid var(--c-border-strong);
+  background: var(--c-surface-2);
+}
+
+/*
+ * 消費税の「参考値」の注意の本文と言葉の説明（report-views2.js の disclaimerMore）。どの幅でも「くわしく」に畳む
+ * （注意の帯は1行の要点だけにして、結論の数字と表を先に見せる）。
+ */
+.tax-more-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tax-more > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: fit-content;
+  color: var(--c-primary);
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+
+.tax-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tax-more[open] .tax-more-icon {
+  transform: rotate(90deg);
+}

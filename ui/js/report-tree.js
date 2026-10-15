@@ -92,9 +92,113 @@ export function treeRows(rows, accounts, keys) {
 export function flattenBsRows(rows, depth = 0, out = []) {
   for (const r of rows) {
     const children = r.children || [];
-    out.push({ code: r.code, name: r.name, amount: r.amount, depth, parent: children.length > 0, direct: false });
+    const row = { code: r.code, name: r.name, amount: r.amount, depth, parent: children.length > 0, direct: false };
+    if (r.sub) row.sub = r.sub;
+    out.push(row);
     if (children.length && r.own) out.push({ code: r.code, name: DIRECT_LABEL, amount: r.own, depth: depth + 1, parent: false, direct: true });
     flattenBsRows(children, depth + 1, out);
   }
   return out;
+}
+
+/**
+ * 平らな行（treeRows の結果）で、子が1つだけの親（直接の記帳の行が無く、子が末端）を1行に畳む。
+ * 試算表・損益計算書で「現金／現金」と同じ数字が2回並ばないようにするため（貸借対照表の collapseSingleChildren と同じ決まり）。
+ * 親の行の数字は子の合計なので、そのまま使う。子の名前が親と違えば sub に残す（孫まで1本道なら、途中の名前もつなぐ）。
+ * @param {Array<{ name: string, depth: number, parent: boolean, direct: boolean, sub?: string }>} rows
+ */
+export function collapseSingleRows(rows) {
+  let cur = rows;
+  // 深い所から畳むと、上の親も1本道になることがあるので、変わらなくなるまで繰り返す（深さの数だけ）。
+  for (;;) {
+    const out = [];
+    for (let k = 0; k < cur.length; k += 1) {
+      const r = cur[k];
+      let end = k + 1;
+      while (end < cur.length && cur[end].depth > r.depth) end += 1;
+      const kids = cur.slice(k + 1, end).filter((x) => x.depth === r.depth + 1);
+      const only = r.parent && kids.length === 1 && end === k + 2 && !kids[0].parent && !kids[0].direct ? kids[0] : null;
+      if (!only) {
+        out.push(r);
+        continue;
+      }
+      const names = [only.name, only.sub].filter((n) => n && n !== r.name);
+      out.push({ ...r, parent: false, sub: names.length ? names.join('・') : r.sub });
+      k += 1;
+    }
+    if (out.length === cur.length) return out;
+    cur = out;
+  }
+}
+
+/**
+ * 月別の表に出す月（列）と、その月に科目の金額があるか。
+ * 今月（until）より後の月も、科目の金額があれば出す。右端の「合計」はサーバーの年間の値なので、
+ * 金額のある月を隠すと、列を足しても合計と合わなくなるため。
+ * 「金額がある」は、科目の行の months[i] が1つでも0でないこと。振替だけの月は、収益と費用の合計が0でも、
+ * 科目の金額はある（費用A +10,000 と 費用B −10,000）。
+ * @param {Array<{ month: string }>} series 月ごとの行（その年の12か月）
+ * @param {Array<{ months: number[] }>} rows 科目の行（収益と費用の全部）
+ * @param {string} until YYYY-MM（今月。これより後は、金額のある月だけ）
+ * @returns {Array<{ i: number, month: string, hasAmounts: boolean }>}
+ */
+export function monthColumns(series, rows, until) {
+  return series
+    .map((r, i) => ({ i, month: r.month, hasAmounts: rows.some((x) => Boolean(x.months && x.months[i])) }))
+    .filter((c) => c.month <= until || c.hasAmounts);
+}
+
+/**
+ * 月の並び（1〜12の数、小さい順）を短い言葉にする。2か月だけなら「11月と12月」。3か月以上続く所は「4月〜12月」に
+ * まとめ、ほかは「・」で並べる（「1月〜10月・12月」）。
+ * @param {number[]} months
+ */
+export function monthList(months) {
+  if (months.length === 2) return `${months[0]}月と${months[1]}月`;
+  const runs = [];
+  for (const m of months) {
+    const last = runs[runs.length - 1];
+    if (last && m === last[last.length - 1] + 1) last.push(m);
+    else runs.push([m]);
+  }
+  return runs.flatMap((r) => (r.length >= 3 ? [`${r[0]}月〜${r[r.length - 1]}月`] : r.map((m) => `${m}月`))).join('・');
+}
+
+/**
+ * 月次推移の表に出ない月の一言（表の直前に出す。グラフは12月まであるのに、表が今月で終わる理由が画面に無かった）。
+ * 出ない月が無ければ空の文字。今年で、今月より後の月を1つも出していないときだけ「表は今月までです。」を付ける
+ * （金額のある後の月を出しているときは、表の題の「今月より後の月は、表だけに出ます」と食い違うため）。
+ * @param {Array<{ month: string }>} series その年の12か月
+ * @param {Array<{ i: number, month: string }>} cols monthColumns の結果（表に出す月）
+ * @param {string} thisMonth 今月（YYYY-MM）
+ */
+export function hiddenMonthsNote(series, cols, thisMonth) {
+  const shown = new Set(cols.map((c) => c.i));
+  const hidden = series.flatMap((r, i) => (shown.has(i) ? [] : [Number(r.month.slice(5, 7))]));
+  if (!hidden.length) return '';
+  const thisYear = series.length > 0 && series[0].month.slice(0, 4) === thisMonth.slice(0, 4);
+  const future = cols.some((c) => c.month > thisMonth);
+  const head = thisYear && !future ? '表は今月までです。' : '';
+  return `${head}${monthList(hidden)}は、その月になるか、記録ができたら出ます。`;
+}
+
+/**
+ * 子が1つだけの親（自分への直接の記帳が無く、子が末端）を、1行に畳む。同じ金額が2回並ばないようにするため
+ * （「現金／現金」「未払金／サンプルカード」）。子の名前が親と違えば、sub に残す（どの口座の残高か分かるように）。
+ * 元の木は変えない。
+ * @param {Array<{ code: string, name: string, amount: number, own?: number, children?: any[] }>} rows
+ */
+export function collapseSingleChildren(rows) {
+  return rows.map((r) => {
+    const children = (r.children || []).map((c) => collapseSingleChildren([c])[0]);
+    const only = children.length === 1 ? children[0] : null;
+    if (only && !r.own && !(only.children || []).length) {
+      const merged = { ...r, children: [] };
+      // 孫まで1本道なら、途中の名前も残す（親と同じ名前は省く）。
+      const names = [only.name, only.sub].filter((n) => n && n !== r.name);
+      if (names.length) merged.sub = names.join('・');
+      return merged;
+    }
+    return { ...r, children };
+  });
 }

@@ -55,6 +55,14 @@
   display: none;
 }
 
+/*
+ * 見えないファイルの欄（選ぶのは「ファイルを選ぶ」のボタンから）。1pxの欄でも、ブラウザが中のファイル名に
+ * 「…」の省略を付けて描くので、描かないようにする（スクリプトからの click と、試験の setInputFiles は効く）。
+ */
+.file-input {
+  visibility: hidden;
+}
+
 .drop-busy {
   color: var(--c-primary);
   font-weight: 700;
@@ -112,24 +120,27 @@
   color: var(--c-primary);
 }
 
+/* 長い値は「…」で切らずに折り返す（見本の中身が欠けないように）。 */
 .sample-table th,
 .sample-table td {
   max-width: 16em;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
+/* 見出しは上でそろえる（札の付いた列と付かない列で、名前の高さがずれた）。 */
 .sample-table thead th {
   height: auto;
   padding-top: var(--sp-2);
   padding-bottom: var(--sp-2);
-  vertical-align: bottom;
+  vertical-align: top;
 }
 
 .sample-table th .col-name {
   display: block;
   color: var(--c-text);
   font-size: var(--fs-sm);
+  word-break: keep-all;
 }
 
 .col-tag {
@@ -142,6 +153,119 @@
 
 .sample-table thead th.is-mapped {
   background: var(--c-ok-bg);
+}
+
+/* ファイルの行番号の列。番号と「読み飛ばす」の札を、折り返さずに並べる。 */
+.sample-table .line-col {
+  white-space: nowrap;
+}
+
+/* 読み飛ばす行（読み飛ばす行の数を、推測より増やしたとき）。色に加えて、札の文字でも示す。 */
+.sample-table tr.is-skipped td {
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+}
+
+.skip-tag {
+  margin-left: var(--sp-1);
+}
+
+/* ---- (2) 狭い幅の、列ごとの一覧（見本の表の代わり） ---- */
+.col-list,
+.sample-note--list {
+  display: none;
+}
+
+.col-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-s);
+  background: var(--c-surface);
+}
+
+/* 役目のある列: 背景の色に加えて、役目の札（文字）と左の帯で示す。 */
+.col-item.is-mapped {
+  border-color: var(--c-income);
+  background: var(--c-ok-bg);
+  box-shadow: inset 4px 0 0 var(--c-income);
+}
+
+.col-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-weight: 700;
+}
+
+.col-no {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.col-item-role {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+}
+
+.col-item-role .col-tag {
+  margin: 0;
+}
+
+.col-arrow {
+  color: var(--c-income);
+  font-weight: 700;
+}
+
+.col-item-example {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.col-example:empty,
+.col-warn:empty {
+  display: none;
+}
+
+/* 日付の列に選んだ列が日付らしくないときの注意（取り込みは止めないので、誤りの赤ではなく注意の色。印と文字でも示す）。 */
+.col-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  color: var(--c-warn);
+  font-weight: 600;
+}
+
+.col-warn svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* 列の対応の見本は、幅1023px以下では、列ごとの縦の一覧にする（幅768pxで、6列の表が押しつぶされ、日付・金額が「39295／0」のように割れた）。 */
+@media (max-width: 1023px) {
+  .sample-wrap,
+  .sample-note--table {
+    display: none;
+  }
+
+  .sample-note--list {
+    display: block;
+  }
+
+  .col-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
 }
 
 .import-map {
@@ -176,9 +300,10 @@
   padding: 0;
 }
 
+/* 摘要の列のチェック。格子にして、2段目の始まりの位置をそろえる。 */
 .check-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11em, 1fr));
   gap: var(--sp-1) var(--sp-4);
 }
 
@@ -191,13 +316,43 @@
   display: flex;
 }
 
+/*
+ * (2)と(3)の「戻る」「確かめる／N件を取り込む」の帯。画面の下に付いてくる（40行のファイルで、取り込むボタンがページの
+ * 約2,100px下にあった）。固定バーの決まり（AC-11.8）と同じく、幅767px以下は下のバーの真上に付け、背景は不透明、上に線。
+ * 左右はカードの余白まで伸ばす。下まで送ると、カードの中の元の位置に収まる。通知は data-bottom-bar を見て、この帯の上に出る。
+ */
 .import-actions {
+  position: sticky;
+  bottom: var(--bar-bottom);
+  z-index: var(--z-sticky);
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: var(--sp-2);
-  padding-top: var(--sp-4);
-  border-top: 1px solid var(--c-border);
+  margin: 0 calc(-1 * var(--sp-5));
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+}
+
+/* 欄へ Tab で移ったとき、下に付いた帯（高さ約70px）の裏に隠れないよう、帯の上で止める。帯の中のボタンは除く。 */
+.import-step :is(input, select, textarea, button, a, [tabindex]):not(.import-actions *) {
+  scroll-margin-bottom: 88px;
+}
+
+.check-next {
+  display: flex;
+}
+
+/* 指で触る幅（1024px未満）では、チェック（包むラベルごと）と小さな選択欄も44px以上にする（AC-11.7）。 */
+@media (max-width: 1023px) {
+  .import-step .check {
+    min-height: 44px;
+  }
+
+  .enc-dd .select {
+    height: 44px;
+  }
 }
 
 @media (max-width: 767px) {
@@ -217,6 +372,12 @@
 
   .drop-zone {
     padding: var(--sp-5) var(--sp-4);
+  }
+
+  /* カードの余白が16pxになる幅。帯もそれに合わせる。 */
+  .import-actions {
+    margin: 0 calc(-1 * var(--sp-4));
+    padding: var(--sp-3) var(--sp-4);
   }
 
   .import-actions .btn {

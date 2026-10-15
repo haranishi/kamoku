@@ -1,23 +1,28 @@
 // SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// SC-03 未確認 `#/inbox`。製品の中心。表1枚で、Enterで行を確定候補にして次の行へ、Ctrl/Cmd+Enterで確定する。
-// 絞り込み（状態・口座・文字・ページ）はアドレスに持つ。確定候補の印は画面の中だけの集合で、絞り込みやページを変えても保つ。
+// SC-03 未確認 `#/inbox`。製品の中心。表1枚で、Enterで行を確定する行にして次の行へ、Ctrl/Cmd+Enterで確定する。
+// 絞り込み（状態・口座・文字・ページ）はアドレスに持つ。確定する行の印は画面の中だけの集合で、絞り込みやページを変えても保つ。
 
 import { h } from '../dom.js';
 import { icon } from '../icons.js';
 import { shouldIgnoreKey } from '../ime.js';
 import { createCandidates } from '../candidates.js';
-import { createTabs } from '../components/tabs.js';
-import { selectInput, textInput, button } from '../components/fields.js';
+import { button } from '../components/fields.js';
 import { banner } from '../components/banner.js';
 import { skeletonBlock, delayedSkeleton } from '../components/skeleton.js';
 import { createDraftTable } from './inbox-table.js';
-import { createInboxBar, confirmCandidates } from './inbox-bar.js';
+import { createInboxBar } from './inbox-bar.js';
+import { createConfirmFlow } from './inbox-confirm.js';
+import { createInboxTools } from './inbox-tools.js';
+import { createIgnoreFlow } from './inbox-ignore.js';
 import { ignoredTable, inboxEmpty } from './inbox-parts.js';
-import { walletItems } from './entry-options.js';
 
 export const PAGE_SIZE = 200;
+
+// 確定する行が無いときの、下の帯の案内。指で操作する幅（640px未満）には、Enter の案内は通じない。
+const EMPTY_NOTE = '確定する行は、まだありません。行で Enter を押すと、確定する行になります。';
+const EMPTY_NOTE_NARROW = '左の印を押すと、確定する行になります。';
 
 function readFilters(q) {
   const page = Number(q.page);
@@ -35,10 +40,10 @@ export function mount(root, ctx) {
   const candidates = createCandidates();
   let data = null;
   let rows = [];
+  let draftTable = null;
   let total = 0;
   let counts = { draft: 0, ignored: 0, confirmed: 0 };
   let seq = 0;
-  let busy = false;
   let disposed = false;
   const thisYear = String(new Date().getFullYear());
   const apply = (patch) => ctx.navigate(ctx.router.buildHash('/inbox', toQuery({ ...filters, page: 1, ...patch })));
@@ -52,38 +57,76 @@ export function mount(root, ctx) {
       h('div', { class: 'page-head-actions' }, h('a', { class: 'btn', href: '#/import' }, icon('import', { size: 18 }), '明細を取り込む')),
     ),
   );
-  const tabs = createTabs({ label: '表示する明細', tabs: [{ id: 'draft', label: '未確認' }, { id: 'ignored', label: '無視した行' }], selected: filters.status, onChange: (id) => apply({ status: id }) });
-  const walletSel = selectInput({ 'aria-label': '口座で絞り込む', class: 'inbox-wallet' }, [{ value: '', label: 'すべての口座' }]);
-  walletSel.addEventListener('change', () => apply({ wallet: walletSel.value }));
-  const search = textInput({ type: 'search', placeholder: '摘要・取引先・金額で探す', 'aria-label': '明細を文字で探す', dataset: { search: '1' } });
-  const commitSearch = () => search.value.trim() !== filters.q && apply({ q: search.value.trim() });
-  search.addEventListener('keydown', (e) => {
-    if (shouldIgnoreKey(e) || e.key !== 'Enter') return;
-    e.preventDefault();
-    commitSearch();
-  });
-  search.addEventListener('change', commitSearch);
-  const tools = h('div', { class: 'card inbox-tools', role: 'search', 'aria-label': '未確認の絞り込み' }, tabs.el, h('div', { class: 'inbox-filters' }, walletSel, h('div', { class: 'search-box' }, icon('search', { size: 18 }), search, h('kbd', { 'aria-hidden': 'true' }, '/'))));
+  const tools = createInboxTools({ filters: () => filters, apply });
   const summary = h('p', { class: 'list-summary', 'aria-live': 'polite' });
   const listHost = h('div', { class: 'inbox-host' });
   const pager = h('nav', { class: 'pager', 'aria-label': 'ページ送り' });
-  const bar = createInboxBar({ onConfirm: () => confirmAll() });
-  tabs.panel.classList.add('inbox-panel');
-  root.append(tools, tabs.panel);
-  tabs.panel.append(summary, listHost, pager, bar.el);
+  const bar = createInboxBar({ onConfirm: () => flow.run() });
+  tools.panel.classList.add('inbox-panel');
+  root.append(tools.el, tools.panel);
+  tools.panel.append(summary, listHost, pager, bar.el);
 
   const rowOf = (el) => rows.find((r) => r.tr === el.closest('tr.inbox-row'));
 
+  // 確定の流れ（保存待ち・確認・2,000件ずつ送る・結果を合わせる）は inbox-confirm.js。送る間は、表・絞り込み・ページ送りを止める。
+  const flow = createConfirmFlow({
+    api,
+    state,
+    toast,
+    candidates,
+    bar,
+    root,
+    frozen: [tools.el, listHost, pager],
+    busyEl: listHost,
+    ready: () => Boolean(data) && filters.status === 'draft',
+    rows: () => rows,
+    rowOf,
+    load: () => load(),
+    paintBar: () => paintBar(),
+    disposed: () => disposed,
+  });
+
+  // 無視・戻す・⌘Z で戻す（inbox-ignore.js）。
+  const ignoring = createIgnoreFlow({
+    api,
+    state,
+    toast,
+    rows: () => rows,
+    // 番号で探す: 送っている間に一覧を読み直していたら、読み直した一覧の行を外す（無ければ、数はサーバーの値のまま）。
+    drop: (id) => {
+      const i = rows.findIndex((r) => r.id === id);
+      if (i < 0) return;
+      const [row] = rows.splice(i, 1);
+      candidates.remove(id);
+      row.destroy();
+      row.tr.remove();
+      row.msgTr.remove();
+      counts = { ...counts, draft: counts.draft - 1, ignored: counts.ignored + 1 };
+      total -= 1;
+      paintCounts();
+      paintBar();
+    },
+    reload: (after) => load({ after }),
+    stale,
+    status: () => filters.status,
+    ignoredIds: () => (data && filters.status === 'ignored' ? data.items.map((d) => d.id) : []),
+    ignoredButtons: () => [...listHost.querySelectorAll('.ignored-table .restore-btn')],
+    focusDraftTab: () => tools.focusDraftTab(),
+    focusTop: () => root.querySelector('h1').focus(),
+  });
+
   function paintBar() {
+    if (draftTable) draftTable.paint();
     const ro = state.isReadOnly();
-    const reason = ro ? state.readOnlyReason() : busy ? '確定しています…' : candidates.size ? '' : '確定候補はまだありません。行で Enter を押すと、確定候補になります。';
-    bar.update(candidates.summary(), reason);
+    const sending = flow.sending;
+    const empty = !ro && !sending && !candidates.size;
+    const reason = ro ? state.readOnlyReason() : sending ? '確定しています…' : empty ? EMPTY_NOTE : '';
+    bar.update(sending || candidates.summary(), reason, empty ? EMPTY_NOTE_NARROW : '');
   }
 
   function paintCounts() {
     countText.textContent = `${counts.draft}件`;
-    tabs.el.querySelector('[data-tab="draft"]').textContent = `未確認 ${counts.draft}件`;
-    tabs.el.querySelector('[data-tab="ignored"]').textContent = `無視した行 ${counts.ignored}件`;
+    tools.paintCounts(counts);
     const from = total ? (filters.page - 1) * PAGE_SIZE + 1 : 0;
     summary.textContent = total ? `${total}件のうち ${from}〜${Math.min(filters.page * PAGE_SIZE, total)}件目（日付の古い順）` : '';
   }
@@ -100,44 +143,6 @@ export function mount(root, ctx) {
     pager.append(prev, h('span', { class: 'pager-text' }, `${filters.page} / ${pages} ページ`), next);
   }
 
-  async function ignore(row) {
-    if (state.isReadOnly()) return;
-    const i = rows.indexOf(row);
-    try {
-      await api.post(`/drafts/${row.id}/ignore`);
-    } catch (err) {
-      if (err.code === 'already_confirmed') return stale(err);
-      row.showError(err.message);
-      return undefined;
-    }
-    candidates.remove(row.id);
-    row.destroy();
-    row.tr.remove();
-    row.msgTr.remove();
-    rows.splice(i, 1);
-    counts = { ...counts, draft: counts.draft - 1, ignored: counts.ignored + 1 };
-    total -= 1;
-    paintCounts();
-    paintBar();
-    state.load('status', { force: true }).catch(() => {});
-    toast.success(`「${row.draft.description}」を取り込まない行にしました。`, { action: { label: '元に戻す', onClick: () => restore(row.id) } });
-    const target = rows[Math.min(i, rows.length - 1)];
-    if (target) target.focus('cand');
-    else if (!rows.length) load();
-    return undefined;
-  }
-
-  async function restore(id) {
-    try {
-      await api.post(`/drafts/${id}/restore`);
-      toast.success('未確認に戻しました。');
-      state.load('status', { force: true }).catch(() => {});
-      load();
-    } catch (err) {
-      toast.error(err.message);
-    }
-  }
-
   function stale(err) {
     toast.info('他の場所で更新されました。読み込み直します。', { detail: err && err.message });
     load();
@@ -146,6 +151,7 @@ export function mount(root, ctx) {
   function render() {
     rows.forEach((r) => r.destroy());
     rows = [];
+    draftTable = null;
     // 「無視した行」では確定しないので、確定のバーを出さない。
     bar.el.hidden = filters.status === 'ignored';
     if (!data.items.length) {
@@ -154,7 +160,7 @@ export function mount(root, ctx) {
       return;
     }
     if (filters.status === 'ignored') {
-      listHost.replaceChildren(ignoredTable({ items: data.items, thisYear, readOnly: state.isReadOnly(), onRestore: (d) => restore(d.id) }));
+      listHost.replaceChildren(ignoredTable({ items: data.items, thisYear, readOnly: state.isReadOnly(), onRestore: (d) => ignoring.restore(d.id) }));
       return;
     }
     const t = createDraftTable({
@@ -167,21 +173,39 @@ export function mount(root, ctx) {
       api,
       candidates,
       onCandidate: paintBar,
-      onIgnore: ignore,
+      onIgnore: (row) => ignoring.ignore(row),
       onStale: stale,
       onSaveState: (k) => bar.setSaveState(k),
       onLast: () => bar.confirmButton.focus(),
     });
     rows = t.rows;
+    draftTable = t;
     listHost.replaceChildren(t.el);
+    t.layout(listHost.getBoundingClientRect().width);
   }
 
-  async function load() {
+  // 入れ物の幅が、表とカードの境目をまたいだら、行の欄の並び（Tabの順）を合わせ直す。
+  const resize = new ResizeObserver((entries) => {
+    if (draftTable && entries.length) draftTable.layout(entries[entries.length - 1].contentRect.width);
+  });
+  resize.observe(listHost);
+
+  /** いまフォーカスのある行（番号と列と位置）。読み直したあとに、同じ行へ戻すため。 */
+  function focusSpot() {
+    const el = document.activeElement;
+    const row = el && el.closest ? rowOf(el) : null;
+    const td = row && el.closest('td');
+    return row ? { id: row.id, index: rows.indexOf(row), col: td ? td.dataset.col : null } : null;
+  }
+
+  /**
+   * 一覧を読み直す。after を渡せば、描いた後に呼ぶ（戻した行へのフォーカスなど）。渡さなければ、フォーカスのあった行へ戻す
+   * （その行が無くなっていれば、同じ位置の行）。
+   */
+  async function load({ after } = {}) {
     const my = ++seq;
     const stop = delayedSkeleton(listHost, () => skeletonBlock({ lines: 6, label: '未確認の明細を読み込んでいます' }));
-    const focus = document.activeElement && document.activeElement.closest ? document.activeElement.closest('tr.inbox-row') : null;
-    const focusCol = focus && document.activeElement.closest('td') ? document.activeElement.closest('td').dataset.col : null;
-    const focusIndex = focus ? rows.findIndex((r) => r.tr === focus) : -1;
+    const spot = focusSpot();
     try {
       const res = await api.get('/drafts', { status: filters.status, wallet: filters.wallet, q: filters.q, limit: PAGE_SIZE, offset: (filters.page - 1) * PAGE_SIZE });
       stop();
@@ -189,11 +213,16 @@ export function mount(root, ctx) {
       data = { ...data, items: res.items };
       total = res.total;
       counts = res.counts || counts;
+      // 絞り込みが無く1ページに収まる＝未確認の全部の行が見えている。そこに無い印（ほかで確定・無視された行）は外す。
+      if (filters.status === 'draft' && !filters.wallet && !filters.q && filters.page === 1 && total <= PAGE_SIZE) {
+        candidates.keepOnly(new Set(res.items.map((d) => d.id)));
+      }
       render();
       paintCounts();
       paintPager();
       paintBar();
-      if (focusIndex >= 0 && rows.length) rows[Math.min(focusIndex, rows.length - 1)].focus(focusCol || 'account');
+      if (after) after();
+      else if (spot && rows.length) (rows.find((r) => r.id === spot.id) || rows[Math.min(spot.index, rows.length - 1)]).focus(spot.col || 'account');
     } catch (err) {
       stop();
       if (disposed || my !== seq) return;
@@ -201,61 +230,17 @@ export function mount(root, ctx) {
     }
   }
 
-  async function confirmAll() {
-    if (busy || !data || filters.status !== 'draft') return;
-    if (state.isReadOnly()) return paintBar();
-    const active = document.activeElement;
-    const row = active ? rowOf(active) : null;
-    if (row) row.commit(active.closest('td') ? active.closest('td').dataset.col : null);
-    if (!candidates.size) {
-      bar.update(candidates.summary(), '確定候補がありません。行で Enter を押して、確定候補にしてください。');
-      return undefined;
-    }
-    await Promise.all(rows.map((r) => r.flush()));
-    if (!(await confirmCandidates(candidates.summary()))) return undefined;
-    busy = true;
-    paintBar();
-    try {
-      const res = await api.post('/drafts/confirm', { ids: candidates.ids() });
-      res.confirmed.forEach((c) => candidates.remove(c.id));
-      if (res.confirmed.length) {
-        const nos = res.confirmed.map((c) => c.no).sort((a, b) => a - b);
-        toast.success(`${res.confirmed.length}件を確定しました（No.${nos[0]}〜No.${nos[nos.length - 1]}）。`, { action: { label: '仕訳帳を見る', href: '#/journal' } });
-      }
-      if (res.failed.length) toast.error(`${res.failed.length}件は確定できませんでした。行の下の理由を確かめて、直してからもう一度確定してください。`);
-      state.load('status', { force: true }).catch(() => {});
-      busy = false;
-      await load();
-      res.failed.forEach((f) => {
-        const r = rows.find((x) => x.id === f.id);
-        if (r) r.showError(f.error.message);
-      });
-    } catch (err) {
-      busy = false;
-      if (err.isStale || err.code === 'already_confirmed') stale(err);
-      else toast.error(err.message);
-    } finally {
-      busy = false;
-      paintBar();
-    }
-    return undefined;
-  }
-
   const onDocKey = (e) => {
     if (shouldIgnoreKey(e)) return;
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && !document.querySelector('dialog[open]')) {
       e.preventDefault();
-      confirmAll();
+      flow.run();
+      return;
     }
+    ignoring.onKey(e);
   };
   document.addEventListener('keydown', onDocKey);
   const unsub = state.subscribe('status', () => paintBar());
-
-  function syncControls() {
-    tabs.select(filters.status);
-    walletSel.value = filters.wallet;
-    if (document.activeElement !== search) search.value = filters.q;
-  }
 
   const stopSkel = delayedSkeleton(listHost, () => skeletonBlock({ lines: 6, label: '未確認の明細を読み込んでいます' }));
   const fresh = { force: true };
@@ -264,8 +249,8 @@ export function mount(root, ctx) {
       stopSkel();
       if (disposed) return;
       data = { settings, accounts, partners, items: [] };
-      walletSel.replaceChildren(h('option', { value: '' }, 'すべての口座'), ...walletItems(accounts).map((w) => h('option', { value: w.value }, w.label)));
-      syncControls();
+      tools.setWallets(accounts);
+      tools.sync(filters);
       load();
     })
     .catch((err) => {
@@ -277,7 +262,9 @@ export function mount(root, ctx) {
   const cleanup = () => {
     disposed = true;
     document.removeEventListener('keydown', onDocKey);
+    resize.disconnect();
     unsub();
+    bar.destroy();
     rows.forEach((r) => r.destroy());
   };
   cleanup.update = (nextCtx) => {
@@ -285,7 +272,7 @@ export function mount(root, ctx) {
     if (JSON.stringify(nextFilters) !== JSON.stringify(filters)) {
       filters = nextFilters;
       if (data) {
-        syncControls();
+        tools.sync(filters);
         load();
       }
     }
@@ -293,4 +280,3 @@ export function mount(root, ctx) {
   };
   return cleanup;
 }
-

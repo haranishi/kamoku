@@ -7,7 +7,87 @@
 .detail {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--sp-4);
+}
+
+/* 金額は、ホームの数字のカードと同じ大きさにする（日付や種別と同じ大きさで、目立たなかった）。 */
+.detail-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-kpi);
+  font-weight: 700;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-total-label {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+/* 最新の訂正・取消（第2版以降）。履歴の要約として、最初の1画面に出す。 */
+.detail-latest {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-s);
+  background: var(--c-danger-bg);
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+}
+
+.detail-latest svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--c-danger);
+}
+
+/* 取り消す: 戻せない操作なので、朱の枠と文字（塗りは、確認のダイアログの「取り消す」だけ）。 */
+.btn-void {
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+}
+
+/* 明細: 広い幅は4列の表（メモは科目の下、税額は税区分の下）。狭い幅は借方と貸方の2列（下の @media）。 */
+.detail-lines td,
+.detail-lines th {
+  height: auto;
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  vertical-align: top;
+  white-space: normal;
+}
+
+.detail-lines .num {
+  white-space: nowrap;
+}
+
+.detail-lines .sub {
+  display: block;
+}
+
+/* 「貸借」の列は、中身（借方・貸方）の幅だけにし、折り返さない（幅を決め打ちしていて、「借／方」と1字ずつ折れた）。 */
+.detail-lines th:first-child,
+.detail-lines .detail-side {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.detail-side {
+  color: var(--c-muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.detail-account {
+  font-weight: 600;
+}
+
+.detail-sides {
+  display: none;
 }
 
 .detail-facts {
@@ -38,9 +118,11 @@
   font-size: 16px;
 }
 
-.detail-lines td,
-.detail-lines th {
-  white-space: nowrap;
+/* 履歴の見出しの下の、「記録のハッシュ」の説明（1行）。 */
+.detail-hash-note {
+  margin: calc(var(--sp-2) * -1) 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  text-wrap: pretty;
 }
 
 .detail-actions {
@@ -86,9 +168,10 @@
   color: var(--c-primary);
 }
 
+/* 訂正も取消も朱の淡い色（色の決まり）。どちらかは、記号（鉛筆と斜線の丸）と文字で見分ける。 */
 .timeline-item--edit .timeline-icon {
-  background: var(--c-pending-bg);
-  color: var(--c-warn);
+  background: var(--c-danger-bg);
+  color: var(--c-danger);
 }
 
 .timeline-item--ban .timeline-icon {
@@ -120,6 +203,15 @@
   }
 }
 
+@media (max-width: 1023px) {
+  /* 「この版の明細」の開閉は、押せる大きさ（44px）にする（AC-11.7）。 */
+  .timeline-lines summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
 @media (max-width: 767px) {
   .filters {
     padding: var(--sp-3) var(--sp-4);
@@ -133,12 +225,71 @@
     display: none;
   }
 
+  /* キーの手がかり（/）を出さない分、右の余白を詰め、案内の文は小さめの字にして、切れずに入れる。 */
+  .search-box .input {
+    padding-right: var(--sp-3);
+  }
+
+  .search-box .input::placeholder {
+    font-size: var(--fs-sm);
+  }
+
   .filter-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  /* 積み上げ表示では、空のメモの行を出さない。 */
-  .detail-lines td[data-label="メモ"]:empty {
+/* 640px未満は、明細を借方と貸方の2列のかたまりにする（1明細を5〜6段の縦並びにすると、どちらにいくら入るか追えなかった）。 */
+@media (max-width: 639px) {
+  .detail-lines-wrap {
     display: none;
+  }
+
+  .detail-sides {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-m);
+    background: var(--c-surface);
+  }
+
+  .detail-side-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .detail-side-col + .detail-side-col {
+    border-left: 1px solid var(--c-border);
+  }
+
+  .detail-side-title {
+    padding: var(--sp-1) var(--sp-3);
+    border-bottom: 1px solid var(--c-border);
+    background: var(--c-surface-2);
+    color: var(--c-muted);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+  }
+
+  .detail-side-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .detail-side-list li + li {
+    border-top: 1px solid var(--c-border);
+  }
+
+  .detail-amount {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .detail-side-list .sub {
+    color: var(--c-muted);
+    font-size: var(--fs-xs);
   }
 }

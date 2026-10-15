@@ -6,21 +6,24 @@
 
 import { h, addDescribedBy, removeDescribedBy } from '../dom.js';
 import { shouldIgnoreKey } from '../ime.js';
-import { normalizeWidth, todayIso } from '../input-parse.js';
-import { formatYen } from '../format.js';
+import { todayIso } from '../input-parse.js';
+import { formatYen, formatDate } from '../format.js';
 import { nextDefaults, taxOptions, isTransitional } from '../account-defaults.js';
 import { accountItems, defaultWallet } from './entry-options.js';
 import { createPreviewRunner } from './entry-run-preview.js';
 import { buildSimpleFields, WALLET_LABEL } from './entry-simple-fields.js';
-
+import { checkSimple, fieldNames } from './entry-simple-check.js';
+import { parsePct, PCT_ERROR, pctSourceNote, taxSourceNote } from './entry-hints.js';
 
 /**
- * @param {{ accounts: any[], partners: any[], settings: any, initial?: any, preview: any, api: any,
+ * @param {{ accounts: any[], partners: any[], settings: any, initial?: any, preview: any, api: any, labelledBy?: string,
  *           onSubmit: (opts: { cont: boolean }) => void, onCancel: () => void, onDirty?: () => void }} opts
+ *   labelledBy: フォームの名前にする見出しの id（読み上げで「取引を登録」のフォームと伝わる）
  */
 export function createSimpleForm(opts) {
   const byCode = new Map(opts.accounts.map((a) => [a.code, a]));
   const exempt = opts.settings && opts.settings.tax_mode === 'exempt';
+  const taxable = Boolean(opts.settings && opts.settings.tax_mode === 'taxable');
   const init = opts.initial || {};
   const s = {
     kind: init.kind || 'expense',
@@ -36,10 +39,10 @@ export function createSimpleForm(opts) {
     memo: init.memo || '',
   };
   let detailOpen = Boolean(init.tax_code) && exempt;
-  let dirty = false;
+  let baseline = '';
   const changed = () => {
-    dirty = true;
     if (opts.onDirty) opts.onDirty();
+    syncNotes();
     runner.schedule();
   };
 
@@ -53,6 +56,11 @@ export function createSimpleForm(opts) {
       setAccount: (code) => setAccount(code),
       syncNotes: () => syncNotes(),
       validatePct: () => validatePct(),
+      // 日付が決まったら、締めた日以前かを確かめる（部品は値を入れる前に誤りを消すので、その後に出す）。
+      dateChanged: (v) => {
+        const m = v && opts.dateProblem ? opts.dateProblem(v) : '';
+        if (m) u.dateF.setError(m);
+      },
       openDetail: () => {
         detailOpen = true;
         // 免税で隠していた間は空にしていたので、欄を出したときに、いまの科目の既定の税区分を入れる（2026-10-14 20:10 の決定）。
@@ -69,13 +77,15 @@ export function createSimpleForm(opts) {
     },
   });
   const { kindSeg, dateIn, dateF, transitionalNote, amountIn, amountF, accountCb, accountF, toWalletCb, toWalletF, walletCb, walletF } = u;
-  const { taxSel, taxF, detailBtn, detailCell, lockCell, partnerCb, descIn, pctIn, pctF, ownDraw, grid } = u;
-  const form = h('form', { class: 'entry-form', novalidate: true, 'aria-label': '取引の入力' }, kindSeg.el, grid);
+  const { taxSel, taxF, detailBtn, detailCell, lockCell, partnerCb, partnerF, descIn, pctIn, pctF, ownDraw, grid } = u;
+  const named = opts.labelledBy ? { 'aria-labelledby': opts.labelledBy } : { 'aria-label': '取引の入力' };
+  const form = h('form', { class: 'entry-form', novalidate: true, ...named }, kindSeg.el, grid);
 
   const runner = createPreviewRunner({
     api: opts.api,
     preview: opts.preview,
     build: () => buildInput(),
+    blocked: () => pctProblem(),
     onLines: (lines) => paintOwnDraw(lines),
     onFailedChange: opts.onPreviewState,
     idleText: '日付・金額・科目・口座を入れると、ここに保存される仕訳が出ます。',
@@ -93,11 +103,18 @@ export function createSimpleForm(opts) {
     ownDraw.textContent = s.kind === 'expense' && own ? `→ 事業主貸 ${formatYen(own)}円` : '';
   }
 
+  // 欄の下の一言（経過措置の日付、割合の出どころ、課税で「対象外」のまま、新しい取引先）。値は変えず、気づけるようにするだけ。
   function syncNotes() {
-    const show = s.kind === 'expense' && isTransitional(s.tax_code) && !isLocked();
+    const expense = s.kind === 'expense' && !isLocked();
+    const show = expense && isTransitional(s.tax_code);
     transitionalNote.hidden = !show;
     if (show) addDescribedBy(dateIn.input, transitionalNote.id);
     else removeDescribedBy(dateIn.input, transitionalNote.id);
+    const acc = byCode.get(s.account) || null;
+    u.pctNote.set(expense ? pctSourceNote(acc) : '');
+    u.taxNote.set(taxF.el.hidden ? '' : taxSourceNote({ taxable, kind: s.kind, account: acc, taxCode: s.tax_code }));
+    const p = partnerCb.item;
+    u.partnerNote.set(p && p.isNew && partnerCb.input.value.trim() === p.label ? `新しい取引先: ${p.label}` : '', { plain: true });
   }
 
   function applyKind() {
@@ -119,7 +136,7 @@ export function createSimpleForm(opts) {
     if (k === s.kind) return;
     s.kind = k;
     kindSeg.setValue(k);
-    accountCb.setItems(accountItems(opts.accounts, k));
+    accountCb.setItems(accountItems(opts.accounts, k, { forEntry: true, keep: [s.account] }));
     // 種別に合わない税区分は、科目の既定値（無ければ対象外）に戻す。
     const valid = taxOptions(k).map((o) => o.value);
     const current = s.tax_code || '';
@@ -132,6 +149,8 @@ export function createSimpleForm(opts) {
     taxSel.value = s.tax_code || '';
     if (k !== 'expense') s.business_pct = 100;
     pctIn.value = String(s.business_pct);
+    // 割合の欄を正しい値に入れ直したので、前の誤り（150 など）の表示を残さない。
+    pctF.setError('');
     applyKind();
     changed();
   }
@@ -149,20 +168,19 @@ export function createSimpleForm(opts) {
     if (s.kind === 'expense') {
       s.business_pct = d.pct;
       pctIn.value = String(d.pct);
+      pctF.setError('');
     }
     applyKind();
     changed();
   }
 
+  /** 割合の欄の誤り（支出で、欄が出ているときだけ）。範囲外のうちは、プレビューも保存も止める。 */
+  const pctProblem = () => (s.kind !== 'expense' || isLocked() || parsePct(pctIn.value) !== null ? '' : PCT_ERROR);
+
   function validatePct() {
-    if (s.kind !== 'expense' || isLocked()) return true;
-    const n = Number(normalizeWidth(pctIn.value).trim());
-    if (pctIn.value.trim() === '' || !Number.isInteger(n) || n < 0 || n > 100) {
-      pctF.setError('事業の割合は、0から100の整数で入れてください。');
-      return false;
-    }
-    pctF.setError('');
-    return true;
+    const msg = pctProblem();
+    pctF.setError(msg);
+    return !msg;
   }
 
   /** 送る形の入力。足りない欄があれば null（プレビューを出さない）。 */
@@ -176,28 +194,13 @@ export function createSimpleForm(opts) {
     return { ...base, account: s.account, tax_code: locked || hiddenTax ? null : s.tax_code, business_pct: s.kind === 'expense' && !locked ? s.business_pct : 100 };
   }
 
+  // 最後の検査で誤りのあった欄の名前（保存の帯の一言に使う）。
+  let problemNames = [];
+
   /** 保存の前の検査。誤りは欄のすぐ下に出し、最初の誤りへフォーカスを移す。良ければ入力を返す。 */
   function collect() {
-    const problems = [];
-    if (!dateIn.commit()) problems.push(dateIn.input);
-    if (amountIn.input.value.trim() === '') {
-      amountF.setError('金額を入れてください。');
-      problems.push(amountIn.input);
-    } else if (!amountIn.commit()) problems.push(amountIn.input);
-    const pick = (cb, f, what) => {
-      f.setError('');
-      if (cb.value) return;
-      f.setError(cb.input.value.trim() ? `打った文字に合う${what}がありません。候補から選んでください。` : `${what}を選んでください。`);
-      problems.push(cb.input);
-    };
-    if (s.kind === 'transfer') pick(toWalletCb, toWalletF, '移動先の口座');
-    else pick(accountCb, accountF, '科目');
-    pick(walletCb, walletF, '口座');
-    if (s.kind === 'transfer' && s.wallet && s.wallet === s.to_wallet) {
-      toWalletF.setError('移動元と移動先が同じ口座です。別の口座を選んでください。');
-      problems.push(toWalletCb.input);
-    }
-    if (!validatePct()) problems.push(pctIn);
+    const problems = checkSimple({ u, s, pctProblem });
+    problemNames = fieldNames({ u, s }, problems);
     if (problems.length) {
       problems[0].focus();
       return null;
@@ -205,7 +208,17 @@ export function createSimpleForm(opts) {
     return buildInput();
   }
 
-  const FIELD_OF = { date: [dateF, () => dateIn.input], amount: [amountF, () => amountIn.input], account: [accountF, () => accountCb.input], wallet: [walletF, () => walletCb.input], to_wallet: [toWalletF, () => toWalletCb.input], tax_code: [taxF, () => taxSel], business_pct: [pctF, () => pctIn] };
+  // 入力の指紋。開いたとき（保存して続けたとき）から変わったかを見る（離れる前の確認に使う）。
+  // 決まった値に加えて、まだ値になっていない打ちかけの文字（日付・金額・割合・候補の欄）も入れる。
+  function fingerprint() {
+    const typed = (cb) => (cb.item ? '' : cb.input.value.trim());
+    const dateText = dateIn.input.value.trim();
+    const dateRaw = s.date && (dateText === s.date || dateText === formatDate(s.date)) ? '' : dateText;
+    const amountRaw = amountIn.value === null ? amountIn.input.value.trim() : '';
+    return JSON.stringify([s, dateRaw, amountRaw, pctIn.value.trim(), typed(accountCb), typed(walletCb), typed(toWalletCb)]);
+  }
+
+  const FIELD_OF = { date: [dateF, () => dateIn.input], amount: [amountF, () => amountIn.input], account: [accountF, () => accountCb.input], wallet: [walletF, () => walletCb.input], to_wallet: [toWalletF, () => toWalletCb.input], tax_code: [taxF, () => taxSel], partner: [partnerF, () => partnerCb.input], business_pct: [pctF, () => pctIn] };
 
   // 欄の並び（Enterで次へ進む順）。見えている欄だけ。
   function order() {
@@ -240,18 +253,29 @@ export function createSimpleForm(opts) {
 
   applyKind();
   runner.schedule();
+  baseline = fingerprint();
 
   return {
     el: form,
     collect,
+    /** 最後の collect() で誤りのあった欄の名前。 */
+    get problems() {
+      return problemNames;
+    },
+    /** 開いたとき（保存して続けたとき）から、入力が変わったか。 */
     get dirty() {
-      return dirty;
+      return fingerprint() !== baseline;
     },
     get previewFailed() {
       return runner.failed;
     },
     focusKind: () => kindSeg.focus(),
-    focusAmount: () => amountIn.input.focus(),
+    focusDate: () => dateIn.input.focus(),
+    /** 金額へ（保存して続けた後・テンプレートの後）。下の方から戻るときに、引き継いだ日付も見えるよう、日付の欄から見せる。 */
+    focusAmount() {
+      dateF.el.scrollIntoView({ block: 'nearest' });
+      amountIn.input.focus();
+    },
     setKind: (k) => setKind(k),
     /** サーバーが返した誤り（field 付き）を、その欄の下に出す。欄が見つからなければ偽。 */
     showFieldError(name, message) {
@@ -290,7 +314,7 @@ export function createSimpleForm(opts) {
       applyKind();
       changed();
     },
-    /** 保存した後、種別・日付・口座を残して、ほかを空にする（AC-02.5）。 */
+    /** 保存した後、種別・日付・口座を残して、ほかを空にする（AC-02.5）。プレビューもすぐ空にする（前の仕訳を残さない）。 */
     resetForNext() {
       s.amount = null;
       s.account = null;
@@ -308,9 +332,9 @@ export function createSimpleForm(opts) {
       descIn.value = '';
       pctIn.value = '100';
       Object.values(FIELD_OF).forEach(([f]) => f.setError(''));
-      dirty = false;
       applyKind();
-      runner.schedule();
+      runner.run();
+      baseline = fingerprint();
     },
     /** いまの入力（テンプレートに登録するときに使う）。 */
     snapshot: () => buildInput(),

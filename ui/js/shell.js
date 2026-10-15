@@ -6,8 +6,8 @@
 
 import { h } from './dom.js';
 import { icon } from './icons.js';
-import { iconButton } from './components/fields.js';
 import { openDrawer } from './components/drawer.js';
+import { kbd, shortcutKeys } from './components/fields.js';
 
 /** サイドバーの項目。short は 768〜1023px の細いサイドバーで出す短い名前。 */
 export const NAV = [
@@ -40,6 +40,13 @@ function flatNav() {
   return NAV.flatMap((n) => (n.group ? n.items : [n]));
 }
 
+/** メニューの右端のキーの表示（読み上げない）。 */
+function navKbd(text) {
+  const el = kbd(text);
+  el.classList.add('nav-kbd');
+  return el;
+}
+
 function brandMark() {
   // 帳簿を表した印（自作のアイコンを、藍の四角に白抜きで置く）。
   return h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('book', { size: 18 }));
@@ -65,9 +72,10 @@ export function buildShell(opts) {
     const count = h('span', { class: 'nav-count', hidden: true });
     paintCount(count, countValues.get(item.id) || 0);
     if (track) countEls.set(item.id, (countEls.get(item.id) || []).concat(count));
+    // キーの表示は読み上げず、1つのキーで動くもの（「n」）だけを aria-keyshortcuts で伝える（「g i」は表せない）。
     const a = h(
       'a',
-      { class: 'nav-item', href: item.href, dataset: { nav: item.id } },
+      { class: 'nav-item', href: item.href, dataset: { nav: item.id }, 'aria-keyshortcuts': item.kbd ? shortcutKeys(item.kbd) : null },
       icon(item.icon),
       h(
         'span',
@@ -76,7 +84,7 @@ export function buildShell(opts) {
         item.short ? h('span', { class: 'nav-label-short' }, item.short) : null,
       ),
       count,
-      withKbd && item.kbd ? h('kbd', { class: 'nav-kbd', 'aria-hidden': 'true' }, item.kbd) : null,
+      withKbd && item.kbd ? navKbd(item.kbd) : null,
     );
     if (!item.short) a.querySelector('.nav-label-long').classList.remove('nav-label-long');
     if (item.id === currentNav) a.setAttribute('aria-current', 'page');
@@ -98,7 +106,9 @@ export function buildShell(opts) {
 
   const businessName = h('p', { class: 'sidebar-business' });
   const themeText = h('span', null, opts.themeText());
-  const railToggle = iconButton({ iconName: 'panel', label: 'サイドバーを広げる', className: 'rail-toggle', 'aria-expanded': 'false' });
+  // 細い列では、ほかの項目と同じく、アイコンの下に短い名前を出す（読み上げの名前は aria-label。見える文字を含める）。
+  const railLabel = h('span', { class: 'rail-toggle-label', 'aria-hidden': 'true' }, '広げる');
+  const railToggle = h('button', { type: 'button', class: 'icon-btn rail-toggle', 'aria-expanded': 'false' }, icon('panel'), railLabel);
   // 外側（背景と境目の線）はページの高さいっぱいに伸ばし、内側だけを画面に付いてこさせる。
   const sidebar = h(
     'nav',
@@ -112,13 +122,19 @@ export function buildShell(opts) {
       h(
         'div',
         { class: 'sidebar-foot' },
-        h('button', { type: 'button', class: 'nav-item', onclick: opts.onPalette, dataset: { action: 'palette' } }, icon('search'), h('span', { class: 'nav-label' }, 'コマンド'), h('kbd', { class: 'nav-kbd' }, opts.modLabel, ' K')),
         h(
           'button',
-          { type: 'button', class: 'nav-item', onclick: opts.onHelp },
+          { type: 'button', class: 'nav-item', onclick: opts.onPalette, dataset: { action: 'palette' }, 'aria-keyshortcuts': shortcutKeys(`${opts.modLabel} K`) },
+          icon('search'),
+          h('span', { class: 'nav-label' }, 'コマンド'),
+          navKbd(`${opts.modLabel} K`),
+        ),
+        h(
+          'button',
+          { type: 'button', class: 'nav-item', onclick: opts.onHelp, 'aria-keyshortcuts': '?' },
           icon('keyboard'),
           h('span', { class: 'nav-label' }, h('span', { class: 'nav-label-long' }, 'ショートカット'), h('span', { class: 'nav-label-short' }, 'キー')),
-          h('kbd', { class: 'nav-kbd' }, '?'),
+          navKbd('?'),
         ),
         h(
           'button',
@@ -142,6 +158,7 @@ export function buildShell(opts) {
     railToggle.setAttribute('aria-expanded', rail === 'open' ? 'true' : 'false');
     railToggle.setAttribute('aria-label', rail === 'open' ? 'サイドバーを細くする' : 'サイドバーを広げる');
     railToggle.title = railToggle.getAttribute('aria-label');
+    railLabel.textContent = rail === 'open' ? '細くする' : '広げる';
     try {
       localStorage.setItem(RAIL_KEY, rail);
     } catch {
@@ -151,6 +168,20 @@ export function buildShell(opts) {
   railToggle.addEventListener('click', () => setRail(rail === 'open' ? 'closed' : 'open'));
   setRail(rail);
 
+  /** 全項目のメニュー（左から出る引き出し）。下のバーの「メニュー」と、低い画面の上の帯の「メニュー」から開く。 */
+  function openMenu() {
+    const list = navList(false, false);
+    const d = openDrawer({ title: 'メニュー', side: 'left', className: 'menu-drawer', body: list });
+    list.addEventListener('click', (e) => {
+      if (e.target.closest('a')) d.close();
+    });
+  }
+
+  // 上の帯のボタンは、アイコンの下に短い名前を出す。読み上げの名前は、見える名前で始める（見える文字と食い違わないように）。
+  const topButton = (iconName, text, label, onClick, dataset, extra = {}) =>
+    h('button', { type: 'button', class: ['icon-btn', 'topbar-btn', extra.className], 'aria-label': label, title: label, onclick: onClick, dataset, 'aria-haspopup': extra.popup }, icon(iconName), h('span', { 'aria-hidden': 'true' }, text));
+  const themeTop = topButton('monitor', '表示', opts.themeText(), opts.onTheme, { action: 'theme' });
+  // 「メニュー」は、高さの低い画面（文字を大きくしたときなど）で下のバーを隠したときだけ出す（layout-narrow.css）。
   const topbar = h(
     'header',
     { class: 'topbar' },
@@ -158,8 +189,9 @@ export function buildShell(opts) {
     h(
       'div',
       { class: 'topbar-actions' },
-      iconButton({ iconName: 'search', label: 'コマンド一覧を開く', onClick: opts.onPalette }),
-      iconButton({ iconName: 'monitor', label: '表示の明るさを切り替える', onClick: opts.onTheme, dataset: { action: 'theme' } }),
+      topButton('search', '検索', '検索（コマンド一覧を開く）', opts.onPalette),
+      themeTop,
+      topButton('menu', 'メニュー', 'メニュー', openMenu, { action: 'menu' }, { className: 'topbar-menu', popup: 'dialog' }),
     ),
   );
 
@@ -170,29 +202,29 @@ export function buildShell(opts) {
     { class: 'bottomnav', 'aria-label': 'よく使う画面' },
     BOTTOM.map((id) => {
       const item = byId.get(id);
-      return h('a', { class: 'bottomnav-item', href: item.href, dataset: { nav: id } }, icon(item.icon), h('span', null, item.short || item.label));
+      // 件数（未確認）は、サイドバーと同じ数字と読み上げの名前で、アイコンの右上に出す。
+      const count = h('span', { class: 'nav-count bottomnav-count', hidden: true });
+      paintCount(count, countValues.get(id) || 0);
+      countEls.set(id, (countEls.get(id) || []).concat(count));
+      return h('a', { class: 'bottomnav-item', href: item.href, dataset: { nav: id } }, icon(item.icon), h('span', null, item.short || item.label), count);
     }),
     menuButton,
   );
-  menuButton.addEventListener('click', () => {
-    const list = navList(false, false);
-    const d = openDrawer({ title: 'メニュー', side: 'left', className: 'menu-drawer', body: list });
-    list.addEventListener('click', (e) => {
-      if (e.target.closest('a')) d.close();
-    });
-  });
+  menuButton.addEventListener('click', openMenu);
 
   opts.app.prepend(topbar, sidebar);
   opts.app.append(bottomnav);
 
   return {
-    /** いまの画面の項目に印を付ける。 */
+    /** いまの画面の項目に印を付ける。下のバーに無い画面（帳票・口座など）にいる間は、「メニュー」を選んだ表示にする。 */
     setActive(navId) {
       currentNav = navId;
       document.querySelectorAll('[data-nav]').forEach((a) => {
         if (a.dataset.nav === navId) a.setAttribute('aria-current', 'page');
         else a.removeAttribute('aria-current');
       });
+      if (navId && !BOTTOM.includes(navId)) menuButton.setAttribute('aria-current', 'true');
+      else menuButton.removeAttribute('aria-current');
     },
     /** 項目の横の件数（未確認の件数など）。0なら隠す。 */
     setCount(navId, n) {
@@ -204,6 +236,9 @@ export function buildShell(opts) {
     },
     setThemeText(text) {
       themeText.textContent = text;
+      // 上の帯（幅768px未満）の名前にも、いまの表示を入れる（見える文字「表示」で始まる名前）。
+      themeTop.setAttribute('aria-label', text);
+      themeTop.title = text;
     },
   };
 }
