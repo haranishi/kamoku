@@ -13,7 +13,7 @@ use kamoku_books::{
     format_date, parse_date,
 };
 use kamoku_ledger::{Entry, EntryId, Line, Side, Yen};
-use kamoku_store::{Draft, DraftAction, DraftFilter, DraftId, DraftPatch, DraftStatus, Store};
+use kamoku_store::{Draft, DraftAction, DraftFilter, DraftId, DraftPatch, DraftStatus};
 use serde_json::{Value, json};
 use std::collections::{HashMap, HashSet};
 
@@ -180,33 +180,6 @@ fn placeholder(id: EntryId) -> Result<Entry, ApiError> {
     .map_err(ApiError::internal)
 }
 
-fn waiting_drafts(
-    store: &Store,
-    wanted: &HashSet<DraftId>,
-) -> Result<HashMap<DraftId, Draft>, ApiError> {
-    let mut found = HashMap::new();
-    let mut offset = 0u64;
-    loop {
-        let page = store.drafts(DraftFilter {
-            status: Some(DraftStatus::Draft),
-            limit: 500,
-            offset,
-            ..DraftFilter::default()
-        })?;
-        let count = u64::try_from(page.items.len()).map_err(ApiError::internal)?;
-        found.extend(
-            page.items
-                .into_iter()
-                .filter(|d| wanted.contains(&d.id))
-                .map(|d| (d.id, d)),
-        );
-        offset = offset.saturating_add(count);
-        if count == 0 || offset >= page.total {
-            return Ok(found);
-        }
-    }
-}
-
 fn error_json(e: &ApiError) -> Value {
     let mut body = e.body();
     body.get_mut("error").map_or(Value::Null, Value::take)
@@ -244,7 +217,7 @@ pub(crate) fn draft_confirm(state: &mut State, call: &Call<'_>) -> Result<Reply,
     }
     let position: HashMap<DraftId, usize> =
         ids.iter().enumerate().map(|(i, id)| (*id, i)).collect();
-    let waiting = waiting_drafts(&state.store, &wanted)?;
+    let waiting = state.store.pending_drafts(&ids)?;
     let settings = compose_settings(state.store.settings(), Source::Import);
     let partners = state.store.partners()?;
     let invoices: HashMap<&str, &str> = partners
@@ -254,9 +227,9 @@ pub(crate) fn draft_confirm(state: &mut State, call: &Call<'_>) -> Result<Reply,
     let mut taken = HashSet::new();
     let mut inputs = Vec::new();
     let mut failed: Vec<(usize, Value)> = Vec::new();
-    for (order, id) in ids.iter().enumerate() {
+    for (order, (id, draft)) in ids.iter().zip(&waiting).enumerate() {
         let entry_id = fresh_id(&state.store, &mut taken)?;
-        let Some(draft) = waiting.get(id) else {
+        let Some(draft) = draft else {
             inputs.push((*id, placeholder(entry_id)?));
             continue;
         };

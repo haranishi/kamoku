@@ -190,8 +190,8 @@
     },
     {
       "label": "B5 ホーム: 未確認の出金の合計の桁を見ない",
-      "file": "crates/kamoku-app/src/api/dashboard.rs",
-      "find": "                .filter(|t| *t <= MAX_REPORT_AMOUNT)\n",
+      "file": "crates/kamoku-store/src/drafts.rs",
+      "find": "                .filter(|sum| *sum <= kamoku_books::MAX_REPORT_AMOUNT)\n",
       "replace": ""
     },
     {
