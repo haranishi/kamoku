@@ -3,7 +3,7 @@
 Runtime source: `c857db305b22679027403a4a4c8a111a7ff09df3`.
 Baseline: `9ad343060b821b9d9789c10766664c8689893120`.
 PR: <https://github.com/haranishi/kamoku/pull/9>.
-Follow-up changes affect the measurement harness and records only.
+Follow-up changes affect measurement/test harnesses and records only.
 
 ## Scope
 
@@ -30,6 +30,19 @@ Accounting, tax, persistence, authentication and hash-chain rules are unchanged.
   the original multi-step dirty/history scenario passed three consecutive times.
 - Public-source secret scan: 522 files, no findings. CI history scan passed.
 - Independent source review, final pass: Standards 0 / Spec 0.
+- Independent UI review: 19/20; experience: 18/20; no required fixes.
+  Review covered 19 selected screenshots at three widths/both themes and actual
+  navigation, search, input recovery, dirty guards and fresh-book setup to home.
+  Transaction durability and assistive technology were outside that manual review.
+
+Final-head run 38776533822 exposed a CSV test readiness race: `open()` waits for
+the heading, while report loading intentionally disables the export link. Reading
+its null `href` immediately resolves to `/null` and returns 404. Holding the real
+report request reproduced exactly that failure. The repaired test verifies the
+pending disabled/null state, releases the response, awaits the exact CSV URL and
+retains HTTP 200, MIME, UTF-8 BOM and Shift_JIS checks. Three delayed repeats and
+the complete report suite passed. A narrow independent review confirmed the fix;
+production source is unchanged. Require all checks on the resulting final head.
 
 ## Findings corrected during integration
 

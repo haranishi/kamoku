@@ -108,19 +108,41 @@ test('AC-08.7 貸借対照表は日付を1つ選ぶ。当期純利益の行が�
 });
 
 test('AC-08.6 の画面側: 文字コードを Shift_JIS にするとリンクが変わり、書き出したCSVを受け取れる（既定はBOMつきUTF-8）', async ({ page }) => {
-  await open(page, '#/reports/trial-balance');
-  const href = await exportLink(page).getAttribute('href');
-  const res = await page.request.get(new URL(href, page.url()).href);
-  expect(res.status()).toBe(200);
-  expect(res.headers()['content-type']).toContain('text/csv');
-  const bytes = await res.body();
-  expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
-  await page.getByLabel('CSVの文字コード').selectOption('sjis');
-  await expect(exportLink(page)).toHaveAttribute('href', /encoding=sjis/);
-  const sj = await page.request.get(new URL(await exportLink(page).getAttribute('href'), page.url()).href);
-  expect(sj.status()).toBe(200);
-  expect([...(await sj.body()).subarray(0, 3)]).not.toEqual([0xef, 0xbb, 0xbf]);
-  await page.getByLabel('CSVの文字コード').selectOption('utf8bom');
+  let releaseReport;
+  let reportRequested = false;
+  const reportGate = new Promise((resolve) => { releaseReport = resolve; });
+  // 見出しだけでは帳票はまだ準備中。実サーバーへの要求を保留し、CSVの有効化まで検査する。
+  await page.route('**/api/v1/reports/trial-balance?*', async (route) => {
+    reportRequested = true;
+    await reportGate;
+    await route.continue();
+  }, { times: 1 });
+  try {
+    await open(page, '#/reports/trial-balance');
+    await expect.poll(() => reportRequested).toBe(true);
+    await expect(exportLink(page)).toHaveAttribute('aria-disabled', 'true');
+    expect(await exportLink(page).getAttribute('href')).toBeNull();
+    const reportResponse = page.waitForResponse('**/api/v1/reports/trial-balance?*');
+    releaseReport();
+    expect((await reportResponse).status()).toBe(200);
+    await expect(exportLink(page)).toHaveAttribute('href', /^\/api\/v1\/export\/trial-balance\.csv\?.*encoding=utf8bom$/);
+    await expect(exportLink(page)).not.toHaveAttribute('aria-disabled', 'true');
+    await expect(page.getByRole('table', { name: '試算表', exact: true })).toBeVisible();
+    const href = await exportLink(page).getAttribute('href');
+    const res = await page.request.get(new URL(href, page.url()).href);
+    expect(res.status()).toBe(200);
+    expect(res.headers()['content-type']).toContain('text/csv');
+    const bytes = await res.body();
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    await page.getByLabel('CSVの文字コード').selectOption('sjis');
+    await expect(exportLink(page)).toHaveAttribute('href', /encoding=sjis/);
+    const sj = await page.request.get(new URL(await exportLink(page).getAttribute('href'), page.url()).href);
+    expect(sj.status()).toBe(200);
+    expect([...(await sj.body()).subarray(0, 3)]).not.toEqual([0xef, 0xbb, 0xbf]);
+    await page.getByLabel('CSVの文字コード').selectOption('utf8bom');
+  } finally {
+    releaseReport();
+  }
 });
 
 test('SC-06 総勘定元帳: 科目を選ぶと行と残高の推移が出て、行から仕訳の詳細に飛べる', async ({ page }) => {
