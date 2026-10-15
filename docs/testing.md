@@ -1,22 +1,23 @@
 # 試験の地図: 何を、どの層で、どうやって確かめているか
 
-kamoku の試験は11の層に分かれています。下の層ほど速く、失敗の場所を絞りやすい。上の層ほど本物に近く、部品の組み合わせまで確かめます。PRの前は、`tools/check-all.sh` と `cd e2e && ./run-real.sh` を流してください。件数は 2026-10-14 時点です。
+部品の試験は速く、失敗の場所を絞りやすい。通し試験は本物に近く、部品の組み合わせまで確かめます。準備と変更別のコマンドは[試験の実行手順](testing-procedure.md)にあります。PRの前は `tools/check-all.sh` と `e2e/run-real.sh` を流してください。
 
 ## 層ごとの役割
 
-| 層 | 確かめること | 流し方 | 件数 |
-|---|---|---|---:|
-| 部品（Rust） | 金額、税、集計、台帳の符号化、CSVの読み取り。性質の試験（proptest）つき | `cargo test -p kamoku-ledger -p kamoku-jp-tax -p kamoku-books -p kamoku-import` | 122 |
-| 保存層（Rust） | SQLite、追記専用、起動時の検証、下書きの確定、別の接続との競合 | `cargo test -p kamoku-store` | 41 |
-| サーバー（Rust） | 実際のソケットでAPIを通す。入口の守り、失敗の形、上限、外へ通信しないこと | `cargo test -p kamoku-app` | 100 |
-| 別実装の照合 | 台帳のハッシュを、Pythonで計算し直して比べる | `python3 tools/verify-ledger-golden.py` | 7値 |
-| 画面の単体試験 | 金額の式、日付、IMEの判定、絞り込み、帳票の親子、取込の列 | `node --test ui/tests/` | 78 |
-| 画面の静的検査 | 色の組のコントラスト（AC-11.2）と、禁止事項の文字列 | `node ui/dev/check-contrast.mjs`、`node ui/dev/check-policy.mjs` | 64組、104ファイル |
-| スモーク | 実際のバイナリを起動して、入口・貸借の一致・書き出し・巨大な要求への耐性を外から見る | `python3 tools/smoke-demo.py` | 29項目 |
-| ブラウザの通し試験 | 本物のサーバーを相手に、キーボードだけの流れまで通す | `cd e2e && ./run-real.sh flows` | 143 |
-| 契約試験 | 模擬サーバーと本物の、応えの形が同じか | `cd e2e && ./run-real.sh contract` | 25 |
-| スクリーンショット | 全画面を3つの幅とライト・ダークで開き、描画できることを確かめて撮る | `cd e2e && ./run-real.sh screens` | 150枚 |
-| 変異試験 | わざと誤りを入れて、試験が赤くなるか | `python3 tools/mutate.py tools/mutations/<名前>.json` | 92 |
+| 層 | 確かめること | 流し方 |
+|---|---|---|
+| 実行手順の回帰試験 | 必須ツールの不足、検査失敗、指定ミスを成功扱いしない | `python3 -m unittest discover -s tools/tests -v` |
+| 部品（Rust） | 金額、税、集計、台帳の符号化、CSVの読み取り。性質の試験（proptest）つき | `cargo test -p kamoku-ledger -p kamoku-jp-tax -p kamoku-books -p kamoku-import --locked` |
+| 保存層（Rust） | SQLite、追記専用、起動時の検証、下書きの確定、別の接続との競合 | `cargo test -p kamoku-store --locked` |
+| サーバー（Rust） | 実際のソケットでAPIを通す。入口の守り、失敗の形、上限、外へ通信しないこと | `cargo test -p kamoku-app --locked` |
+| 別実装の照合 | 台帳のハッシュを、Pythonで計算し直して比べる | `python3 tools/verify-ledger-golden.py` |
+| 画面の単体試験 | 金額の式、日付、IMEの判定、絞り込み、帳票の親子、取込の列 | `node --test ui/tests/` |
+| 画面の静的検査 | 色の組のコントラスト（AC-11.2）と、禁止事項の文字列 | `node ui/dev/check-contrast.mjs`、`node ui/dev/check-policy.mjs` |
+| スモーク | 実際のバイナリを起動して、入口・貸借の一致・書き出し・巨大な要求への耐性を外から見る | `e2e/run-real.sh` の最初の段階 |
+| ブラウザの通し試験 | 本物のサーバーを相手に、キーボードだけの流れまで通す | `e2e/run-real.sh flows` |
+| 契約試験 | 模擬サーバーと本物の、応えの形が同じか | `e2e/run-real.sh contract` |
+| スクリーンショット | 全画面を3つの幅とライト・ダークで開き、描画できることを確かめて撮る | `e2e/run-real.sh screens` |
+| 変異試験 | わざと誤りを入れて、試験が赤くなるか | `python3 tools/mutate.py tools/mutations/<名前>.json` |
 
 ## 試験が「門番」になっているか
 
@@ -28,7 +29,7 @@ kamoku の試験は11の層に分かれています。下の層ほど速く、�
 
 ## 仕様との対応
 
-画面とサーバーの約束は `docs/spec/` の受け入れ条件（`AC-02.1` など）に書いてあります。72件の条件のすべてに、試験からの参照があります（人が確かめる6件を除く）。`python3 tools/check-spec-trace.py` が、参照の無い条件を一覧します。試験の名前かコメントに条件の番号を書けば、参照として数えます。
+画面とサーバーの約束は `docs/spec/` の受け入れ条件（`AC-02.1` など）に書いてあります。`python3 tools/check-spec-trace.py --strict` は、人が確かめる条件を除き、参照の無い条件があれば失敗します。試験の名前かコメントに条件の番号を書けば、参照として数えます。参照の数だけでは試験内容の妥当性までは分かりません。
 
 ## CIで流れるもの
 

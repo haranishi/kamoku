@@ -3,6 +3,8 @@
 ## 確かめたこと
 
 - [ ] `cargo fmt`・`clippy`・`test`・`deny` が通る
+- [ ] `tools/check-all.sh` の完全検証が通る（quickによる省略と区別する）
+- [ ] 画面・API・保存・依存の変更では `e2e/run-real.sh` が通る
 - [ ] 新しいファイルに SPDX の2行（著作権者とライセンス）を付けた
 - [ ] 実データ、他人のコード、他社の文面・画面を含めていない
 - [ ] コミットに `Signed-off-by` を付けた（`git commit -s`）

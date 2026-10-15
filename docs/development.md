@@ -7,7 +7,7 @@
 - Rust 1.88以上と、Cのコンパイラ（[使い方](getting-started.md)）
 - Node 24（画面の単体試験と、ブラウザの通し試験）
 - Python 3（`tools/` の点検の道具。標準ライブラリだけで動きます）
-- あると良いもの: `cargo-deny`（依存の検査）、`uv`（ライセンス表示の検査 `reuse`）
+- PR前の完全検証には `cargo-deny`、Rust 1.88、`uvx` と準備済みの `reuse` も必要です（[試験の実行手順](testing-procedure.md)）。
 
 ## どこに何があるか
 
@@ -41,13 +41,12 @@ PRの前に、次を流してください。
 
 ```
 tools/check-all.sh           # 書式、clippy、試験、文書、依存、ライセンス表示、画面の単体試験
-cargo build -p kamoku-app    # 通し試験が使う実行ファイル
-cd e2e && npm ci && ./run-real.sh   # 本物のサーバーでの通し試験、契約試験、スクリーンショット
+e2e/run-real.sh              # ビルド、スモーク、操作、契約試験、スクリーンショット
 ```
 
-`run-real.sh` は、段階ごとに本物のサーバーを新しく起動し、前の段階のものを止めてから次へ進みます（127.0.0.1 のCookieはポートが違っても共有されるため）。`flows` `contract` `screens` のどれかを渡すと、その段階だけ流します。ブラウザは `npx playwright install chromium` で入れます。どの層が何を確かめているかは、[試験の地図](testing.md)にあります。
+`run-real.sh` はRustサーバーをビルドし、段階ごとに新しく起動します。前の段階のものを止めてから次へ進みます（127.0.0.1 のCookieはポートが違っても共有されるため）。`flows` `contract` `screens` を渡すと、その段階だけ流します。依存とブラウザの準備、変更別のコマンド、失敗時の記録は[試験の実行手順](testing-procedure.md)にあります。
 
-`tools/check-all.sh --quick` は、依存の検査と最小のRustの確認を省きます。個別に流すなら、`cargo test -p kamoku-books`、`node --test ui/tests/` のように、対象だけを指定します。
+`tools/check-all.sh --quick` は、依存の検査と最小のRustの確認を省き、結果にも省略を明記します。個別に流すなら、`cargo test -p kamoku-books --locked`、`node --test ui/tests/` のように、対象だけを指定します。
 
 ## 試験が「門番」として働くかを確かめる
 
@@ -55,7 +54,7 @@ cd e2e && npm ci && ./run-real.sh   # 本物のサーバーでの通し試験、
 
 ## 仕様と試験の対応
 
-画面とサーバーの約束は `docs/spec/` の「受け入れ条件」（`AC-02.1` のような番号）に書いてあります。試験の名前かコメントに、その番号を書いてください。`python3 tools/check-spec-trace.py` で、試験の参照がまだ無い条件を一覧できます。**最初の貢献に向く作業**です（[最初の貢献の候補](good-first-issues.md)）。
+画面とサーバーの約束は `docs/spec/` の「受け入れ条件」（`AC-02.1` のような番号）に書いてあります。試験の名前かコメントに、その番号を書いてください。`python3 tools/check-spec-trace.py --strict` は、試験からの参照が無い自動検証の条件があれば失敗します。**最初の貢献に向く作業**です（[最初の貢献の候補](good-first-issues.md)）。
 
 ## 変更を出すとき
 

@@ -76,7 +76,8 @@ jobs:
           persist-credentials: false
       - run: python3 tools/check-links.py
       - run: python3 tools/verify-ledger-golden.py
-      - run: python3 tools/check-spec-trace.py
+      - run: python3 tools/check-spec-trace.py --strict
+      - run: python3 -m unittest discover -s tools/tests -v
 
   ui:
     name: 画面の単体試験と静的検査
@@ -102,14 +103,11 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-      - run: cargo build -p kamoku-app --locked
-      # 実際のバイナリを起動して、入口(合言葉・Host・Origin)と巨大な要求への耐性まで外から確かめる。
-      - run: python3 tools/smoke-demo.py --bin target/debug/kamoku
       - run: npm ci
         working-directory: e2e
       - run: npx playwright install --with-deps chromium
         working-directory: e2e
-      # 操作の試験・契約試験・スクリーンショットの順に、段階ごとに本物のサーバーを起動し直す。
+      # ローカルと同じ入口で、ビルド・スモーク・操作・契約・撮影まで通す。
       - run: ./run-real.sh
         working-directory: e2e
 

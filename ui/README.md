@@ -27,10 +27,10 @@ node ui/dev/mock-server.mjs --port 8766
 node --test ui/tests/             # 部品の単体試験（金額の式、日付、IMEの判定、絞り込み、帳票の期間と親子の行、取込の列、検査の門番）
 node ui/dev/check-contrast.mjs    # tokens.css の色の組を計算する（AC-11.2）
 node ui/dev/check-policy.mjs      # 下の「守る決まり」をソースの文字列で確かめる
-cd e2e && npm ci && ./run-real.sh   # 本物のサーバーで、通し試験・契約試験・スクリーンショット
+e2e/run-real.sh                  # ビルド・スモーク・本物のサーバーでの通し試験・契約試験・撮影
 ```
 
-`./run-real.sh` は、先に `cargo build -p kamoku-app` で作った実行ファイルを使います（`KAMOKU_BIN` で場所を変えられます）。`npx playwright test` だけで流すと、e2e は模擬サーバーを4つ立てます（操作用の8766、スクリーンショット用の8767、初期設定の試験用の8768と、その撮影用の8769。後の2つは `--fresh`）。スクリーンショットはリポジトリ直下の `screens-out/` に出ます。ブラウザは新しく取得せず、手元の Playwright の Chromium か、`KAMOKU_E2E_CHANNEL=chrome` で入っている Chrome を使います。
+`e2e/run-real.sh` は実行前にRustサーバーをビルドします（特定の実行ファイルを使うときだけ `KAMOKU_BIN` で指定します）。依存とブラウザの準備は[試験の実行手順](../docs/testing-procedure.md)を見てください。`npx playwright test` だけで流すと、e2e は模擬サーバーを4つ立てます（操作用の8766、スクリーンショット用の8767、初期設定の試験用の8768と、その撮影用の8769。後の2つは `--fresh`）。スクリーンショットはリポジトリ直下の `screens-out/` に出ます。ブラウザは新しく取得せず、手元の Playwright の Chromium か、`KAMOKU_E2E_CHANNEL=chrome` で入っている Chrome を使います。
 
 手でサーバーを立てて試すときは、`KAMOKU_URL` と `KAMOKU_TOKEN`（起動時の合言葉）を入れます。初期設定の試験には、空の帳簿のサーバーが別に要ります（`kamoku serve --data <空のフォルダ> --no-open`）。試験には `KAMOKU_SETUP_URL` と `KAMOKU_SETUP_TOKEN`、撮影には `KAMOKU_SETUP_SHOTS_URL` と `KAMOKU_SETUP_SHOTS_TOKEN` で渡します。試験は仕訳や口座を足していくので、スクリーンショットの前にデモを起動し直してください。
 
