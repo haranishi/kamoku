@@ -57,7 +57,7 @@
 
 | 要求 | 内容 |
 |---|---|
-| `/export/journal.csv?from&to&state=active\|all` | 1行が1明細。列: 仕訳No, 版, 状態, 日付, 摘要, 取引先, 行, 貸借, 科目コード, 科目名, 金額, 税区分, 税額, 行メモ。既定は有効な仕訳だけ |
+| `/export/journal.csv?from&to&state=active\|all` | 1行が1明細。列: 仕訳No, 版, 状態, 日付, 摘要, 取引先, 行, 貸借, 科目コード, 科目名, 金額, 税区分, 税額, 行メモ。既定は有効な仕訳だけ。ファイル名は、期間を決めれば `kamoku-journal-<from>_<to>.csv`、決めなければ書き出した日（JST）の `kamoku-journal-YYYYMMDD.csv` |
 | `/export/trial-balance.csv` `/export/income-statement.csv?by=total\|month` `/export/balance-sheet.csv` `/export/ledger.csv?account` `/export/tax-summary.csv` | 画面の帳票と同じ数字 |
 | `/export/all.json` | 設定、科目、取引先、全イベント（明細・付随情報・ハッシュ）。`schema` の版を持つ |
 | `/export/backup.db` | `VACUUM INTO` で作ったSQLiteの複製 |
