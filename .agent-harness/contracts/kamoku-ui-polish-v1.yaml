@@ -1,0 +1,39 @@
+# 画面の磨きのハーネス契約（正本は作者のObsidianノート「Web制作ハーネス契約テンプレート」と
+# 「ゲーム・アプリ体験評価ハーネステンプレート」）。役割は人格でなく、工程の契約として置く。
+# 順番は「体験 → 見た目」。見た目を先に磨くと、操作の流れの作り直しで無駄になる。
+
+meta: {name: "kamoku-ui-polish", version: "1.0.0", status: active, owner: "保守者"}
+goal: >
+  画面（ui/）が、体験の評価と見た目の採点の両方で合格すること（それぞれ10項目×0〜2点、
+  16点以上かつ0点の項目なし）。配置の門（AC-11.6・AC-11.7・AC-11.8）と、全試験が通り、
+  権利の確認記録がそろっていること。
+non_goals:
+  - "他社の画面・文言・アイコン・配色を写すこと。近づけるのは、機能の流れと使い勝手まで"
+  - "自動仕訳、銀行・カードの自動取得、マネーフォワード形式の書き出し、申告書・e-Tax（法務の確認が済むまで）"
+  - "最終のプレイ判定の代行（人が測る時間、Safari・Firefox・実機のIMEは保守者の確認）"
+roles:
+  - {stage: implement, runner: "Codex（workspace-write。ブラウザを使わない作業）／Opus（ブラウザで確かめながら直す作業）",
+     deliverable: "コード・試験・変更一覧・進み具合の記録",
+     denied: ["git commit/push", "crates/・docs/spec/ への書き込み", "新しい依存の追加", "試験を弱めること"]}
+  - {stage: gate, runner: "決定的な試験（単体・方針検査・コントラスト・通し試験・契約試験）",
+     deliverable: "件数つきの結果。通らなければ、採点に進まない"}
+  - {stage: review, runner: "別セッションのCodex（read-only）", deliverable: "コードで確認した指摘の一覧と、1件ずつの判断"}
+  - {stage: experience_eval, runner: "Opus・別セッション。agent-browser で実際に操作する（評価者ごとに別のセッション）",
+     deliverable: "操作の記録・採点表・不具合・改善TOP5・慣れの近さ。コードは見ない"}
+  - {stage: visual_eval, runner: "Codex（画像を見て採点）。使えないときはOpus", deliverable: "幅ごとの採点表。長い画像は読める高さに切って渡す"}
+  - {stage: human_gate, runner: "保守者",
+     approves: ["commit・push・PR・マージ", "見た目をどこまで近づけるかの方針", "最終のプレイ判定"]}
+loop_control:
+  retry: "不合格なら、改善TOP5だけを implement へ差し戻す。上限3周。同じ指摘が2周続いたら保守者へ返す"
+  budgets: {max_cycles: 3}
+  order: "experience_eval が合格してから visual_eval に進む"
+terminal_states: [SUCCESS, NO_WORK, NEEDS_HUMAN, BUDGET_EXCEEDED, FAILED, UNCERTAIN]
+invariants:
+  - "完了は自己申告でなく証拠（試験の結果、実ファイル、コマンドの出力）で判定する。担当の報告は、再実行して確かめる"
+  - "実装とレビュー、実装と採点を同じ担当に兼ねさせない。採点は毎回、新しいセッションでゼロから行う"
+  - "採点の指摘は、要件にする前に、本物の画面で実測して裏を取る（撮影の都合による偽陽性がある）"
+  - "評価者は、実際の他社製品の画面を見ない・使わない。製品名を出力に書かない。提案は『一般にこう置かれる型』のレベルにとどめる"
+  - "試験が門番として働くか、実装を壊して赤くなることを確かめる"
+  - "公開前に、著作権・規約・法律の確認を行い、docs/legal/ に記録する。調べていないことは『問題なし』と書かない"
+  - "実データを、リポジトリにも指示書にも入れない。画像は合成データだけを撮る"
+receipt: "各周回の依頼書・進み具合・最終報告・採点の全文を .agent-harness/runs/ に残す"
