@@ -3,23 +3,79 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 #
 # 本物のサーバー（kamoku）を起動して、ブラウザの通し試験を流す。
-#   e2e/run-real.sh            操作の試験（flows）と、スクリーンショット（screens）の両方
+#   e2e/run-real.sh [all]      スモーク、操作、契約、スクリーンショットの順にすべて
 #   e2e/run-real.sh flows      操作の試験だけ
 #   e2e/run-real.sh screens    スクリーンショットだけ（screens-out/ に出る）
 #   e2e/run-real.sh contract   模擬サーバーと本物の応えの形を比べる契約試験だけ
 #   e2e/run-real.sh docs-images READMEと「画面の紹介」の画像を docs/images/ に作る（all には含まれない）
-# 段階の名前のあとに足した引数は、Playwright にそのまま渡す（例: e2e/run-real.sh flows layout.spec.mjs -g "AC-11.6"）。
-# 実行ファイルは KAMOKU_BIN（既定は ../target/debug/kamoku。先に cargo build -p kamoku-app）。
+# flows / screens / docs-images の追加引数は、その段階へ渡す。
+# 既定ではcargo buildで再ビルドし、Cargoが返す実行ファイルを使う。
+# KAMOKU_BINを明示した場合だけ、既存の実行ファイルをそのまま使う。
 #
 # 127.0.0.1 の Cookie は、ポートが違っても共有される。そのため、段階ごとにサーバーを起動し直し、
 # 前の段階のサーバーは止めてから次へ進む。試験が仕訳を足すので、段階ごとに新しい帳簿で始める。
 set -euo pipefail
-cd "$(dirname "$0")"
-BIN="${KAMOKU_BIN:-../target/debug/kamoku}"
-WHICH="${1:-all}"
-[ "$#" -gt 0 ] && shift
+
+usage() {
+  echo "使い方: e2e/run-real.sh [all | flows | contract | screens | docs-images | --help]"
+  echo "  flows / screens / docs-images だけ、後ろにその段階の引数を追加できます。"
+  echo "  既定で再ビルドします。KAMOKU_BINを指定すると既存の実行ファイルを使います。"
+}
+
+WHICH="${1-all}"
+if [ "$#" -gt 0 ]; then shift; fi
+case "$WHICH" in
+  all | contract)
+    [ "$#" = 0 ] || { echo "$WHICH は追加引数を受け付けません。" >&2; usage >&2; exit 2; } ;;
+  flows | screens | docs-images) ;;
+  --help) [ "$#" = 0 ] || { usage >&2; exit 2; }; usage; exit 0 ;;
+  *) echo "不明な段階: $WHICH" >&2; usage >&2; exit 2 ;;
+esac
 EXTRA=("$@")
-[ -x "$BIN" ] || { echo "実行ファイルがありません: $BIN（cargo build -p kamoku-app を先に）"; exit 2; }
+cd "$(dirname "$0")"
+
+missing=()
+if command -v node >/dev/null 2>&1; then
+  version="$(node --version 2>/dev/null || true)"
+  if ! [[ "$version" =~ ^v([0-9]+)\. ]] || [ "${BASH_REMATCH[1]:-0}" -lt 24 ]; then
+    missing+=("Node 24以上を導入（現在: ${version:-取得できません}）")
+  fi
+else
+  missing+=("node (24以上) をPATHに追加")
+fi
+if [ "${KAMOKU_BIN+x}" = x ]; then
+  BIN="$KAMOKU_BIN"
+  if [ -f "$BIN" ] && [ -x "$BIN" ]; then
+    case "$BIN" in /*) ;; *) BIN="$PWD/$BIN" ;; esac
+  else
+    missing+=("KAMOKU_BINに既存の実行可能ファイルを指定")
+  fi
+else
+  command -v cargo >/dev/null 2>&1 || missing+=("cargo をPATHに追加")
+fi
+if [ "$WHICH" = all ] || [ "${KAMOKU_BIN+x}" != x ]; then
+  command -v python3 >/dev/null 2>&1 || missing+=("python3 をPATHに追加（Cargoの出力の読取・スモーク試験）")
+fi
+PLAYWRIGHT="./node_modules/@playwright/test/cli.js"
+if [ "$WHICH" != contract ] && [ ! -f "$PLAYWRIGHT" ]; then
+  missing+=("Playwrightを事前に準備: cd e2e && npm ci")
+fi
+if [ "${#missing[@]}" -gt 0 ]; then
+  echo "必要な前提が不足しています。試験を開始しません。" >&2
+  printf '  - %s\n' "${missing[@]}" >&2
+  exit 2
+fi
+if [ "$WHICH" != contract ]; then
+  node -e '
+    try {
+      require("@playwright/test");
+    } catch {
+      console.error("ローカルのPlaywrightを事前に準備してください: cd e2e && npm ci");
+      process.exit(2);
+    }
+  '
+fi
+
 TMP="$(mktemp -d)"
 PIDS=()
 
@@ -32,18 +88,46 @@ stop_servers() {
 }
 cleanup() { stop_servers; rm -rf "$TMP"; }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+if [ "${KAMOKU_BIN+x}" = x ]; then
+  echo "== 実行ファイル: KAMOKU_BINの指定（ビルドを省略）"
+else
+  echo "== 実行ファイル: cargo buildで再ビルド（既定）"
+  if ! (cd .. && cargo build -p kamoku-app --bin kamoku --locked --message-format=json > "$TMP/build.jsonl"); then
+    echo "Rustのビルドに失敗しました。試験を開始しません。" >&2
+    exit 1
+  fi
+  BIN="$(python3 ../tools/cargo-executable.py "$TMP/build.jsonl")"
+  if [ ! -f "$BIN" ] || [ ! -x "$BIN" ]; then
+    echo "Cargoが返した実行ファイルが存在しないか、実行できません。" >&2
+    exit 1
+  fi
+fi
+
+if [ "$WHICH" = all ]; then
+  echo "== スモーク試験（本物のバイナリ）"
+  python3 ../tools/smoke-demo.py --bin "$BIN"
+fi
 
 # 起動して、アドレスと合言葉を <名前>_URL と <名前>_TOKEN に入れる。
 start() {
   local name="$1"; shift
   "$@" > "$TMP/$name.log" 2>&1 < /dev/null &
-  PIDS+=("$!")
+  local pid="$!"
+  PIDS+=("$pid")
   local tries=0 line=""
   while [ -z "$line" ]; do
     line="$(grep -o 'http://127.0.0.1:[0-9]*/?t=[0-9a-f]*' "$TMP/$name.log" 2>/dev/null | head -1 || true)"
+    if ! kill -0 "$pid" 2>/dev/null; then
+      echo "$name が起動前に終了しました。サーバーログは合言葉を含むため表示しません。" >&2
+      exit 1
+    fi
     tries=$((tries + 1))
     if [ "$tries" -gt 300 ]; then
-      echo "$name が起動しませんでした:"; cat "$TMP/$name.log"; exit 1
+      echo "$name の起動が時間切れになりました。サーバーログは合言葉を含むため表示しません。" >&2
+      exit 1
     fi
     [ -n "$line" ] || sleep 0.2
   done
@@ -57,7 +141,7 @@ if [ "$WHICH" = "all" ] || [ "$WHICH" = "flows" ]; then
   start SETUP "$BIN" serve --data "$TMP/setup" --no-open --port 0 --ui-dir ../ui
   KAMOKU_URL="$DEMO_URL" KAMOKU_TOKEN="$DEMO_TOKEN" \
     KAMOKU_SETUP_URL="$SETUP_URL" KAMOKU_SETUP_TOKEN="$SETUP_TOKEN" \
-    npx playwright test --project=flows ${EXTRA[@]+"${EXTRA[@]}"}
+    node "$PLAYWRIGHT" test --project=flows ${EXTRA[@]+"${EXTRA[@]}"}
   stop_servers
 fi
 
@@ -82,6 +166,6 @@ if [ "$WHICH" = "all" ] || [ "$WHICH" = "screens" ]; then
   start SHOTS "$BIN" serve --data "$TMP/shots" --no-open --port 0 --ui-dir ../ui
   KAMOKU_URL="$DEMO_URL" KAMOKU_TOKEN="$DEMO_TOKEN" \
     KAMOKU_SETUP_SHOTS_URL="$SHOTS_URL" KAMOKU_SETUP_SHOTS_TOKEN="$SHOTS_TOKEN" \
-    npx playwright test --project=screens ${EXTRA[@]+"${EXTRA[@]}"}
+    node "$PLAYWRIGHT" test --project=screens ${EXTRA[@]+"${EXTRA[@]}"}
   stop_servers
 fi
