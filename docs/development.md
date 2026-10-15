@@ -19,7 +19,7 @@
 | `crates/kamoku-import` | 明細CSVの読み取り（文字コード、列の対応、指紋）。入出力を持たない |
 | `crates/kamoku-store` | SQLiteへの保存、起動時の検証、下書きと確定 |
 | `crates/kamoku-app` | 手元のサーバーとコマンド（`kamoku`）。HTTPの受け口は標準ライブラリだけ |
-| `ui/` | ブラウザの画面。素のJavaScriptで、ビルドが要りません（[ui/README.md](../ui/README.md)） |
+| `ui/` | 通常の画面は素のJavaScriptでビルド不要。任意の[Rustプレビュー](rust-ui-preview.md)も置く（[ui/README.md](../ui/README.md)） |
 | `e2e/` | ブラウザを動かす通し試験（Playwright。開発専用） |
 | `tools/` | 点検の道具（[tools/README.md](../tools/README.md)） |
 | `docs/` | 設計と仕様。`docs/spec/` が、画面とサーバーの約束です |
@@ -34,6 +34,8 @@ cargo run -p kamoku-app -- demo --ui-dir ui
 ```
 
 `--ui-dir ui` を付けると、画面のファイルをディスクから読みます。`ui/` の下を直して、ブラウザを再読込するだけで確かめられます（付けないと、ビルド時に埋め込んだ版を使います）。サーバーなしで画面だけ見たいときは、模擬サーバー（`node ui/dev/mock-server.mjs`）があります。
+
+Rustで書く画面の最初の範囲は、別経路の仕訳帳です。[ビルドと専用試験](rust-ui-preview.md)は通常の画面と分けています。
 
 ## 試験を通す
 

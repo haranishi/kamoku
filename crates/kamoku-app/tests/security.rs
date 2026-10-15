@@ -10,7 +10,7 @@ mod common;
 use common::*;
 use serde_json::json;
 
-const CSP: &str = "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+const CSP: &str = "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
 fn assert_common_headers(r: &Resp) {
     assert_eq!(
@@ -238,6 +238,13 @@ fn security_headers_on_every_response() {
     ];
     for r in &cases {
         assert_common_headers(r);
+        let policy = r.header("Content-Security-Policy").unwrap();
+        assert!(policy.contains("'wasm-unsafe-eval'"));
+        assert!(
+            !policy
+                .split_whitespace()
+                .any(|word| word == "'unsafe-eval'")
+        );
     }
     assert_eq!(cases[0].header("Cache-Control"), Some("no-store"));
     assert_eq!(cases[4].status, 200);

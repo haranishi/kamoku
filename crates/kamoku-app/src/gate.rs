@@ -11,7 +11,8 @@ use std::collections::VecDeque;
 use std::sync::{Mutex, PoisonError};
 
 /// すべての応答に付ける `Content-Security-Policy`。外部の読み込みを禁じる。
-pub(crate) const CSP: &str = "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+// The preview needs WASM compilation; JS string evaluation remains forbidden.
+pub(crate) const CSP: &str = "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 /// セッションのCookieの名前。
 pub(crate) const COOKIE: &str = "kamoku_session";
 // 同じ起動の間に何度も合言葉から入り直しても、表が際限なく育たないようにする。

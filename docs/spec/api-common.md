@@ -23,7 +23,7 @@
 3. `Host` が `127.0.0.1:<port>` か `localhost:<port>` でなければ `421`。この検査は、`/?t=` を含む全部の経路に掛ける。DNSの付け替えによる攻撃への備え。
 4. `POST` `PUT` `PATCH` `DELETE` は、`Origin` が**必須**で、`http://127.0.0.1:<port>` か `http://localhost:<port>` のどちらかと完全に一致すること。欠けている、`null`、違うオリジンはすべて `403`。`Sec-Fetch-Site` が付いていて `same-origin` でなければ `403`。ブラウザは変更の要求に必ず `Origin` を付けるので、通常の利用には影響しない。`curl` など別の道具は、`Origin` を自分で付ける。
 
-応答には、`Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`、`X-Content-Type-Options: nosniff`、`Referrer-Policy: no-referrer` を、すべてに付けます。`Cache-Control: no-store` は、API と、`/?t=` の移動の応答に付けます。アクセスの記録には、合言葉（`t=`）を残しません。外部への通信は、サーバーも画面も一切しません。
+応答には、`Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`、`X-Content-Type-Options: nosniff`、`Referrer-Policy: no-referrer` を、すべてに付けます。`wasm-unsafe-eval` はRustプレビューのWASMコンパイルだけを許し、JavaScriptの `eval` は許しません。`Cache-Control: no-store` は、API と、`/?t=` の移動の応答に付けます。アクセスの記録には、合言葉（`t=`）を残しません。外部への通信は、サーバーも画面も一切しません。
 
 ## 失敗の形
 
