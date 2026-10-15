@@ -32,6 +32,13 @@ evaluation, which bypasses CSP; it now loads a same-origin external probe and
 reads its result. Real Chromium returned blocked=true under the strict policy
 and false in a deliberately permissive control. Product policy was not relaxed.
 
+Viewing all three actual CI PNGs then exposed a narrow card-layout caption that
+automatic bounds checks had missed. The caption now spans the card; regressions
+check visible text, width/line count, non-overlap, and the table's accessible
+name. A small real-Chromium before/after probe reduced 390px caption height
+from 419px to 66px and kept desktop unchanged. A separate reviewer closed the
+fix; final application screenshots still require a fresh CI review.
+
 ## Required remote and visual evidence
 
 Before merge: original CI; Rust 1.88 WASM check; current WASM clippy; actual

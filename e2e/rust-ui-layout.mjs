@@ -29,6 +29,14 @@ export async function expectJournalTextFits(page, width) {
     };
     document.querySelectorAll('tbody td').forEach((cell) => inspect(cell, cell.getBoundingClientRect(), cell.className, card));
     document.querySelectorAll('tbody .amount').forEach((amount) => inspect(amount, amount.closest('td').getBoundingClientRect(), 'amount', card));
+    const caption = document.querySelector('caption');
+    const captionBox = caption.getBoundingClientRect();
+    const captionStyle = getComputedStyle(caption);
+    const maxCaptionHeight = 3 * parseFloat(captionStyle.lineHeight) + parseFloat(captionStyle.paddingTop) + parseFloat(captionStyle.paddingBottom);
+    inspect(caption, captionBox, 'caption', card);
+    if (captionBox.width < card.width - 3) problems.push({ label: 'caption does not span the card', width: captionBox.width, cardWidth: card.width });
+    if (!Number.isFinite(maxCaptionHeight) || captionBox.height > maxCaptionHeight + 1) problems.push({ label: 'caption exceeds three normal lines', height: captionBox.height, maxCaptionHeight });
+    if (captionBox.bottom > document.querySelector('tbody').getBoundingClientRect().top + 1) problems.push({ label: 'caption overlaps rows' });
     const summary = document.querySelector('.summary');
     const summaryBox = summary.getBoundingClientRect();
     inspect(summary, summaryBox, 'summary');
@@ -36,6 +44,8 @@ export async function expectJournalTextFits(page, width) {
     return problems;
   });
   expect(problems, `Text must fit its cell and summary at ${width}px`).toEqual([]);
+  await expect(page.locator('caption')).toBeVisible();
+  await expect(page.getByRole('table', { name: /日付の新しい順。詳細は通常の画面で開き/ })).toBeVisible();
   if (width < 1024) {
     const box = await page.getByRole('link', { name: '通常の仕訳帳へ' }).boundingBox();
     expect(box.width).toBeGreaterThanOrEqual(44);
