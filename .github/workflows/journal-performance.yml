@@ -1,0 +1,67 @@
+# SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+name: journal-performance
+
+on:
+  pull_request:
+    paths:
+      - 'crates/kamoku-ledger/**'
+      - 'crates/kamoku-app/src/api/entry_*'
+      - 'crates/kamoku-app/src/api/export.rs'
+      - 'crates/kamoku-app/src/api/opening.rs'
+      - 'crates/kamoku-app/examples/bench_journal.rs'
+      - 'crates/kamoku-app/examples/bench_journal/**'
+      - '.github/workflows/journal-performance.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: journal-performance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  journal:
+    name: 仕訳帳の性能比較 (release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: head
+          persist-credentials: false
+      - name: Build one benchmark source against each revision independently
+        run: |
+          mkdir -p results
+          rustc -Vv > results/toolchain.txt
+          printf 'base=%s\nhead=%s\n' "$BASE_SHA" "$HEAD_SHA" > results/revisions.txt
+          cp head/crates/kamoku-app/examples/bench_journal.rs base/crates/kamoku-app/examples/
+          cp -R head/crates/kamoku-app/examples/bench_journal base/crates/kamoku-app/examples/
+          cargo build --release --locked -p kamoku-app --example bench_journal --manifest-path base/Cargo.toml --target-dir "$RUNNER_TEMP/kamoku-journal-base"
+          cargo build --release --locked -p kamoku-app --example bench_journal --manifest-path head/Cargo.toml --target-dir "$RUNNER_TEMP/kamoku-journal-head"
+          sha256sum "$RUNNER_TEMP/kamoku-journal-base/release/examples/bench_journal" "$RUNNER_TEMP/kamoku-journal-head/release/examples/bench_journal" > results/binaries.sha256
+      - name: Compare plain and revision-heavy synthetic journals
+        run: |
+          for rows in 10000 100000; do
+            KAMOKU_BENCH_REVISION="$BASE_SHA" "$RUNNER_TEMP/kamoku-journal-base/release/examples/bench_journal" --entries "$rows" --revisions 0 --samples 10 --output "results/base-$rows-plain.json"
+            KAMOKU_BENCH_REVISION="$HEAD_SHA" "$RUNNER_TEMP/kamoku-journal-head/release/examples/bench_journal" --entries "$rows" --revisions 0 --samples 10 --output "results/head-$rows-plain.json"
+          done
+          KAMOKU_BENCH_REVISION="$BASE_SHA" "$RUNNER_TEMP/kamoku-journal-base/release/examples/bench_journal" --entries 10000 --revisions 5 --samples 10 --output results/base-10000-revised.json
+          KAMOKU_BENCH_REVISION="$HEAD_SHA" "$RUNNER_TEMP/kamoku-journal-head/release/examples/bench_journal" --entries 10000 --revisions 5 --samples 10 --output results/head-10000-revised.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: journal-performance
+          path: results/
+          if-no-files-found: error
+          retention-days: 14

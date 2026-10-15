@@ -40,6 +40,14 @@ pub struct Event {
     /// このイベントのハッシュ。
     pub hash: Hash,
 }
+/// 1つの仕訳の現在の状態。取消済みの場合も、最後に有効だった仕訳を参照します。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct EntryState<'a> {
+    /// 最新のイベント。取消済みなら取消のイベントです。
+    pub latest: &'a Event,
+    /// 最後の登録または訂正の仕訳。
+    pub entry: &'a Entry,
+}
 /// 勘定科目の借方・貸方の累計。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Balance {
@@ -54,6 +62,8 @@ pub struct Ledger {
     events: Vec<Event>,
     // Noneは空の台帳のみ。const fn new()の公開契約を保つ。
     index: Option<HashMap<EntryId, Vec<usize>>>,
+    // 初回登録のイベント位置。訂正・取消によって登録順は変わらない。
+    posted: Vec<usize>,
 }
 impl Ledger {
     /// 空の台帳を作ります。
@@ -62,6 +72,7 @@ impl Ledger {
         Self {
             events: Vec::new(),
             index: None,
+            posted: Vec::new(),
         }
     }
     /// 連鎖とイベント規則を検証して台帳を復元します。
@@ -72,6 +83,7 @@ impl Ledger {
         let mut ledger = Self {
             events,
             index: None,
+            posted: Vec::new(),
         };
         ledger.verify()?;
         ledger.rebuild_index();
@@ -152,19 +164,25 @@ impl Ledger {
     }
     fn rebuild_index(&mut self) {
         let mut index = HashMap::<EntryId, Vec<usize>>::new();
+        let mut posted = Vec::new();
         for (position, event) in self.events.iter().enumerate() {
+            if event.kind == EventKind::Posted {
+                posted.push(position);
+            }
             index
                 .entry(event.entry_id.clone())
                 .or_default()
                 .push(position);
         }
         self.index = Some(index);
+        self.posted = posted;
     }
     #[cfg(test)]
     fn from_unverified_events(events: Vec<Event>) -> Self {
         let mut ledger = Self {
             events,
             index: None,
+            posted: Vec::new(),
         };
         ledger.rebuild_index();
         ledger
@@ -203,6 +221,9 @@ impl Ledger {
             hash: Hash::GENESIS,
         };
         event.hash = event_hash(&event).ok_or(LedgerError::Overflow)?;
+        if event.kind == EventKind::Posted {
+            self.posted.push(self.events.len());
+        }
         self.index
             .get_or_insert_with(HashMap::new)
             .entry(event.entry_id.clone())
@@ -211,13 +232,30 @@ impl Ledger {
         self.events.push(event);
         self.events.last().ok_or(LedgerError::Overflow)
     }
+    /// 全仕訳の現在の状態を最初の登録順で参照します。取消済みも含みます。
+    /// 訂正・取消・復元後も順序は変わらず、履歴の複製や索引の再構築は行いません。
+    pub fn entry_states(&self) -> impl Iterator<Item = EntryState<'_>> {
+        self.posted
+            .iter()
+            .filter_map(|position| self.entry_state(&self.events.get(*position)?.entry_id))
+    }
+    /// 指定仕訳の現在の状態。未登録なら`None`、取消済みなら最後の有効な仕訳を含みます。
+    #[must_use]
+    pub fn entry_state(&self, id: &EntryId) -> Option<EntryState<'_>> {
+        let positions = self.index.as_ref()?.get(id)?;
+        let latest = self.events.get(*positions.last()?)?;
+        let entry = positions
+            .iter()
+            .rev()
+            .find_map(|position| self.events.get(*position)?.entry.as_ref())?;
+        Some(EntryState { latest, entry })
+    }
     /// 取消済みを除く最新仕訳を最初の登録順で返します。
     #[must_use]
     pub fn current(&self) -> Vec<&Entry> {
-        self.events
-            .iter()
-            .filter(|e| e.kind == EventKind::Posted)
-            .filter_map(|e| self.latest(&e.entry_id).and_then(|e| e.entry.as_ref()))
+        self.entry_states()
+            .filter(|state| state.latest.kind != EventKind::Voided)
+            .map(|state| state.entry)
             .collect()
     }
     /// 指定仕訳の全イベントを追記順で返します。
@@ -361,10 +399,12 @@ mod tests {
         let mut ledger = Ledger::from_unverified_events(vec![event]);
         let before_events = ledger.events().to_vec();
         let before_index = ledger.index.clone();
+        let before_posted = ledger.posted.clone();
         let before_head = ledger.head_hash();
         assert_eq!(ledger.void(&id, "取消", 1), Err(LedgerError::Overflow));
         assert_eq!(ledger.events(), before_events);
         assert_eq!(ledger.index, before_index);
+        assert_eq!(ledger.posted, before_posted);
         assert_eq!(ledger.head_hash(), before_head);
     }
 }

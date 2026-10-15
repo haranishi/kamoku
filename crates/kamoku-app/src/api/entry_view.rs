@@ -8,7 +8,6 @@ use kamoku_books::{Chart, LineView, format_date, reconstruct_simple};
 use kamoku_ledger::{Entry, EntryId, Event, EventKind};
 use kamoku_store::Store;
 use serde_json::{Value, json};
-use std::collections::HashMap;
 
 /// 1つの仕訳のいまの姿。
 pub(crate) struct Current<'a> {
@@ -28,44 +27,26 @@ impl Current<'_> {
     }
 }
 
-/// すべての仕訳のいまの姿を、登録の順で返します。イベントを1回だけ通して作る。
-pub(crate) fn all_current(store: &Store) -> Vec<Current<'_>> {
-    let events = store.ledger().events();
-    let mut order: Vec<&EntryId> = Vec::new();
-    let mut slots: HashMap<&EntryId, (usize, Option<usize>)> = HashMap::new();
-    for (i, event) in events.iter().enumerate() {
-        let slot = slots.entry(&event.entry_id).or_insert_with(|| {
-            order.push(&event.entry_id);
-            (i, None)
-        });
-        slot.0 = i;
-        if event.entry.is_some() {
-            slot.1 = Some(i);
-        }
-    }
-    order
-        .into_iter()
+/// 保存済みの索引から、すべての仕訳のいまの姿を登録順に参照します。
+pub(crate) fn all_current(store: &Store) -> impl Iterator<Item = Current<'_>> {
+    store
+        .ledger()
+        .entry_states()
         .zip(1u64..)
-        .filter_map(|(id, no)| {
-            let (latest, last_entry) = slots.get(id)?;
-            Some(Current {
-                no,
-                latest: events.get(*latest)?,
-                entry: events.get((*last_entry)?)?.entry.as_ref()?,
-            })
+        .map(|(state, no)| Current {
+            no,
+            latest: state.latest,
+            entry: state.entry,
         })
-        .collect()
 }
 
 /// 1つの仕訳のいまの姿。
 pub(crate) fn current<'a>(store: &'a Store, id: &EntryId) -> Option<Current<'a>> {
-    let history = store.ledger().history(id);
-    let latest = *history.last()?;
-    let entry = history.iter().rev().find_map(|e| e.entry.as_ref())?;
+    let state = store.ledger().entry_state(id)?;
     Some(Current {
         no: store.entry_no(id)?,
-        latest,
-        entry,
+        latest: state.latest,
+        entry: state.entry,
     })
 }
 
