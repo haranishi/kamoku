@@ -59,10 +59,18 @@ test('actual WASM starts under CSP and uses the streaming MIME type without JS e
   const policy = response.headers()['content-security-policy'];
   expect(policy).toContain("'wasm-unsafe-eval'");
   expect(policy.split(/\s+/)).not.toContain("'unsafe-eval'");
-  const blocked = await page.evaluate(() => {
-    try { globalThis.eval('1 + 1'); return false; } catch { return true; }
-  });
-  expect(blocked).toBe(true);
+  // Automation evaluation can bypass CSP. Run the probe as an actual same-origin
+  // external script, then use evaluation only to read its result.
+  await page.route('**/rust/csp-probe.js', (route) => route.fulfill({
+    contentType: 'text/javascript',
+    body: `globalThis.kamokuCspProbe = { ran: true, blocked: false };
+      try { globalThis.eval('1 + 1'); }
+      catch (error) { globalThis.kamokuCspProbe.blocked = error.name === 'EvalError'; }`,
+  }));
+  await page.addScriptTag({ url: '/rust/csp-probe.js' });
+  const probe = await page.evaluate(() => globalThis.kamokuCspProbe);
+  expect(probe).toEqual({ ran: true, blocked: true });
+  await page.unroute('**/rust/csp-probe.js');
   await expect(page.getByRole('table')).toBeVisible();
   await expect(page.getByRole('link', { name: '通常の仕訳帳へ' })).toHaveAttribute('href', '/#/journal');
 });
@@ -264,7 +272,7 @@ test('synthetic screenshots and fresh-context/search/asset evidence at three wid
     builds: 'debug Rust server; release WASM UI',
     baselineJournalReadyMs: readiness.baseline,
     rustJournalReadyMs: readiness.rust,
-    rustSearchToPaintMs: { samples, median: sorted[10], p95: sorted[18] },
+    rustSearchToPaintMs: { samples, median: (sorted[9] + sorted[10]) / 2, p95: sorted[18] },
     assetsBytes: assets,
     limitations: ['Five alternating pairs of fresh HTTP-cache contexts; browser process, OS and server stay warm.', 'One CI machine/browser; not a benchmark of typical customer hardware.', 'Readiness includes Playwright polling; do not treat it as precise user latency.'],
   }, null, 2));

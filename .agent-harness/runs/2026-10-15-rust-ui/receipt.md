@@ -27,6 +27,11 @@ fragments against cell/table bounds, check link dimensions, and capture all
 three widths. Spec/runtime review found no additional blocker. Parent reviewed
 the build/runner, static serving, CSP/MIME, and artifact boundaries separately.
 
+Initial actual-WASM CI passed six browser cases. The CSP test used automation
+evaluation, which bypasses CSP; it now loads a same-origin external probe and
+reads its result. Real Chromium returned blocked=true under the strict policy
+and false in a deliberately permissive control. Product policy was not relaxed.
+
 ## Required remote and visual evidence
 
 Before merge: original CI; Rust 1.88 WASM check; current WASM clippy; actual
