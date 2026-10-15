@@ -24,7 +24,9 @@ function instrument({ target, journalIds }) {
     const heading = document.querySelector('main h1')?.textContent;
     if (state.target === 'home') return heading === 'ホーム' && document.querySelectorAll('.kpis .kpi-value').length === 4;
     if (heading !== '仕訳帳') return false;
-    const ids = [...document.querySelectorAll('.journal-table tbody tr[data-entry-id]')].map((row) => row.dataset.entryId);
+    // The legacy table stores IDs in data-key; Rust rows also expose data-entry-id.
+    const ids = [...document.querySelectorAll('.journal-table tbody tr[data-entry-id], .journal-table tbody tr[data-key]')]
+      .map((row) => row.dataset.entryId ?? row.dataset.key);
     return ids.length === journalIds.length && ids.every((id, i) => id === journalIds[i]);
   };
   const check = () => {
@@ -117,11 +119,13 @@ async function transition(page, kind, hash) {
 }
 
 async function navigationSample(name, keep) {
-  stage = name + '_navigation';
+  stage = name + '_cold_home';
   const home = await contextFor(name, 'home');
   try {
     const initial = await cold(home.page, home.origin, 'home');
+    stage = name + '_home_to_journal';
     const toJournal = await transition(home.page, 'journal', '#/journal');
+    stage = name + '_journal_to_home';
     const toHome = await transition(home.page, 'home', '#/');
     if (keep) {
       raw[name].cold_home.push(initial);
@@ -129,6 +133,7 @@ async function navigationSample(name, keep) {
       raw[name].journal_to_home.push(toHome);
     }
   } finally { await home.context.close(); }
+  stage = name + '_cold_journal';
   const journal = await contextFor(name, 'journal');
   try {
     const initial = await cold(journal.page, journal.origin, 'journal');

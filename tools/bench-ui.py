@@ -151,7 +151,7 @@ def browser_run(runner, config, timeout, temporary):
         report = json.loads(stdout)
         if proc.returncode != 0 or report.get("complete") is not True:
             stage = report.get("failed_stage", "unknown")
-            allowed = r"(?:browser_launch|(?:baseline|head)_(?:navigation|inbox_setup|inbox_input))"
+            allowed = r"(?:browser_launch|(?:baseline|head)_(?:cold_home|cold_journal|home_to_journal|journal_to_home|inbox_setup|inbox_input))"
             stage = stage if isinstance(stage, str) and re.fullmatch(allowed, stage) else "unknown"
             raise BenchmarkError("Browser measurement failed during " + stage)
         return report
@@ -230,6 +230,10 @@ def main():
                     "head": binary_info(binaries["head"], args.head_ref),
                     "platform": platform.platform(), "python": platform.python_version(),
                     "ui_source": "embedded production assets; no ui-dir override",
+                    "harness": {
+                        "python_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                        "browser_sha256": hashlib.sha256(runner.read_bytes()).hexdigest(),
+                    },
                 }
                 text = json.dumps(report, ensure_ascii=False)
                 if "?t=" in text or "kamoku_session=" in text or any(c.cookie in text for c in clients.values()):
