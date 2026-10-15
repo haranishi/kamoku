@@ -39,14 +39,13 @@ jobs:
           persist-credentials: false
       - name: Build both revisions with the same toolchain and flags
         run: |
-          export CARGO_TARGET_DIR="$RUNNER_TEMP/kamoku-performance-target"
           mkdir -p results
           rustc -Vv > results/toolchain.txt
           printf 'base=%s\nhead=%s\n' "$BASE_SHA" "$HEAD_SHA" > results/revisions.txt
-          cargo build --release --locked -p kamoku-app --bin kamoku --manifest-path base/Cargo.toml
-          cp "$CARGO_TARGET_DIR/release/kamoku" "$RUNNER_TEMP/kamoku-base"
-          cargo build --release --locked -p kamoku-app --bin kamoku --manifest-path head/Cargo.toml
-          cp "$CARGO_TARGET_DIR/release/kamoku" "$RUNNER_TEMP/kamoku-head"
+          cargo build --release --locked -p kamoku-app --bin kamoku --manifest-path base/Cargo.toml --target-dir "$RUNNER_TEMP/kamoku-performance-base"
+          cp "$RUNNER_TEMP/kamoku-performance-base/release/kamoku" "$RUNNER_TEMP/kamoku-base"
+          cargo build --release --locked -p kamoku-app --bin kamoku --manifest-path head/Cargo.toml --target-dir "$RUNNER_TEMP/kamoku-performance-head"
+          cp "$RUNNER_TEMP/kamoku-performance-head/release/kamoku" "$RUNNER_TEMP/kamoku-head"
       - name: Compare synthetic 10k and 100k pending rows
         run: |
           for rows in 10000 100000; do
