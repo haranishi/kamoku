@@ -62,7 +62,8 @@ th { background: var(--c-surface-2); font-size: var(--fs-sm); color: var(--c-mut
   .filter-grid { grid-template-columns: 1fr; gap: var(--sp-3); }
   .search-line button { flex: 1; }
   .search-line input { flex-basis: 100%; width: 100%; }
-  table, tbody, tr, td { display: block; width: 100%; }
+  /* Native table-caption sizing otherwise creates a narrow anonymous table. */
+  table, caption, tbody, tr, td { display: block; width: 100%; }
   thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
   tr { padding: var(--sp-3); border-top: 1px solid var(--c-border); }
   td { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--sp-2); padding: var(--sp-1) 0; border: 0; text-align: start; }
