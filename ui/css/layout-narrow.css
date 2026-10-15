@@ -38,8 +38,35 @@
   .app:not([data-rail="open"]) .brand-text,
   .app:not([data-rail="open"]) .sidebar-business,
   .app:not([data-rail="open"]) .nav-group-label,
-  .app:not([data-rail="open"]) .nav-kbd,
+  .app:not([data-rail="open"]) .nav-kbd {
+    display: none;
+  }
+
+  /* 細い列でも、未確認の件数はアイコンの右上に小さく出す（どこに手を付けるべきか分かるように）。 */
   .app:not([data-rail="open"]) .nav-count {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    min-width: 20px;
+    padding: 0 5px;
+    line-height: 18px;
+  }
+
+  /* 広げるボタンは、細い列では「広げる」の文字をアイコンの下に出す（ほかの項目と同じ形・大きさ）。 */
+  .app:not([data-rail="open"]) .rail-toggle {
+    flex-direction: column;
+    gap: 2px;
+    width: 64px;
+    min-height: 52px;
+    color: var(--c-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .rail-toggle-label {
+    line-height: 1.3;
+  }
+
+  .app[data-rail="open"] .rail-toggle-label {
     display: none;
   }
 
@@ -49,6 +76,7 @@
     border-top: 1px solid var(--c-border);
   }
 
+  /* 細い列の名前は 13px（12px では本文よりかなり小さく見えた。4文字の「コマンド」も列の幅64pxに収まる）。 */
   .app:not([data-rail="open"]) .nav-item {
     flex-direction: column;
     justify-content: center;
@@ -56,8 +84,13 @@
     width: 64px;
     min-height: 52px;
     padding: var(--sp-1) 0;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     text-align: center;
+  }
+
+  /* 広げたサイドバーでも、指で押せる高さにする（AC-11.7）。 */
+  .app[data-rail="open"] .nav-item {
+    min-height: 44px;
   }
 
   .app:not([data-rail="open"]) .nav-label {
@@ -70,7 +103,17 @@
   }
 
   .app:not([data-rail="open"]) .sidebar-foot .nav-label {
-    font-size: 11px;
+    font-size: var(--fs-sm);
+  }
+}
+
+.rail-toggle-label {
+  display: none;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app:not([data-rail="open"]) .rail-toggle-label {
+    display: inline;
   }
 }
 
@@ -86,6 +129,16 @@
 
 /* ---- 768px未満: 上の帯と下のバー ---- */
 @media (max-width: 767px) {
+  /* 上の帯（固定）の裏に、Shift+Tab で戻った欄が隠れないように（layout.css の余白の決まりの、狭い幅の値）。 */
+  html {
+    scroll-padding-top: calc(var(--topbar-h) + var(--sp-2));
+  }
+
+  html:root:has(.inbox-bar:not([hidden])) {
+    scroll-padding-top: calc(var(--topbar-h) + var(--sp-2));
+    scroll-padding-bottom: calc(var(--bar-bottom) + 200px);
+  }
+
   .app {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
@@ -114,8 +167,27 @@
     gap: var(--sp-1);
   }
 
+  /* 上の帯では、製品名を出す（アイコンだけでは何のアプリか分からないため）。 */
+  .app .topbar .brand-text {
+    display: inline;
+  }
+
+  /* 上の帯のボタンは、アイコンの下に短い名前を出す（下のバーと同じ形）。名前は折り返さない（「メニュー」が2行に割れた）。 */
+  .topbar-btn {
+    flex-direction: column;
+    gap: 1px;
+    width: auto;
+    min-width: 48px;
+    padding: 0 var(--sp-1);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  /* 本文の下に、下のバー（下の余白を含む。--bar-bottom と同じ高さ）と、少しの間を空ける。 */
   .main {
-    padding: var(--sp-4) var(--sp-4) calc(var(--bottomnav-h) + var(--sp-6) + env(safe-area-inset-bottom, 0px));
+    padding: var(--sp-4) var(--sp-4) calc(var(--bar-bottom) + var(--sp-6));
   }
 
   .banners {
@@ -126,6 +198,15 @@
     margin-bottom: var(--sp-4);
   }
 
+  /*
+   * 下に固定・貼り付けるバーの決まり（AC-11.8）:
+   * - 下の端にぴったり付ける。下のバー（.bottomnav）は bottom: 0、ほかの固定バーは bottom: var(--bar-bottom)
+   *   （幅767px以下は下のバーの高さ＝60px＋iPhone の下の余白、それ以外は0。tokens.css）。バーとバーの間に隙間を作らない。
+   *   --bar-bottom は下の余白を含むので、使う側で env(safe-area-inset-bottom) を足し直さない。
+   * - 背景は不透明（--c-surface）にし、上に区切りの線（1px の --c-border）を引く。浮いた角丸のカードにしない。
+   * - 後ろの本文がバーの下に隠れないよう、本文の下に、バーの高さぶんの余白を取る（.main の padding-bottom）。
+   * 浮かせて出す通知（.toasts）と、ダイアログの中の下のバーは、この決まりの外。
+   */
   .bottomnav {
     position: fixed;
     right: 0;
@@ -141,6 +222,7 @@
   }
 
   .bottomnav-item {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -150,15 +232,45 @@
     border: 0;
     background: transparent;
     color: var(--c-muted);
-    font-size: 11px;
+    font-size: var(--fs-xs);
     font-weight: 600;
     text-decoration: none;
   }
 
-  .bottomnav-item[aria-current="page"] {
+  /* 未確認の件数は、アイコンの右上に重ねる（サイドバーの細い列と同じ形）。 */
+  .bottomnav-count {
+    position: absolute;
+    top: 4px;
+    left: calc(50% + 4px);
+    min-width: 20px;
+    padding: 0 5px;
+    line-height: 18px;
+  }
+
+  /* いまの画面。下のバーに無い画面（帳票・口座など）にいる間は、「メニュー」を選んだ表示にする（aria-current="true"）。 */
+  .bottomnav-item[aria-current] {
     color: var(--c-primary);
     font-weight: 700;
     box-shadow: inset 0 3px 0 var(--c-primary);
+  }
+}
+
+/* 上の帯の「メニュー」は、下のバーを隠す低い画面（下）でだけ出す。.icon-btn の display より強くするため、.topbar を付けて書く。 */
+.topbar .topbar-menu {
+  display: none;
+}
+
+/*
+ * 高さの低い画面（520px以下。文字を200%に拡大したときに近い）: 上の帯・確定の帯・下のバーで画面の半分を超え、本文が
+ * 約200pxしか見えなかった。下のバーを隠し、全部の画面へは上の帯の「メニュー」から行く（下に固定する帯は、画面の下の端に付く。tokens.css）。
+ */
+@media (max-width: 767px) and (max-height: 520px) {
+  .bottomnav {
+    display: none;
+  }
+
+  .topbar .topbar-menu {
+    display: inline-flex;
   }
 }
 
@@ -169,4 +281,16 @@
 
 .menu-drawer .nav-item {
   min-height: 48px;
+}
+
+/* ---- 640px未満: デモの帯は見出しだけの1行（本文は読み上げにだけ残す） ---- */
+@media (max-width: 639px) {
+  .banners > .banner--info .banner-body > p:not(.banner-title) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }

@@ -33,6 +33,11 @@
   min-width: 8em;
 }
 
+/* 表の上の、借方・貸方の1行の説明。表のすぐ上に付ける（フォームの欄の間隔のままだと、表から離れて見えた）。 */
+.jl-help {
+  margin-bottom: calc(var(--sp-5) * -1 + var(--sp-2));
+}
+
 .jl-foot {
   display: flex;
   flex-wrap: wrap;
@@ -112,6 +117,19 @@
   font-size: var(--fs-sm);
 }
 
+/* 指で触る幅（1024px未満）では、仕訳の行の欄も44px以上にする（AC-11.7。表の中だけ36pxにしていた）。 */
+@media (max-width: 1023px) {
+  .jl-table .input,
+  .jl-table .select {
+    height: 44px;
+  }
+}
+
+/* 選択欄に入り切らない長い税区分の名前（entry-journal.js）。640px以上は欄に全部入るので出さない。 */
+.jl-tax-full {
+  display: none;
+}
+
 @media (max-width: 639px) {
   .jl-table td:first-child,
   .jl-amount,
@@ -122,5 +140,107 @@
   .jl-table td > * {
     flex: 1;
     min-width: 0;
+  }
+
+  /* 幅390では「経過措置の仕入10%（免税事業者等から）」が欄に入らない（16pxの文字で約355px要る）。欄の下に全部を出す。 */
+  .jl-tax {
+    flex-wrap: wrap;
+  }
+
+  .jl-table td > .jl-tax-full:not(:empty) {
+    display: block;
+    flex: 0 0 100%;
+    font-size: var(--fs-sm);
+  }
+}
+
+/*
+ * 640px以上: 1つの明細を2段にする（1段目: 借方か貸方・科目・金額、2段目: 税区分・メモ・行を消す。並びは Tab の順と同じ）。
+ * 5つの欄を1段の表に並べると、幅1440でも「借方」と税区分（「課税仕」）が切れた（2026-10-15 の体験の評価 B7）。
+ * 借方か貸方と税区分の選択欄は、幅を決めずに、いちばん長い選択肢（経過措置の仕入10%（免税事業者等から））が入る幅にする。
+ * 欄の名前は、最初の明細の上にだけ出す（下の明細は同じ位置に並ぶので、表の見出しの代わり）。
+ */
+@media (min-width: 640px) {
+  .jl-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .jl-table,
+  .jl-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .jl-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--sp-2) var(--sp-3);
+    padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .jl-table tbody tr:first-child {
+    padding-top: 0;
+  }
+
+  .jl-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .jl-table td,
+  .jl-table td:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .jl-table tbody tr:first-child td::before {
+    content: attr(data-label);
+    color: var(--c-muted);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .jl-table tbody tr:first-child td[data-label=""]::before {
+    content: none;
+  }
+
+  .jl-side,
+  .jl-tax {
+    flex: 0 0 auto;
+  }
+
+  .jl-side .select,
+  .jl-tax .select {
+    width: auto;
+  }
+
+  /* 1段目は、科目が残りの幅を使い切る（次の税区分は、2段目に折り返す）。 */
+  .jl-account {
+    flex: 1 1 12em;
+  }
+
+  /* 金額は、欄の中の例（例: 1650、1000+650）が切れずに入る幅。 */
+  .jl-amount {
+    flex: 0 0 14em;
+  }
+
+  .jl-memo {
+    flex: 1 1 10em;
+  }
+
+  .jl-del {
+    flex: 0 0 auto;
   }
 }

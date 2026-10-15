@@ -25,7 +25,7 @@
   transition: transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
 }
 
-.btn:hover {
+.btn:hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--c-surface-2);
 }
 
@@ -45,7 +45,8 @@
   color: var(--c-on-primary);
 }
 
-.btn--primary:hover {
+/* 乗せたときの見た目は、押せるボタンだけ。押せないボタンに効かせると、不透明度が0.92に戻り、押せるときとほぼ同じに見えた（体験の評価 第3回 E2）。 */
+.btn--primary:hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--c-primary);
   opacity: 0.92;
 }
@@ -56,7 +57,7 @@
   color: var(--c-on-danger);
 }
 
-.btn--danger:hover {
+.btn--danger:hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--c-danger);
   opacity: 0.92;
 }
@@ -67,7 +68,7 @@
   color: var(--c-primary);
 }
 
-.btn--ghost:hover {
+.btn--ghost:hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--c-primary-soft);
 }
 
@@ -110,7 +111,8 @@
   text-underline-offset: 3px;
 }
 
-@media (max-width: 767px) {
+/* 指で触る幅（1024px未満）では、小さいボタンもアイコンだけのボタンも44×44px以上にする（AC-11.7）。 */
+@media (max-width: 1023px) {
   .btn,
   .btn--sm {
     min-height: 44px;
@@ -139,12 +141,15 @@
 .field-label .req {
   margin-left: var(--sp-1);
   color: var(--c-muted);
-  font-weight: 400;
+  font-size: var(--fs-xs);
+  font-weight: 600;
 }
 
+/* 補足の文は、行末に1〜2文字だけ残さない（「してくだ／さい。」を避ける）。 */
 .field-hint {
   color: var(--c-muted);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
+  text-wrap: pretty;
 }
 
 .field-error {
@@ -158,6 +163,22 @@
 
 .field-error:empty {
   display: none;
+}
+
+/*
+ * 欄の誤り（fields.js。読み上げの領域）は、空のときも消さずに、見えない形で置く。表示しない入れ物に文を入れても、
+ * 読み上げソフトが新しく出た文として読まないことがあるため。並びから外して、場所も間隔も取らない。
+ */
+.field-error[aria-live]:empty,
+.field-error[aria-live]:has(> .field-error-text:empty) {
+  display: flex;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .input,
@@ -181,8 +202,25 @@
   resize: vertical;
 }
 
+/*
+ * 選択欄は、端末の標準の矢印をやめ、候補つきの入力欄（.combo）と同じ矢印・文字の大きさ・高さ・枠にする。
+ * 矢印は右から10px、16px角（.combo-chevron と同じ位置）。中の文字が矢印に重ならないよう、右に36px空ける。
+ * 表の中などで余白を詰めるときも、右は28px以上残す。
+ */
 .select {
-  padding-right: var(--sp-6);
+  padding-right: 36px;
+  appearance: none;
+  background-image: var(--icon-select);
+  background-position: right 10px center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  line-height: normal;
+  text-overflow: clip;
+  cursor: pointer;
+}
+
+.select::-ms-expand {
+  display: none;
 }
 
 .input::placeholder,
@@ -240,10 +278,66 @@
 }
 
 .check input {
+  margin: 0;
+}
+
+/*
+ * 押せる範囲は、チェックとラジオを包むラベル（高さ44px。本体は18px）。Tab / Shift+Tab のフォーカスで寄せるとき、
+ * ブラウザは本体の四角だけを見るので、ラベルの縁（本体の上下13px）が、上下に固定した帯の裏に入った。その分を見込む。
+ */
+input[type="checkbox"],
+input[type="radio"] {
+  scroll-margin-block: 14px;
+}
+
+/*
+ * チェックボックス。端末の標準のままだと、ダークで未選択が灰色に塗られ「使えない」ように見えるので、自作にする。
+ * 未選択は枠（--c-border-strong、地との差3:1以上）だけで塗らない。選ぶと藍に塗り、白抜きの印を出す。
+ */
+input[type="checkbox"] {
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: var(--c-primary);
+  border: 2px solid var(--c-border-strong);
+  border-radius: 4px;
+  background: var(--c-surface) no-repeat center / 14px 14px;
+  appearance: none;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+input[type="checkbox"]:checked {
+  border-color: var(--c-primary);
+  background-color: var(--c-primary);
+  background-image: var(--icon-check);
+}
+
+input[type="checkbox"]:indeterminate {
+  border-color: var(--c-primary);
+  background: var(--c-primary) linear-gradient(var(--c-on-primary), var(--c-on-primary)) no-repeat center / 8px 2px;
+}
+
+input[type="checkbox"]:disabled {
+  border-style: dashed;
+  background-color: var(--c-surface-2);
+  cursor: not-allowed;
+}
+
+input[type="checkbox"]:checked:disabled {
+  opacity: 0.55;
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1023px) {
+  /* 包むラベルごと44px以上にする（チェックは、包むラベルの大きさで押せる。AC-11.7）。 */
+  .check {
+    min-height: 44px;
+  }
 }
 
 /* 金額と「円」: 折り返しでも離れず、「円」は小さく、数字との間に空白を入れない（全画面で同じ書き方。js/components/money.js）。 */
@@ -261,6 +355,14 @@
 /* 名前や札は、語の途中で折り返さない。入りきらない長い名前だけは、行の端で折る。 */
 .keep {
   word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 塊の切れ目で折り、文字の拡大などで塊自体が枠より長いときだけ、中でも折って収める。 */
+.nw {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 

@@ -13,6 +13,7 @@ import { field, selectInput, textInput, iconButton, button } from '../components
 import { createCombobox } from '../components/combobox.js';
 import { createDateInput } from '../components/date-input.js';
 import { accountItems, walletItems } from './entry-options.js';
+import { NO_ACCOUNT } from './entry-simple-fields.js';
 
 export const PAGE_SIZE = 50;
 const KEYS = ['from', 'to', 'account', 'wallet', 'q', 'kind', 'state', 'min', 'max', 'page'];
@@ -89,18 +90,22 @@ const STATE_OPTIONS = [
 
 /**
  * 絞り込みの入れ物を作る。条件が決まったら apply(新しい条件) を呼ぶ。
- * @param {{ filters: object, accounts: any[], apply: (f: object) => void }} opts
+ * @param {{ filters: object, accounts: any[], apply: (f: object) => void, onDown?: (searching: boolean) => void }} opts
+ *   onDown: 検索欄で ↓ を押したとき。searching が真なら、打ちかけの文字で探し始めた（一覧を読み直した後に、先頭の行へ移す）
  */
 export function createFilters(opts) {
   let f = opts.filters;
   const apply = (patch) => opts.apply({ ...f, ...patch, page: 1 });
 
   const label = h('span', { class: 'period-label', 'aria-live': 'polite' });
-  const prev = iconButton({ iconName: 'chevron-left', label: '前の月（[ キー）', onClick: () => opts.apply(shiftPeriod(f, -1)) });
-  const next = iconButton({ iconName: 'chevron-right', label: '次の月（] キー）', onClick: () => opts.apply(shiftPeriod(f, 1)) });
+  const prevBtn = iconButton({ iconName: 'chevron-left', label: '前の月（[ キー）', onClick: () => opts.apply(shiftPeriod(f, -1)) });
+  const nextBtn = iconButton({ iconName: 'chevron-right', label: '次の月（] キー）', onClick: () => opts.apply(shiftPeriod(f, 1)) });
   const allBtn = button({ label: 'すべての期間', small: true, variant: 'ghost', onClick: () => apply({ from: undefined, to: undefined }) });
+  // すべての期間のときは、前後の矢印を出さない（「‹ すべての期間 ›」は、何の前後か分からなかった）。代わりに、月で見る入口を置く。
+  const monthBtn = button({ label: '月ごとに見る', small: true, variant: 'ghost', onClick: () => opts.apply(shiftPeriod(f, 0)) });
 
-  const search = textInput({ type: 'search', placeholder: '摘要・取引先・金額など', 'aria-label': '文字で探す', dataset: { search: '1' } });
+  // 打つそばからは絞らず、Enterで探す。打っても一覧が変わらない訳に気づけるよう、欄の中に書いておく。
+  const search = textInput({ type: 'search', placeholder: '摘要・取引先・金額（Enterで探します）', 'aria-label': '文字で探す', dataset: { search: '1' } });
   const commitSearch = () => {
     if ((search.value.trim() || undefined) !== f.q) apply({ q: search.value.trim() || undefined });
   };
@@ -109,6 +114,17 @@ export function createFilters(opts) {
     if (e.key === 'Enter') {
       e.preventDefault();
       commitSearch();
+    } else if (e.key === 'ArrowDown' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && opts.onDown) {
+      // ↓ で一覧の先頭の行へ（探した後、Tab を2回押していた）。打ちかけの文字があれば、先に探す。
+      e.preventDefault();
+      const searching = (search.value.trim() || undefined) !== f.q;
+      opts.onDown(searching);
+      if (searching) commitSearch();
+    } else if (e.key === 'Escape') {
+      // 欄から出る（続けて押した g h などが、文字として入らないように）。打ちかけの文字は、探している条件に戻す。
+      e.preventDefault();
+      search.value = f.q || '';
+      search.blur();
     }
   });
   search.addEventListener('change', commitSearch);
@@ -116,7 +132,7 @@ export function createFilters(opts) {
 
   const fromIn = createDateInput({ onChange: (v) => v !== f.from && apply({ from: v || undefined }) });
   const toIn = createDateInput({ onChange: (v) => v !== f.to && apply({ to: v || undefined }) });
-  const accountCb = createCombobox({ items: accountItems(opts.accounts, 'expense'), listLabel: '科目の候補', placeholder: 'すべての科目', onSelect: (item) => (item ? item.value : undefined) !== f.account && apply({ account: item ? item.value : undefined }) });
+  const accountCb = createCombobox({ items: accountItems(opts.accounts, 'expense'), listLabel: '科目の候補', placeholder: 'すべての科目', noMatch: NO_ACCOUNT, onSelect: (item) => (item ? item.value : undefined) !== f.account && apply({ account: item ? item.value : undefined }) });
   const walletSel = selectInput({}, [{ value: '', label: 'すべての口座' }, ...walletItems(opts.accounts).map((w) => ({ value: w.value, label: w.label }))]);
   walletSel.addEventListener('change', () => apply({ wallet: walletSel.value || undefined }));
   const kindSel = selectInput({}, KIND_OPTIONS);
@@ -158,7 +174,7 @@ export function createFilters(opts) {
   const el = h(
     'div',
     { class: 'card filters', role: 'search', 'aria-label': '仕訳の絞り込み' },
-    h('div', { class: 'filter-top' }, h('div', { class: 'period' }, prev, label, next, allBtn), searchBox),
+    h('div', { class: 'filter-top' }, h('div', { class: 'period' }, prevBtn, label, nextBtn, allBtn, monthBtn), searchBox),
     more,
   );
 
@@ -167,7 +183,11 @@ export function createFilters(opts) {
   function sync(next) {
     f = next;
     label.textContent = periodLabel(f);
-    allBtn.hidden = !f.from && !f.to;
+    const all = !f.from && !f.to;
+    allBtn.hidden = all;
+    prevBtn.hidden = all;
+    nextBtn.hidden = all;
+    monthBtn.hidden = !all;
     if (document.activeElement !== search) search.value = f.q || '';
     fromIn.setValue(f.from || null);
     toIn.setValue(f.to || null);

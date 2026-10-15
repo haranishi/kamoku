@@ -68,11 +68,23 @@ const PAIRS_45 = [
   ['--c-text', '--c-danger-bg'],
   ['--c-danger', '--c-danger-bg'],
 ];
+// 部品ごとの文字と地（どこで使う組か）。上の総当たりと重なる組は、数えるときに1つにまとめる。
+const PAIRS_45_USES = [
+  ['--c-primary', '--c-primary-soft'], // 藍の札（badge--info）、サイドバーの件数
+  ['--c-danger', '--c-danger-bg'], // 朱の札（訂正・取消。badge--danger）
+  ['--c-muted', '--c-surface-2'], // 無彩色の札（赤字。badge--muted）、ショートカットの小枠（kbd）の文字
+  ['--c-muted', '--c-surface'], // 試算表の薄い0（.rt-zero）。合計の行の地（surface-2）は上の組
+  ['--c-muted', '--c-primary-soft'], // 選んだ行・未確認の確定候補の行・藍の帯の上の、補足の文字
+  ['--c-muted', '--c-ok-bg'], // 一致の札の地の上の、補足の文字
+];
 const PAIRS_3 = [
   ['--c-border-strong', '--c-surface'],
   ['--c-border-strong', '--c-bg'],
   ['--c-primary', '--c-surface'],
   ['--c-primary', '--c-bg'],
+  // チェックボックスと入力欄の枠が、薄い地の行（合計の行、指を置いた行）と、未確認の確定候補の行（藍の淡い地）に載る。
+  ['--c-border-strong', '--c-surface-2'],
+  ['--c-border-strong', '--c-primary-soft'],
 ];
 
 /**
@@ -91,8 +103,11 @@ export function checkTokens(css) {
   const rows = [];
   for (const [theme, vars] of [['ライト', t.light], ['ダーク', t.darkManual]]) {
     if (!vars) continue;
-    for (const [pairs, need] of [[PAIRS_45, 4.5], [PAIRS_3, 3]]) {
+    const seen = new Set();
+    for (const [pairs, need] of [[PAIRS_45, 4.5], [PAIRS_45_USES, 4.5], [PAIRS_3, 3]]) {
       for (const [fg, bg] of pairs) {
+        if (seen.has(`${fg}|${bg}|${need}`)) continue;
+        seen.add(`${fg}|${bg}|${need}`);
         if (!vars[fg] || !vars[bg]) {
           problems.push(`${theme}: ${fg} か ${bg} が定義されていません。`);
           continue;

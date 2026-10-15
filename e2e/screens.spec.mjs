@@ -33,7 +33,17 @@ async function fillEntry(page) {
   await page.keyboard.insertText('サンプル通信');
   await f.description.fill('10月分 携帯電話');
   await f.description.blur();
-  await expect(f.preview.locator('table')).toBeVisible();
+  const table = f.preview.locator('table');
+  if (page.viewportSize().width >= 640) {
+    await expect(table).toBeVisible();
+  } else {
+    await expect(f.preview.locator('.pv-summary')).toBeVisible();
+    const toggle = f.preview.getByRole('button', { name: 'くわしく' });
+    await toggle.click();
+    await expect(table).toBeVisible();
+    await toggle.click();
+    await expect(f.preview.locator('.pv-summary')).toBeVisible();
+  }
 }
 
 // 未確認の途中の様子: 3行に科目が入っていて（1行は按分）、2行が確定候補。書き込まずに見せるため、一覧の応えを差し替える。
@@ -135,8 +145,8 @@ const SCREENS = [
     ready: '.wallet-list',
     prepare: async (page) => {
       await expect(page.locator('.wallet-list').first()).toBeVisible();
-      await page.getByRole('button', { name: '口座を足す' }).click();
-      await expect(page.getByRole('dialog', { name: '口座を足す' })).toBeVisible();
+      await page.getByRole('button', { name: '口座を追加' }).click();
+      await expect(page.getByRole('dialog', { name: '口座を追加' })).toBeVisible();
     },
   },
   { name: 'accounts', hash: '#/accounts', ready: '.accounts-table' },

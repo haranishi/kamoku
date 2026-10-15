@@ -6,7 +6,7 @@
 import { installImeTracking } from './ime.js';
 import { applyAppearance, cycleTheme, setTheme, setDensity, getDensity, themeLabel, onAppearanceChange } from './theme.js';
 import { createRouter, buildHash } from './router.js';
-import { createKeys, modLabel } from './keys.js';
+import { createKeys, modLabel, singleKeysEnabled } from './keys.js';
 import { api } from './api.js';
 import * as state from './state.js';
 import { buildShell } from './shell.js';
@@ -14,7 +14,7 @@ import { ROUTES, NOT_FOUND } from './routes.js';
 import { initToasts, toast } from './components/toast.js';
 import { banner } from './components/banner.js';
 import { createCommandPalette } from './components/command-palette.js';
-import { openShortcutsHelp } from './components/shortcuts-help.js';
+import { openShortcutsHelp, toggleSingleKeys } from './components/shortcuts-help.js';
 
 applyAppearance();
 installImeTracking(document);
@@ -73,9 +73,12 @@ function commands() {
     go('勘定科目', 'かんじょうかもく', '#/accounts', 'list'),
     go('取引先', 'とりひきさき', '#/partners', 'building'),
     go('設定', 'せってい', '#/settings', 'sliders', 'g s'),
+    // 訂正・取消は仕訳の詳細で行う。一般的な言葉（編集・修正・削除）で探しても見つかるようにする。
+    { ...go('仕訳を訂正する（仕訳帳で仕訳を開く）', 'しわけをていせいする', '#/journal', 'book'), id: 'correct', keywords: '編集 修正 直す 変更 へんしゅう しゅうせい なおす へんこう' },
+    { ...go('仕訳を取り消す（仕訳帳で仕訳を開く）', 'しわけをとりけす', '#/journal', 'book'), id: 'void', keywords: '削除 消す 取り消し 削る さくじょ けす とりけし' },
     go('台帳を検査する（設定のデータ）', 'だいちょうをけんさ はっしゅ しょうごう', '#/settings?section=data', 'shield-check'),
     go('期首残高を見直す（設定）', 'きしゅざんだか もといれきん', '#/settings?section=opening', 'wallet'),
-    go('口座を足す（口座の画面）', 'こうざをたす', '#/wallets', 'plus'),
+    go('口座を追加（口座の画面）', 'こうざをついか', '#/wallets', 'plus'),
     { id: 'theme-light', label: '表示をライトにする', reading: 'ひょうじ らいと あかるい', group: '操作', icon: 'sun', run: () => setTheme('light') },
     { id: 'theme-dark', label: '表示をダークにする', reading: 'ひょうじ だーく くらい', group: '操作', icon: 'moon', run: () => setTheme('dark') },
     { id: 'theme-os', label: '表示をOSに合わせる', reading: 'ひょうじ おーえす', group: '操作', icon: 'monitor', run: () => setTheme('os') },
@@ -88,6 +91,15 @@ function commands() {
       run: () => setDensity(getDensity() === 'compact' ? 'standard' : 'compact'),
     },
     { id: 'help', label: 'ショートカットの一覧', reading: 'しょーとかっと', group: '操作', icon: 'keyboard', hint: '?', run: () => openShortcutsHelp() },
+    {
+      id: 'single-keys',
+      label: `1文字のショートカットを切り替える（いまは${singleKeysEnabled() ? '使っています' : '切ってあります'}）`,
+      reading: 'いちもじのしょーとかっとをきりかえる',
+      keywords: 'キー ショートカット 1文字 切る 使う オフ オン',
+      group: '操作',
+      icon: 'keyboard',
+      run: () => toggleSingleKeys(),
+    },
   ];
 }
 

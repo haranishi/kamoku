@@ -129,6 +129,8 @@ h2[tabindex="-1"]:focus {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+  /* 見えない要素に「…」を出さない（ファイルの欄は、ブラウザの既定で ellipsis になる）。 */
+  text-overflow: clip;
 }
 
 .skip-link {
@@ -170,6 +172,7 @@ kbd,
   color: var(--c-muted);
   font-family: var(--font-sans);
   font-size: var(--fs-xs);
+  font-weight: 600;
   line-height: 1.5;
   text-align: center;
   white-space: nowrap;

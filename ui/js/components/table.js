@@ -21,6 +21,30 @@ import { shouldIgnoreKey } from '../ime.js';
  */
 
 /**
+ * 表の入れ物を、横にスクロールできるときだけ Tab の止まり場所にする。止まれると、キーボードだけで横に動かせる
+ * （表の中だけが動く）。動かない表の入れ物にまで止まると、Tab が1つ余計に要り、読み上げも領域を1つ余計に読んだ。
+ * 幅や行が変わったら測り直す（入れ物と、中の表の大きさを見張る）。測れない環境では、今までどおりいつも止まる。
+ * @param {HTMLElement} wrap 横にスクロールする入れ物
+ * @param {HTMLElement} [inner] 中の表（行を入れ替えると、入れ物の大きさは変わらずに中の幅だけが変わるため）
+ */
+export function focusWhenScrollable(wrap, inner) {
+  if (typeof ResizeObserver !== 'function') {
+    wrap.setAttribute('tabindex', '0');
+    return;
+  }
+  const ro = new ResizeObserver(() => {
+    if (!wrap.isConnected) {
+      ro.disconnect();
+      return;
+    }
+    if (wrap.scrollWidth > wrap.clientWidth + 1) wrap.setAttribute('tabindex', '0');
+    else wrap.removeAttribute('tabindex');
+  });
+  ro.observe(wrap);
+  if (inner) ro.observe(inner);
+}
+
+/**
  * 表を作る。
  * 例: createTable({ caption: '仕訳の一覧', columns, rows, rowKey: (r) => r.id, onOpen: (r) => open(r) })
  * @param {{ caption: string, columns: Column[], rows?: any[], rowKey?: (row: any) => string,
@@ -50,8 +74,8 @@ export function createTable(opts) {
   );
   const tbody = h('tbody');
   const table = h('table', { class: ['table', stack && 'table--stack', opts.className] }, h('caption', null, caption), thead, tbody, opts.foot || null);
-  // 入れ物にフォーカスできると、キーボードだけで横にスクロールできる（表の中だけが動く）。
-  const el = h('div', { class: 'table-wrap', role: 'region', 'aria-label': caption, tabindex: '0' }, table);
+  const el = h('div', { class: 'table-wrap', role: 'region', 'aria-label': caption }, table);
+  focusWhenScrollable(el, table);
 
   function cell(c, row, i) {
     const value = c.render ? c.render(row, i) : row[c.key];

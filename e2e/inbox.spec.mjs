@@ -25,10 +25,11 @@ async function prepare(page, prefix, n, amount = (i) => 1100 + i * 110) {
 
 test('AC-05.3 キーボードだけで、科目を選びながら10行を確定候補にして、Ctrl/Cmd+Enterでまとめて確定する', async ({ page }) => {
   const token = await prepare(page, 'E2E 未確認10', 10);
-  // 見出し → 検索欄（/）→ Tab 3回で、1行目の科目の欄へ（候補の欄、日付の欄の次）。
+  // 見出し → 検索欄（/）→ Tab 4回で、1行目の科目の欄へ（見出しの「すべて選ぶ」、候補の欄、日付の欄の次）。
+  // 「すべて選ぶ」を見出しに足したので、2026-10-14 の画面の直し（F2）で3回から4回にした。
   await page.keyboard.press('/');
   await expect(page.getByRole('searchbox', { name: '明細を文字で探す' })).toBeFocused();
-  for (let i = 0; i < 3; i += 1) await page.keyboard.press('Tab');
+  for (let i = 0; i < 4; i += 1) await page.keyboard.press('Tab');
   await expect(accountOf(rowsOf(page).nth(0))).toBeFocused();
   for (let i = 0; i < 10; i += 1) {
     await page.keyboard.insertText('しょうもう');
@@ -41,7 +42,7 @@ test('AC-05.3 キーボードだけで、科目を選びながら10行を確定�
   await expect(page.getByRole('button', { name: /確定する/ })).toBeFocused();
   const bar = page.locator('.inbox-bar');
   const sum = Array.from({ length: 10 }, (_, i) => 1100 + i * 110).reduce((a, b) => a + b, 0);
-  await expect(bar).toContainText('確定候補10件');
+  await expect(bar).toContainText('確定する行10件');
   await expect(bar).toContainText(`出金${sum.toLocaleString('en-US')}円`);
   await page.keyboard.press('ControlOrMeta+Enter');
   const dialog = page.getByRole('dialog', { name: '10件を確定しますか' });
@@ -97,11 +98,13 @@ test('AC-05.1 ひらがなの読みで科目が絞れる。科目が空の行は
   await expect(first).not.toHaveClass(/is-candidate/);
   // 確定候補が無いまま確定しようとすると、理由を出す。
   await page.keyboard.press('ControlOrMeta+Enter');
-  await expect(page.locator('.inbox-note')).toContainText('確定候補がありません');
+  await expect(page.locator('.inbox-note')).toContainText('確定する行がありません');
+  // 帯の文は最初から同じ文で、押しても変わらず、読み上げでは無音だった。通知（読み上げの領域）でも返す（体験の評価 第3回 E4）。
+  await expect(page.locator('.toast').filter({ hasText: '確定する行がありません' })).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
-test('AC-05.7 x で取り込まない行にすると一覧から消え、「無視した行」から戻せる', async ({ page }) => {
+test('AC-05.7 x で無視すると一覧から消え、「無視した行」から戻せる', async ({ page }) => {
   const token = await prepare(page, 'E2E 未確認無視', 2);
   const first = rowsOf(page).nth(0);
   await accountOf(first).click();
@@ -111,7 +114,7 @@ test('AC-05.7 x で取り込まない行にすると一覧から消え、「無�
   await page.keyboard.press('Escape');
   await expect(first.locator('.cand-check')).toBeFocused();
   await page.keyboard.press('x');
-  await expect(page.locator('.toast').filter({ hasText: '取り込まない行にしました' })).toBeVisible();
+  await expect(page.locator('.toast').filter({ hasText: `「${token} 001」を無視しました。` })).toBeVisible();
   await expect(rowsOf(page)).toHaveCount(1);
   await expect(rowsOf(page).nth(0).locator('.cand-check')).toBeFocused();
   await page.getByRole('tab', { name: /無視した行/ }).click();
@@ -151,7 +154,7 @@ test('SC-03 上下の矢印は同じ列の隣の行へ。Shift+Space で確定�
   // 絞り込みを変えて戻っても、印は残る（画面の中の集合）。
   await page.goto(`/#/inbox?q=${encodeURIComponent(`${token} 002`)}`);
   await expect(rows).toHaveCount(1);
-  await expect(page.locator('.inbox-bar')).toContainText('確定候補1件');
+  await expect(page.locator('.inbox-bar')).toContainText('確定する行1件');
   await page.goBack();
   await expect(rows).toHaveCount(3);
   await expect(rows.nth(0)).toHaveClass(/is-candidate/);
@@ -183,7 +186,8 @@ test('api-inbox の決まり: 科目を変えたとき、いまの値が前の�
     await expect(row.locator('td.c-pct input')).toHaveValue('50');
     await expect(row.locator('td.c-tax select')).toHaveValue('P10');
     await pick('ちだい', '地代家賃');
-    await expect(row.locator('td.c-tax select')).toHaveValue('');
+    // 既定の税区分が無い科目で、手で選んでいない税区分は、仮の値「科目で決まる」（2026-10-15 の体験の評価の直し g2 の1）。
+    await expect(row.locator('td.c-tax select')).toHaveValue('__unset');
     await expect(row.locator('td.c-pct input')).toHaveValue('50');
     await expect.poll(async () => {
       const d = (await apiCall(page, 'GET', `/drafts?q=${encodeURIComponent(token)}`)).json.items[0];
@@ -201,7 +205,8 @@ test('SC-03 日付を直せて、税区分が経過措置（P10X）の行には�
   await date.click();
   await date.fill('0107');
   await date.press('Tab');
-  await expect(date).toHaveValue(/01\/07$/);
+  // 未確認の日付は、ほかの画面と同じく曜日つき（今年なら年を省く。2026-10-15 の P3 の直し）。
+  await expect(date).toHaveValue(/01\/07 \(.\)$/);
   await expect.poll(async () => (await apiCall(page, 'GET', `/drafts?q=${encodeURIComponent(token)}`)).json.items[0].date).toMatch(/-01-07$/);
   await accountOf(row).click();
   await page.keyboard.insertText('がいちゅう');

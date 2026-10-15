@@ -187,7 +187,13 @@
 }
 
 .chart-highlight {
-  fill: var(--c-primary-soft);
+  fill: var(--c-chart-band);
+}
+
+/* 凡例の「選んだ月」の見本は、地の色に近いので枠で示す（ダークでも見分けられるように）。 */
+.chart-swatch-outline {
+  stroke: var(--c-border-strong);
+  stroke-width: 1;
 }
 
 .chart-grid {
@@ -240,6 +246,25 @@
 
 .chart-dot--loss {
   fill: var(--c-income);
+}
+
+/* 赤字の月の額（chart.js）。線や目盛りの上でも読めるよう、地の色の縁を先に描く。 */
+.chart-loss-label {
+  fill: var(--c-text);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: var(--c-surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* 凡例の下の、棒・線・点の見分け方の1行。 */
+.chart-note {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  text-wrap: pretty;
 }
 
 .chart-legend {

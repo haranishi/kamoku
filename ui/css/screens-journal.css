@@ -35,10 +35,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 幅は、案内の文（摘要・取引先・金額（Enterで探します））が16pxで切れずに入る大きさ。 */
 .search-box {
   position: relative;
   display: flex;
-  flex: 0 1 380px;
+  flex: 0 1 400px;
   align-items: center;
   min-width: 0;
 }
@@ -70,6 +71,13 @@
   cursor: pointer;
 }
 
+/* 指で触る幅では、開閉の文字も44px以上にする（AC-11.7）。 */
+@media (max-width: 1023px) {
+  .filter-more summary {
+    min-height: 44px;
+  }
+}
+
 .filter-more[open] summary {
   margin-bottom: var(--sp-3);
 }
@@ -96,8 +104,12 @@
   font-variant-numeric: tabular-nums;
 }
 
-.list-summary span:last-child {
+/* 「条件に合う208件の合計」。何の合計かを文で書き、金額だけを太くする。 */
+.list-summary > .list-sum {
   color: var(--c-text);
+}
+
+.list-sum .money {
   font-weight: 700;
 }
 
@@ -107,14 +119,49 @@
   font-size: var(--fs-xs);
 }
 
+/* 仕訳帳の取引先: 摘要の下の行。小さく淡いと探しにくかったので、本文の色にする（大きさと位置で摘要と分ける）。 */
+.journal-partner {
+  display: block;
+  margin-top: 2px;
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+}
+
+/* 表の形（入れ物900px以上）では、取引先のある行（摘要が2行）も、上下の線に文字が付かないように、升目の上下に余白を取る。 */
+@container journal (min-width: 900px) {
+  .journal-table td.c-desc {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}
+
+/* 「詳細」の列（訂正・取消の札）は右に寄せ、右の「›」（詳細を開く）と1つのまとまりに見せる。 */
+.journal-table .c-state {
+  text-align: right;
+}
+
 .state-plain {
   color: var(--c-muted);
   font-size: var(--fs-xs);
 }
 
+/* 行の右端の「›」。行を開けると分かる印（飾り。押す場所は行の全体）。 */
+.journal-table .c-go {
+  width: 1%;
+  padding-left: 0;
+  color: var(--c-muted);
+}
+
+.journal-table .c-go svg {
+  display: block;
+}
+
 /*
- * 入れ物が900px未満のとき（768pxの画面、スマホ）は、1件を3行のカードにする。
- * 1行目: 摘要と金額、2行目: No・日付・状態、3行目: 借方と貸方。金額の列が表の外に隠れないようにするため。
+ * 入れ物が900px未満のとき（768pxの画面、スマホ）は、1件をカードにする。
+ * 1行目: 摘要（と取引先）と金額、2行目: No・日付・訂正と取消の札、3行目: 借方、4行目: 貸方。金額の列が表の外に隠れないようにするため。
+ * 借方と貸方は別の行にする（同じ細い行に並べると、口座の名前が折れて「預金」だけが次の行に残った）。
  */
 .list-host {
   container-type: inline-size;
@@ -139,14 +186,21 @@
   .journal-table tbody tr {
     display: grid;
     grid-template-areas:
-      "desc desc desc total"
-      "no date date state"
-      "debit debit credit credit";
-    grid-template-columns: auto auto minmax(0, 1fr) auto;
+      "desc desc desc total go"
+      "no date date state go"
+      "debit debit debit debit go"
+      "credit credit credit credit go";
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
     gap: 2px var(--sp-2);
     align-items: baseline;
-    padding: var(--sp-3) var(--sp-4);
+    padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
     border-bottom: 1px solid var(--c-border);
+  }
+
+  .journal-table .c-go {
+    grid-area: go;
+    align-self: center;
+    width: auto;
   }
 
   .journal-table tbody tr:last-child {
@@ -159,7 +213,7 @@
     padding: 0;
     border: 0;
     color: var(--c-muted);
-    font-size: var(--fs-xs);
+    font-size: var(--fs-sm);
     white-space: normal;
   }
 
@@ -171,7 +225,15 @@
     font-weight: 700;
   }
 
-  .journal-table .c-desc .sub-inline {
+  .journal-table .c-desc .journal-partner {
+    font-weight: 400;
+  }
+
+  /* カードには列の見出しが無いので、金額に単位を添える（読み上げでも「円」まで読まれる）。 */
+  .journal-table .c-total .amount::after {
+    content: "円";
+    margin-left: 1px;
+    font-size: var(--fs-xs);
     font-weight: 400;
   }
 
@@ -227,6 +289,12 @@
 
 .pager:empty {
   display: none;
+}
+
+/* 一覧の上のページ送り（下と同じもの）。 */
+.pager--top {
+  margin-top: 0;
+  margin-bottom: var(--sp-3);
 }
 
 .pager-text {

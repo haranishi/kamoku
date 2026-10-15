@@ -1,31 +1,24 @@
 // SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// 未確認の表の1行（SC-03）。欄は 候補・日付・摘要・金額・科目・税区分・取引先・メモ・割合・操作。
+// 未確認の表の1行（SC-03）。欄は 確定する・日付・摘要・金額・科目・税区分・取引先・メモ・割合・操作（作るのは inbox-row-fields.js）。
 // 欄を離れるときとEnterで PATCH /drafts/{id} に保存する。同じ行の保存は順に送る（追い越して古い値が残らないように）。
-// 科目を変えたときの税区分と割合は account-defaults.js の決まり（変える前の科目の既定値と同じなら更新）。
+// 科目を変えたときの税区分は inbox-rules.js（手で選んでいなければ新しい科目の既定へ）、割合は account-defaults.js の決まり。
 // 免税のときは税区分の列を隠し、既定の税区分を入れない（確定のときは空で送る。2026-10-14 20:10 の決定）。
+// カードの並び（入れ物が1080px未満）では、要約（日付・摘要・金額・口座）と科目の欄だけを出し、残りは「くわしく」で開く
+// （screens-inbox-cards.css）。そのときの欄の並び（Tabの順）は、見た目の順にそろえる（inbox-row-parts.js の orderCells）。
 
 import { h } from '../dom.js';
-import { icon } from '../icons.js';
-import { formatSigned } from '../format.js';
 import { normalizeWidth } from '../input-parse.js';
-import { nextDefaults, taxOptions, isTransitional } from '../account-defaults.js';
-import { createCombobox } from '../components/combobox.js';
-import { createDateInput } from '../components/date-input.js';
-import { selectInput, textInput, iconButton } from '../components/fields.js';
-import { accountItems, partnerItems } from './entry-options.js';
+import { nextDefaults } from '../account-defaults.js';
+import { shortDate, paintTaxSelect, rowMessages, TAX_UNSET, moreToggle, rowElement, FOLDED, fieldOf } from './inbox-row-parts.js';
+import { createRowFields } from './inbox-row-fields.js';
+import { taxAfterAccount, touchedOnLoad, rowLabel } from './inbox-rules.js';
 
-// 表の狭い列に収まる、税区分の短い名前（選んである名前の全体は、欄の title と行の下の案内で示す）。
-const TAX_SHORT = { '': '対象外', S10: '課税売上10%', S8: '課税売上8%軽減', P10: '課税仕入10%', P8: '課税仕入8%軽減', P10X: '経過措置10%', P8X: '経過措置8%軽減', NT: '非課税' };
+export { shortDate };
 
-/** 列の順。上下の矢印は、この名前の同じ列の隣の行へ移る。 */
+/** 列の順。上下の矢印は、この名前の同じ列の隣の行へ移る（税区分の欄では、値の切り替えに使う）。 */
 export const COLUMNS = ['cand', 'date', 'desc', 'amount', 'account', 'tax', 'partner', 'memo', 'pct', 'ops'];
-
-/** 「10/01」。年が違うときだけ「2025/12/30」。 */
-export function shortDate(iso, thisYear) {
-  return iso.slice(0, 4) === thisYear ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}` : iso.replace(/-/g, '/');
-}
 
 /**
  * @param {{ draft: object, accounts: any[], partners: any[], exempt: boolean, readOnly: boolean, thisYear: string,
@@ -37,28 +30,26 @@ export function createInboxRow(o) {
   let draft = { ...o.draft };
   const byCode = new Map(o.accounts.map((a) => [a.code, a]));
   const kind = draft.direction === 'in' ? 'income' : 'expense';
-  const descId = `draft-${draft.id}-desc`;
-  const msgId = `draft-${draft.id}-msg`;
+  const ids = (part) => `draft-${draft.id}-${part}`;
+  const msgId = ids('msg');
   let chain = Promise.resolve();
   const errors = {};
+  const nameEl = h('span', { class: 'visually-hidden', id: ids('name') });
 
-  const labelled = (el, col) => {
-    el.setAttribute('aria-labelledby', `${o.colId(col)} ${descId}`);
-    el.setAttribute('aria-describedby', msgId);
-    if (o.readOnly) el.disabled = true;
-    return el;
-  };
-
-  const check = labelled(h('input', { type: 'checkbox', class: 'cand-check' }), 'cand');
-  const date = createDateInput({ value: draft.date, arrowKeys: false, display: (iso) => shortDate(iso, o.thisYear), placeholder: '', inputClass: 'input--date', onError: (m) => setError('date', m), onChange: (v) => v && v !== draft.date && save({ date: v }) });
-  labelled(date.input, 'date');
-  const account = createCombobox({
-    items: accountItems(o.accounts, kind),
-    value: draft.account,
-    arrowOpens: false,
-    listLabel: '科目の候補',
-    placeholder: '科目',
-    onSelect: (item, info) => {
+  // 欄（inbox-row-fields.js）。呼び返しは、どれも作り終えた後の操作で呼ばれる。
+  const { check, sumDate, date, account, tax, partner, memo, pct, ignore } = createRowFields({
+    draft,
+    kind,
+    accounts: o.accounts,
+    partners: o.partners,
+    readOnly: o.readOnly,
+    thisYear: o.thisYear,
+    colId: o.colId,
+    nameId: nameEl.id,
+    msgId,
+    onDate: (v) => v && v !== draft.date && (sumDate.replaceChildren(shortDate(v, o.thisYear)), save({ date: v }), paintName()),
+    onDateError: (m) => setError('date', m),
+    onAccountSelect: (item, info) => {
       // 打っている途中（選択が外れただけ）は保存しない。決めるのは、選んだときと、欄を離れたとき。
       if (info.via === 'input') return undefined;
       chooseAccount(item ? item.value : null);
@@ -68,43 +59,39 @@ export function createInboxRow(o) {
       }
       return undefined;
     },
+    onIgnore: () => o.onIgnore(api),
   });
-  labelled(account.input, 'account');
-  const taxChoices = taxOptions(kind);
-  const tax = labelled(selectInput({ value: draft.tax_code || '' }, taxChoices.map((x) => ({ value: x.value, label: TAX_SHORT[x.value] || x.label }))), 'tax');
-  const taxTitle = () => {
-    tax.title = (taxChoices.find((x) => x.value === tax.value) || { label: '' }).label;
-  };
-  const partner = createCombobox({ items: partnerItems(o.partners), allowFree: true, arrowOpens: false, value: draft.partner || '', listLabel: '取引先の候補', placeholder: '取引先' });
-  labelled(partner.input, 'partner');
-  const memo = labelled(textInput({ value: draft.memo || '', placeholder: 'メモ', maxlength: 200 }), 'memo');
-  const pct = draft.direction === 'out' ? labelled(textInput({ value: String(draft.business_pct ?? 100), inputmode: 'numeric', class: 'input--num pct-cell', maxlength: 3 }), 'pct') : null;
-  const ignoreBtn = iconButton({ iconName: 'ban', label: `取り込まない（x）: ${draft.description}`, className: 'ignore-btn', onClick: () => o.onIgnore(api) });
-  if (o.readOnly) ignoreBtn.disabled = true;
+  // 税区分を利用者が手で選んだか。選んでいなければ、科目を変えるたびに科目の既定へ入れ直す（inbox-rules.js）。
+  let taxTouched = touchedOnLoad({ account: byCode.get(draft.account) || null, kind, exempt: o.exempt, tax: draft.tax_code });
 
   const msg = h('div', { class: 'row-msg', id: msgId, 'aria-live': 'polite' });
-  const cell = (col, label, ...children) => h('td', { class: `c-${col}`, dataset: { col }, 'data-label': label }, children);
-  const tr = h(
-    'tr',
-    { class: 'inbox-row', dataset: { id: draft.id, dir: draft.direction } },
-    cell('cand', '確定候補', h('label', { class: 'cand' }, check, h('span', { class: 'cand-text' }, '候補'))),
-    cell('date', '日付', date.input),
-    cell('desc', '', h('span', { class: 'desc-text', id: descId }, draft.description || '（摘要なし）'), h('span', { class: 'sub' }, draft.wallet_name)),
-    cell('amount', '金額', h('span', { class: ['amount', `amount--${draft.direction}`] }, formatSigned(draft.direction === 'in' ? draft.amount : -draft.amount)), h('span', { class: 'sub dir-text' }, draft.direction === 'in' ? '入金' : '出金')),
-    cell('account', '科目', account.el),
-    cell('tax', '税区分', tax),
-    cell('partner', '取引先', partner.el),
-    cell('memo', 'メモ', memo),
-    cell('pct', '割合', pct ? h('div', { class: 'affix' }, pct, h('span', { class: 'affix-text' }, '%')) : h('span', { class: 'muted' }, '—')),
-    cell('ops', '', ignoreBtn),
-  );
+  const more = moreToggle({ controls: ['date', 'tax', 'partner', 'memo', 'pct'].map((c) => ids(`cell-${c}`)), onToggle: (open) => setOpen(open) });
+  const tr = rowElement({ draft, cellId: (col) => ids(`cell-${col}`), descId: ids('desc'), name: nameEl, check, date: date.input, sumDate, account: account.el, more: more.el, tax, partner: partner.el, memo, pct, ignore: ignore.el });
   const msgTr = h('tr', { class: 'inbox-msg', hidden: true }, h('td', { colspan: COLUMNS.length }, msg));
 
+  /** 行の名前（日付・摘要・金額）を、読み上げだけの文字と「無視」のボタンに入れる。 */
+  function paintName() {
+    const text = rowLabel(draft, o.thisYear);
+    nameEl.textContent = text;
+    ignore.name(text);
+    more.name(text);
+  }
+
+  /** 狭い幅の「くわしく」を開く・閉じる（広い幅では見た目が変わらない）。 */
+  function setOpen(open) {
+    tr.classList.toggle('is-folded', !open);
+    more.set(open);
+  }
+
+  /** 科目が空の行の印（is-unset）と、税区分の見せ方（手で選んでいない空の税区分は、仮の値で薄く出す）。 */
+  function paintTax() {
+    const none = !draft.account;
+    tr.classList.toggle('is-unset', none);
+    paintTaxSelect(tax, { code: draft.tax_code, unset: !taxTouched && !draft.tax_code && !locked(), hasAccount: !none, account: byCode.get(draft.account) || null, kind });
+  }
+
   function paintMessages() {
-    taxTitle();
-    const parts = [];
-    for (const [field, text] of Object.entries(errors)) if (text) parts.push(h('p', { class: 'field-error', dataset: { field } }, icon('alert', { size: 16 }), h('span', null, text)));
-    if (!o.exempt && isTransitional(draft.tax_code)) parts.push(h('p', { class: 'field-hint row-note' }, icon('info', { size: 16 }), h('span', null, '課税仕入れの日にしてください（商品の引渡し・役務の提供が完了した日）。経過措置の割合は、この行の日付で決まります。')));
+    const parts = rowMessages({ errors, account: byCode.get(draft.account) || null, draft, kind, exempt: o.exempt });
     msg.replaceChildren(...parts);
     msgTr.hidden = !parts.length;
     tr.classList.toggle('has-msg', parts.length > 0);
@@ -112,6 +99,7 @@ export function createInboxRow(o) {
 
   function setError(field, text) {
     errors[field] = text || '';
+    if (text && FOLDED.includes(field)) setOpen(true);
     paintMessages();
   }
 
@@ -143,7 +131,7 @@ export function createInboxRow(o) {
       .catch((err) => {
         o.onSaveState('failed');
         if (err.code === 'already_confirmed' || err.status === 404 || err.isStale) o.onStale(err);
-        else setError(err.field === 'tax_code' ? 'tax' : err.field || 'row', err.message);
+        else setError(fieldOf(err.field), err.message);
       });
     return chain;
   }
@@ -152,27 +140,34 @@ export function createInboxRow(o) {
     if ((code || null) === (draft.account || null)) return;
     const prev = byCode.get(draft.account) || null;
     const next = byCode.get(code) || null;
-    const d = nextDefaults({ prev, next, tax: draft.tax_code, pct: draft.business_pct ?? 100 });
-    const valid = taxOptions(kind).map((x) => x.value);
-    // 免税のときは、隠れた税区分に科目の既定値を入れない（空で送る）。
-    const taxCode = o.exempt ? null : d.tax && valid.includes(d.tax) ? d.tax : null;
+    // 口座（振替）にすると税区分を空にする。手で選んだ値も消えるので、そのあと別の科目にしたら、その科目の既定に戻す。
+    if (next && next.wallet) taxTouched = false;
+    const taxCode = taxAfterAccount({ next, kind, exempt: o.exempt, tax: draft.tax_code, touched: taxTouched });
     const patch = { account: code || null };
     if (taxCode !== (draft.tax_code || null)) patch.tax_code = taxCode;
-    const nextPct = draft.direction === 'out' ? d.pct : 100;
+    const nextPct = draft.direction === 'out' ? nextDefaults({ prev, next, tax: draft.tax_code, pct: draft.business_pct ?? 100 }).pct : 100;
     if (nextPct !== (draft.business_pct ?? 100)) patch.business_pct = nextPct;
     draft = { ...draft, ...patch };
-    tax.value = draft.tax_code || '';
     if (pct) pct.value = String(draft.business_pct ?? 100);
-    setError('account', '');
+    errors.account = '';
+    paintTax();
     paintLocks();
     paintMessages();
     if (!code && o.candidates.has(draft.id)) setCandidate(false);
+    else o.onCandidate();
     save(patch);
   }
 
+  // 無視を送っている途中（inbox-ignore.js）。確定する行にしない（確定と無視が行き違わないように）。
+  let leaving = false;
+
   function setCandidate(on) {
+    if (on && leaving) {
+      check.checked = false;
+      return false;
+    }
     if (on && !draft.account) {
-      setError('account', '科目を選んでください。科目が空の行は、確定候補にできません。');
+      setError('account', '科目を選んでください。科目が空の行は、確定できません。');
       check.checked = false;
       return false;
     }
@@ -206,7 +201,7 @@ export function createInboxRow(o) {
   /** いまの欄の入力を保存する（Enterと、確定の前に呼ぶ）。読めない値なら偽。 */
   function commit(col) {
     if (col === 'account') {
-      // 欄の文字と、選んである科目を合わせる。打った文字に合う科目が無ければ、前の科目のまま確定候補にしない。
+      // 欄の文字と、選んである科目を合わせる。打った文字に合う科目が無ければ、前の科目のまま確定する行にしない。
       const v = account.value;
       if ((v || null) !== (draft.account || null)) chooseAccount(v);
       if (!v && account.input.value.trim()) {
@@ -222,11 +217,11 @@ export function createInboxRow(o) {
     return true;
   }
 
-  /** 行を確定候補にして、次の行へ（Enter）。科目が空なら理由を出して動かない（AC-05.1、AC-05.3）。 */
+  /** 行を確定する行にして、次の行へ（Enter）。科目が空なら理由を出して動かない（AC-05.1、AC-05.3）。 */
   function markAndNext(col = 'account') {
     if (!commit(col)) return;
     if (!draft.account) {
-      setError('account', '科目を選んでください。科目が空の行は、確定候補にできません。');
+      setError('account', '科目を選んでください。科目が空の行は、確定できません。');
       return;
     }
     setCandidate(true);
@@ -235,7 +230,9 @@ export function createInboxRow(o) {
 
   check.addEventListener('change', () => setCandidate(check.checked));
   tax.addEventListener('change', () => {
-    draft = { ...draft, tax_code: tax.value || null };
+    taxTouched = true;
+    draft = { ...draft, tax_code: tax.value === TAX_UNSET ? null : tax.value || null };
+    paintTax();
     paintMessages();
     save({ tax_code: draft.tax_code });
   });
@@ -254,11 +251,26 @@ export function createInboxRow(o) {
     get draft() {
       return draft;
     },
-    /** 列の欄へフォーカスを移す（無い列なら候補の欄）。 */
-    focus(col) {
+    /** 科目が入っていて、確定する行にできるか（「科目のある行をすべて選ぶ」が使う）。 */
+    get ready() {
+      return Boolean(draft.account) && !leaving;
+    },
+    /** 無視を送っている間の印（薄く出す）。付けるときは、確定する行から外す。 */
+    leave(on) {
+      leaving = on;
+      tr.classList.toggle('is-leaving', on);
+      if (on && o.candidates.has(draft.id)) setCandidate(false);
+      else o.onCandidate();
+    },
+    /**
+     * 列の欄へフォーカスを移す（無い列なら、行の印）。nearest が真なら、行が画面の端に半分隠れないよう、
+     * 近い端へ寄せて見せる（上下の固定の帯の分は、ページの scroll-padding が除く）。
+     */
+    focus(col, { nearest = false } = {}) {
       const el = { cand: check, date: date.input, account: account.input, tax, partner: partner.input, memo, pct }[col];
       const target = el && !el.disabled && !el.closest('[hidden]') && el.offsetParent !== null ? el : check;
-      target.focus();
+      target.focus({ preventScroll: nearest });
+      if (nearest) tr.scrollIntoView({ block: 'nearest' });
       if (target.select && target !== check) target.select();
     },
     isOpen: () => account.isOpen || partner.isOpen,
@@ -267,7 +279,8 @@ export function createInboxRow(o) {
     commit,
     /** 送り終えていない保存を待つ（確定の前）。 */
     flush: () => chain,
-    showError: (text) => setError('row', text),
+    /** 確定などで返った誤りを出す。field（サーバーの欄の名前）が畳んだ欄なら、「くわしく」を開く。 */
+    showError: (text, field) => setError(fieldOf(field), text),
     destroy() {
       account.destroy();
       partner.destroy();
@@ -275,6 +288,8 @@ export function createInboxRow(o) {
   };
   check.checked = o.candidates.has(draft.id);
   tr.classList.toggle('is-candidate', check.checked);
+  paintName();
+  paintTax();
   paintLocks();
   paintMessages();
   return api;

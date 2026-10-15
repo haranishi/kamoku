@@ -14,6 +14,34 @@
   min-height: 100vh;
 }
 
+/*
+ * Tab やキーで移った欄が、画面の上下に固定した帯の裏に隠れないよう、ページ全体にスクロールの余白を取る
+ * （上の帯は 768px 未満だけ。layout-narrow.css）。ここが余白の決まりの置き場所で、画面ごとの CSS の
+ * :root:has(...) の指定より優先する（html:root と書いて、詳しさを1つ上げる）。
+ * 下に固定する帯（保存の帯・確定の帯）がある画面は、帯の高さぶん下を空ける。値は、幅ごとに測った帯の高さの最大
+ * （登録の帯は 61〜69px、確定の帯は 640px 未満で 151px、640〜1023px で 106px、1024px 以上で 102px。大きな金額のとき）
+ * ＋8px に、帯の文が折り返して伸びる分の余裕を足したもの。
+ */
+html {
+  scroll-padding-top: var(--sp-2);
+  scroll-padding-bottom: calc(var(--bar-bottom) + var(--sp-2));
+}
+
+@media (max-width: 1279px) {
+  html:root:has(.entry-actions-card) {
+    scroll-padding-bottom: calc(var(--bar-bottom) + 120px);
+  }
+}
+
+/*
+ * 未確認の表は、上へ戻った行の上に、表の見出し（高さ46〜53px）か1つ上の行が見えるだけ空ける
+ * （1行ずつ上へ戻ると、1行目の欄が画面の上の端に付き、見出しが画面の外に隠れた）。
+ */
+html:root:has(.inbox-bar:not([hidden])) {
+  scroll-padding-top: 72px;
+  scroll-padding-bottom: 140px;
+}
+
 /* ---- サイドバー ---- */
 .sidebar {
   position: relative;
@@ -46,6 +74,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
+  min-width: 44px;
+  min-height: 44px;
   color: var(--c-text);
   font-size: 18px;
   font-weight: 700;
@@ -97,6 +127,7 @@
 }
 
 .nav-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -122,7 +153,6 @@
 
 /* いまの画面: 色に加えて、太字と左の帯で示す。 */
 .nav-item[aria-current="page"] {
-  position: relative;
   background: var(--c-primary-soft);
   color: var(--c-primary);
   font-weight: 700;
@@ -152,12 +182,13 @@
   margin-left: auto;
 }
 
+/* 件数は注意ではなく目印なので、藍の淡い色にする（橙は保存前の警告だけに使う）。 */
 .nav-count {
   min-width: 22px;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--c-pending-bg);
-  color: var(--c-warn);
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
   font-size: var(--fs-xs);
   font-weight: 700;
   line-height: 20px;
@@ -173,9 +204,10 @@
   border-top: 1px solid var(--c-border);
 }
 
+/* 下の「コマンド」「ショートカット」「表示」も、ほかの項目と同じ大きさと文字の色にする（控えめな色と小ささが重なり、読みにくかった）。 */
 .sidebar-foot .nav-item {
-  color: var(--c-muted);
-  font-size: var(--fs-sm);
+  color: var(--c-text);
+  font-size: var(--fs-body);
 }
 
 /* ---- 本文 ---- */
@@ -194,6 +226,38 @@
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-4) var(--sp-7) 0;
+}
+
+/*
+ * デモの帯（.banners の中の info の帯）は、見出しより目立たないよう、無彩色の1行にする。
+ * 読み取り専用の帯（danger）は、そのまま大きく出す。
+ */
+.banners > .banner--info {
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border-color: var(--c-border);
+  background: var(--c-surface-2);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-tight);
+}
+
+.banners > .banner--info > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--c-muted);
+}
+
+.banners > .banner--info .banner-body {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-2);
+}
+
+.banners > .banner--info .banner-title {
+  color: var(--c-text);
 }
 
 .main {

@@ -4,8 +4,10 @@
 /* 期首残高の入力（設定と初期設定で共有）と、初期設定（SC-00）の段階・口座・確認の並び。 */
 
 /* ---- 期首残高 ---- */
+/* 科目の名前は折り返してよい（長い口座の名前で、狭い幅の表が枠からはみ出した）。語の途中では折らない。 */
 .opening-table th[scope="row"] {
   font-weight: 400;
+  white-space: normal;
 }
 
 .opening-table td,
@@ -13,6 +15,20 @@
   height: auto;
   padding-top: var(--sp-2);
   padding-bottom: var(--sp-2);
+}
+
+/* 名前と入力欄の間をあける（「サンプル銀行 普通預金」が入力欄の枠に接していた）。 */
+.opening-table tbody th[scope="row"] {
+  padding-right: var(--sp-4);
+}
+
+/* 見出しの「残高」を、入力欄の右の端（数字の右端）にそろえる。「円」の幅と間をあける。 */
+.opening-table {
+  --unit-gap: var(--sp-2);
+}
+
+.opening-table thead th.num {
+  padding-right: calc(var(--sp-3) + var(--fs-table) + var(--unit-gap));
 }
 
 .opening-name {
@@ -28,6 +44,7 @@
 
 .opening-table .affix {
   justify-content: flex-end;
+  gap: var(--unit-gap);
 }
 
 .opening-table .input {
@@ -70,9 +87,7 @@
   white-space: nowrap;
 }
 
-.opening-capital dd {
-  color: var(--c-primary);
-}
+/* 元入金の数字は本文の色（藍だとリンクに見えた）。 */
 
 .opening-hint {
   display: flex;
@@ -86,14 +101,53 @@
 
 /* ---- 初期設定 ---- */
 .setup-card {
+  --form-w: 560px;
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
   max-width: 880px;
 }
 
+/*
+ * 戻る・進むの段（.import-actions。取込と同じ、下に付く帯）は、カードの幅いっぱいにする。入力欄の幅（--form-w）までに
+ * 狭めると、帯が枠より狭くなり、帯の後ろに回った説明の文字が、帯の右からのぞいた（体験の評価 第3回 E3、期首残高）。
+ */
 .setup-card > h2:focus {
   outline: none;
+}
+
+/*
+ * 課税の区分の下の説明: 選んだ区分で何が変わるかの1文と、畳んだ「選び方をくわしく」（setup.js）。
+ * 2つの説明が続いて、次の必須の欄（開業日）まで遠かった（見た目の採点 第2回 幅390）。
+ */
+.setup-mode-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.setup-more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: fit-content;
+  color: var(--c-primary);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+
+.setup-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.setup-more-icon {
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.setup-more[open] .setup-more-icon {
+  transform: rotate(90deg);
 }
 
 .setup-wallets {
@@ -141,6 +195,38 @@
 
 .setup-summary dd {
   overflow-wrap: anywhere;
+}
+
+/* 確認の段階の期首残高: 科目ごとの残高（名前と金額を両端に）と、元入金。 */
+.setup-balances {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 28em;
+}
+
+.setup-balances li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.setup-balance-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  min-width: 0;
+}
+
+.setup-balances .money {
+  white-space: nowrap;
+}
+
+.setup-capital {
+  margin-top: var(--sp-1);
+  font-weight: 700;
 }
 
 /* 初期設定の間は、ほかの画面へ行けないので、移動のメニューを隠す（押しても初期設定に戻るだけになるため）。 */
@@ -200,8 +286,12 @@
     min-width: 5.5em;
   }
 
+  .opening-table {
+    --unit-gap: var(--sp-1);
+  }
+
   .opening-table .affix {
-    gap: var(--sp-1);
+    gap: var(--unit-gap);
   }
 
   .setup-summary div {
@@ -211,5 +301,79 @@
 
   :root[data-setup] .main {
     padding-bottom: var(--sp-7);
+  }
+}
+
+/*
+ * 640px未満の期首残高の表: 科目の名前（と種類）を上の段に、残高の欄を下の段に置く（左の狭い列で「サンプル銀行／普通預金」と
+ * 折れ、種類も加わって3段になっていた。見た目の採点 第2回 幅390）。残高の欄の幅は今までと同じ（行の半分、右寄せ）。
+ */
+@media (max-width: 639px) {
+  /* 行を折り返す形にするので、表の箱は縦の並びにする（表の列の幅の中に行が押し込まれないように）。 */
+  .opening-table,
+  .opening-table thead,
+  .opening-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .opening-table thead tr {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .opening-table thead th {
+    border-bottom: 0;
+  }
+
+  /* 「科目」の見出しを伸ばして、「残高」との間の地の色が途切れないようにする。 */
+  .opening-table thead th:first-child {
+    flex: 1 1 auto;
+  }
+
+  /* 「操作」の見出し（読み上げ用）は、外すボタンのある行にだけ意味があり、各ボタンが名前を持つので、この形では出さない。 */
+  .opening-table thead th:last-child {
+    display: none;
+  }
+
+  .opening-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .opening-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .opening-table tbody tr > * {
+    border-bottom: 0;
+  }
+
+  .opening-table tbody th[scope="row"] {
+    flex: 1 0 100%;
+    padding-bottom: 0;
+  }
+
+  /* 種類（資産・負債）は、名前の後ろに続ける（名前の下の段にしない）。 */
+  .opening-table tbody th[scope="row"] .opening-name,
+  .opening-table tbody th[scope="row"] .sub {
+    display: inline;
+  }
+
+  .opening-table tbody th[scope="row"] .sub {
+    margin-left: var(--sp-2);
+  }
+
+  .opening-table tbody td.num {
+    width: 50%;
+    margin-left: auto;
+    padding-top: var(--sp-1);
+  }
+
+  .opening-table tbody td.opening-ops:empty {
+    display: none;
   }
 }

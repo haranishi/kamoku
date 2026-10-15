@@ -7,6 +7,35 @@
 import { h, uid } from '../dom.js';
 
 /**
+ * 横に入りきらないタブの並びに、続きのある側の印（data-more="left right"）を付ける。CSS がその側の端をぼかす
+ * （次のタブの文字が途中で切れて見えるだけでは、横に続くと気づきにくかった）。端から1px以内は、端に着いたとみなす。
+ */
+function overflowSides(scrollLeft, scrollWidth, clientWidth) {
+  const max = scrollWidth - clientWidth;
+  if (max <= 1) return '';
+  return [scrollLeft > 1 && 'left', scrollLeft < max - 1 && 'right'].filter(Boolean).join(' ');
+}
+
+function markOverflow(el) {
+  const sides = overflowSides(el.scrollLeft, el.scrollWidth, el.clientWidth);
+  if (sides) {
+    if (el.dataset.more !== sides) el.dataset.more = sides;
+  } else if (el.dataset.more) {
+    delete el.dataset.more;
+  }
+}
+
+// 大きさの変化は、すべてのタブの並びを1つの見張りで見る（並びが文書から外れたら、見張りから外す）。
+const resized = typeof ResizeObserver === 'function'
+  ? new ResizeObserver((entries) => {
+      for (const { target } of entries) {
+        if (target.isConnected) markOverflow(target);
+        else resized.unobserve(target);
+      }
+    })
+  : null;
+
+/**
  * 例: const t = createTabs({ label: '入力の形', tabs: [{ id: 'simple', label: 'かんたん' }, ...], selected: 'simple', onChange })
  *     root.append(t.el, t.panel)
  * @param {{ label: string, tabs: Array<{ id: string, label: string, disabled?: boolean }>, selected: string,
@@ -66,6 +95,8 @@ export function createTabs(opts) {
   });
 
   sync();
+  el.addEventListener('scroll', () => markOverflow(el), { passive: true });
+  if (resized) resized.observe(el);
   return {
     el,
     panel,

@@ -119,7 +119,12 @@ function evaluate(tokens) {
  * @returns {{ ok: true, value: number, rounded: boolean, isExpr: boolean } | { ok: false, error: string, empty?: boolean }}
  */
 export function parseAmountExpr(text) {
-  const src = normalizeWidth(text).replace(/[,\s円¥\\]/g, '');
+  const marked = normalizeWidth(text).replace(/[\s円¥\\]/g, '');
+  // 桁区切りは3桁ごとだけ（「1,234」「12,345,678」）。「1,2,3」を黙って123にすると、打ち間違いに気づけない。
+  for (const run of marked.match(/[\d,]+/g) || []) {
+    if (run.includes(',') && !/^\d{1,3}(,\d{3})+$/.test(run)) return { ok: false, error: '桁区切りの位置が違います。3桁ごとに入れるか、カンマを外してください（例: 1,234）。' };
+  }
+  const src = marked.replace(/,/g, '');
   if (src === '') return { ok: false, empty: true, error: '金額を入れてください。' };
   if (src.length > MAX_EXPR_LENGTH) {
     return { ok: false, error: `式が長すぎます。${MAX_EXPR_LENGTH}文字以内にしてください。` };

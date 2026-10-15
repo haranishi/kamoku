@@ -4,8 +4,11 @@
 // ダイアログ。標準の <dialog> と showModal() に、フォーカスの閉じ込めとEscでの閉じ方を任せる。
 // 閉じたら、開いたときにフォーカスがあった要素へ戻す。
 
+import { phrase } from './phrase.js';
 import { h, uid } from '../dom.js';
 import { icon } from '../icons.js';
+import { shouldIgnoreKey } from '../ime.js';
+import { modLabel } from '../keys.js';
 import { button, iconButton } from './fields.js';
 
 /**
@@ -13,6 +16,7 @@ import { button, iconButton } from './fields.js';
  * @property {string} label
  * @property {'primary'|'secondary'|'danger'|'ghost'} [variant]
  * @property {string} [kbd]
+ * @property {boolean} [modEnter] Ctrl/Cmd+Enter でも、このボタンを押したことにする（ボタンにキーの表示も付く）。保存の画面から Ctrl/Cmd+Enter で開いた小窓を、同じキーで進めるため。1つの小窓に1つだけ
  * @property {boolean} [autofocus] 開いたときに、このボタンにフォーカスを置く（本文に入力欄があれば、そちらが先）
  * @property {(ctrl: ModalControl) => void|Promise<void>} onClick 閉じるかどうかは、この関数が ctrl.close() で決める
  */
@@ -32,7 +36,8 @@ import { button, iconButton } from './fields.js';
  * ダイアログを開く。
  * 例: openModal({ title: 'テンプレートに登録', body, actions: [{ label: 'やめる', onClick: (c) => c.close() }] })
  * @param {{ title: string, body?: Node, actions?: DialogAction[], className?: string|string[], onClose?: (value: string) => void,
- *           closeOnBackdrop?: boolean, initialFocus?: HTMLElement, labelExtra?: Node }} opts
+ *           closeOnBackdrop?: boolean, initialFocus?: HTMLElement, labelExtra?: Node, describedBy?: string }} opts
+ *   describedBy: 説明の要素の id（空白で区切って複数も可）。小窓の aria-describedby に入れ、開いたときに題名と一緒に読ませる。
  * @returns {ModalControl}
  */
 export function openModal(opts) {
@@ -43,7 +48,7 @@ export function openModal(opts) {
   const errorEl = h('p', { class: 'field-error', role: 'alert' });
   let busy = false;
   const actionButtons = (opts.actions || []).map((a) =>
-    button({ label: a.label, variant: a.variant || 'secondary', kbd: a.kbd, onClick: () => a.onClick(ctrl) }),
+    button({ label: a.label, variant: a.variant || 'secondary', kbd: a.modEnter ? `${modLabel()} Enter` : a.kbd, onClick: () => a.onClick(ctrl) }),
   );
   const foot = actionButtons.length || opts.footExtra ? h('div', { class: 'dialog-foot' }, opts.footExtra || null, actionButtons) : null;
   const closeBtn = iconButton({ iconName: 'close', label: '閉じる', onClick: () => ctrl.close('cancel') });
@@ -55,6 +60,19 @@ export function openModal(opts) {
     h('div', { class: 'dialog-error' }, errorEl),
     foot,
   );
+
+  if (opts.describedBy) dlg.setAttribute('aria-describedby', opts.describedBy);
+
+  const byModEnter = (opts.actions || []).find((a) => a.modEnter);
+  if (byModEnter) {
+    dlg.addEventListener('keydown', (e) => {
+      if (shouldIgnoreKey(e) || busy) return;
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        byModEnter.onClick(ctrl);
+      }
+    });
+  }
 
   dlg.addEventListener('cancel', (e) => {
     if (busy) e.preventDefault();
@@ -101,7 +119,7 @@ export function openModal(opts) {
     },
     setError(message) {
       errorEl.replaceChildren();
-      if (message) errorEl.append(icon('alert', { size: 16 }), h('span', null, message));
+      if (message) errorEl.append(icon('alert', { size: 16 }), h('span', null, message.length > 20 ? phrase(message) : message));
     },
     setBody(node) {
       bodyEl.replaceChildren(node);
@@ -119,7 +137,8 @@ export function openModal(opts) {
 /**
  * はい・いいえを聞くダイアログ。押した結果を返す。
  * 例: if (await confirmDialog({ title: '入力を捨てますか', confirmLabel: '捨てる' })) ...
- * @param {{ title: string, message?: string|Node, confirmLabel?: string, cancelLabel?: string, danger?: boolean }} opts
+ * @param {{ title: string, message?: string|Node, confirmLabel?: string, cancelLabel?: string, danger?: boolean, describedBy?: string }} opts
+ *   describedBy: 説明の要素の id（openModal と同じ）。message の中に、その id の要素を入れて渡す。
  * @returns {Promise<boolean>}
  */
 export function confirmDialog(opts) {
@@ -127,6 +146,7 @@ export function confirmDialog(opts) {
     let answered = false;
     openModal({
       title: opts.title,
+      describedBy: opts.describedBy,
       body: opts.message ? h('div', null, opts.message) : null,
       actions: [
         {

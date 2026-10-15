@@ -51,11 +51,42 @@
   background: var(--c-ok-bg);
   color: var(--c-income);
 }
-
+/* 取込のカード。中の表の組み方を、カードの幅で決める（screens-import-check.css のコンテナクエリ）。 */
 .import-card {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+  container-type: inline-size;
+  container-name: importcard;
+}
+
+/*
+ * 640px未満は、段階を1行に収める。いまの段階だけ名前を出し、ほかは番号の丸だけにする
+ * （最後の段階だけが2行目に落ちていた）。名前は読み上げには残す。
+ */
+@media (max-width: 639px) {
+  .stepper {
+    flex-wrap: nowrap;
+    gap: var(--sp-2);
+  }
+
+  .step {
+    flex: none;
+  }
+
+  .step.is-current {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .step:not(.is-current) .step-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
 
 .import-card > h2:focus {

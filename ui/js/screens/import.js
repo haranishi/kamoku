@@ -12,9 +12,30 @@ import { skeletonBlock, delayedSkeleton } from '../components/skeleton.js';
 import { createFileStep } from './import-file.js';
 import { createColumnsStep } from './import-columns.js';
 import { createCheckStep, resultView } from './import-check.js';
+import { phrase } from '../components/phrase.js';
 
 const STEPS = ['口座とファイル', '列の対応', '確かめて取り込む'];
 const EXPIRED = '時間が経ったため、読み込んだファイルの期限が切れました（30分）。もう一度ファイルを選んでください。';
+
+// 前に取り込んだ口座（取り込めたときに覚える）。アドレスに口座が無いときの初期値にする（毎回選び直していた。E2 第2回）。
+// 記帳の画面が前に使った口座を覚えるのと同じ作り。読めない・書けない環境では、覚えないだけ。
+const LAST_WALLET_KEY = 'kamoku.import.wallet';
+
+function lastWallet() {
+  try {
+    return localStorage.getItem(LAST_WALLET_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function rememberWallet(code) {
+  try {
+    if (code) localStorage.setItem(LAST_WALLET_KEY, code);
+  } catch {
+    // 覚えられなくても、次は「口座を選んでください」から始まるだけ。
+  }
+}
 
 /** @param {HTMLElement} root */
 export function mount(root, ctx) {
@@ -26,7 +47,7 @@ export function mount(root, ctx) {
   const stepper = h('ol', { class: 'stepper', 'aria-label': '取込の段階' });
   const body = h('div', { class: 'import-body' });
   const topError = h('div');
-  root.append(h('div', { class: 'page-head' }, h('div', { class: 'page-head-text' }, h('h1', { tabindex: '-1' }, '明細を取り込む'), h('p', { class: 'muted small' }, '銀行やカードの明細のCSVを、未確認に並べます。確定するまで、仕訳帳と帳票には入りません。'))), stepper, topError, body);
+  root.append(h('div', { class: 'page-head' }, h('div', { class: 'page-head-text' }, h('h1', { tabindex: '-1' }, '明細を取り込む'), h('p', { class: 'muted small' }, phrase('銀行やカードの明細のCSVを、未確認に並べます。確定するまで、仕訳帳と帳票には入りません。')))), stepper, topError, body);
 
   const walletName = () => (wallets.find((w) => w.code === s.wallet) || { name: '' }).name;
 
@@ -38,12 +59,17 @@ export function mount(root, ctx) {
     );
   }
 
+  /**
+   * 段階を切り替える。表示位置はページの上へ戻し、フォーカスは focus（無ければカードの見出し）へ移す。
+   * (3)で「N件を取り込む」へフォーカスを移していたときは、画面がいちばん下まで送られ、上の件数の要約が画面の外に出た。
+   */
   function show(i, node, focus) {
     paintStepper(i);
     topError.replaceChildren();
     replace(body, h('section', { class: 'card import-card', 'aria-label': STEPS[i] }, h('h2', { class: 'card-title', tabindex: '-1' }, `${i + 1}. ${STEPS[i]}`), node.el || node));
+    window.scrollTo(0, 0);
     if (focus) focus();
-    else body.querySelector('h2').focus();
+    else body.querySelector('h2').focus({ preventScroll: true });
   }
 
   function fail(err, i) {
@@ -89,11 +115,16 @@ export function mount(root, ctx) {
     if (!disposed) step2();
   }
 
-  function step2() {
+  /**
+   * (2)列の対応。kept は(3)から「戻る」で来たときの、直前に選んだ対応。覚えた対応（または推測）を入れるのは、
+   * ファイルを読んで初めて(2)へ来たときと、文字コードを選び直して読み直したときだけ。
+   */
+  function step2(kept = null) {
     const c = createColumnsStep({
       upload: s.upload,
       filename: s.file ? s.file.name : s.upload.filename,
       encodingChoice: s.encoding,
+      kept,
       onEncoding: async (enc) => {
         s.encoding = enc;
         try {
@@ -104,6 +135,8 @@ export function mount(root, ctx) {
         }
       },
       onBack: () => step1(),
+      // 日付の列を選び直したときの確かめ（取り込みはしない。応えの行の理由から、日付として読めない行を数える）。
+      preview: (mapping) => api.post('/imports/preview', { upload_id: s.upload.upload_id, wallet: s.wallet, mapping }),
       onNext: async (mapping) => {
         s.mapping = mapping;
         try {
@@ -121,24 +154,27 @@ export function mount(root, ctx) {
     const c = createCheckStep({
       preview: s.preview,
       walletName: walletName(),
-      onBack: () => step2(),
+      wallet: s.wallet,
+      onBack: () => step2(s.mapping),
       onCommit: async ({ force, saveProfile }) => {
         c.setBusy(true);
         try {
           const res = await api.post('/imports/commit', { upload_id: s.upload.upload_id, wallet: s.wallet, mapping: s.mapping, save_profile: saveProfile, force_lines: force });
+          rememberWallet(s.wallet);
           state.load('status', { force: true }).catch(() => {});
           if (disposed) return;
-          toast.success(`${res.created}件を未確認に入れました。`, { action: { label: '未確認を開く', href: `#/inbox?wallet=${encodeURIComponent(s.wallet)}` } });
+          toast.success(`${res.created}件を未確認に入れました。`, { action: { label: '未確認を開く', href: `#/inbox?wallet=${encodeURIComponent(s.wallet)}` }, ms: 10000 });
           paintStepper(3);
           replace(body, resultView({ result: res, wallet: s.wallet, onAgain: () => step1() }));
-          body.querySelector('a.btn').focus();
+          window.scrollTo(0, 0);
+          body.querySelector('a.btn').focus({ preventScroll: true });
         } catch (err) {
           c.setBusy(false);
           fail(err, 2);
         }
       },
     });
-    show(2, c, () => c.focus());
+    show(2, c);
   }
 
   const stop = delayedSkeleton(body, () => skeletonBlock({ lines: 4, label: '口座を読み込んでいます' }));
@@ -148,7 +184,9 @@ export function mount(root, ctx) {
       stop();
       if (disposed) return;
       wallets = accounts.filter((a) => a.wallet && a.enabled);
-      if (!wallets.some((w) => w.code === s.wallet)) s.wallet = '';
+      const usable = (code) => wallets.some((w) => w.code === code);
+      // アドレスの口座 → 前に取り込んだ口座（無効にした・消した口座は使わない）→ 選ぶまで空。
+      if (!usable(s.wallet)) s.wallet = usable(lastWallet()) ? lastWallet() : '';
       if (!wallets.length) {
         replace(body, banner({ kind: 'warn', title: '口座がまだありません', body: '明細を取り込む前に、口座を足してください。', actions: h('a', { class: 'btn btn--sm', href: '#/wallets' }, '口座の画面へ') }));
         return;

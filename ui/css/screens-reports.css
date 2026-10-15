@@ -1,36 +1,64 @@
 /* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
 /* SPDX-License-Identifier: MIT OR Apache-2.0 */
 
-/* 帳票（SC-06）: タブ、期間と書き出しの帯、親子を字下げした表、合計の行、貸借対照表の2列。 */
+/* 帳票（SC-06）: タブ、期間の帯、見出し、結論の数字、中身の並び、書き出し。表は screens-report-table.css。 */
 
 .report-panel.tabpanel {
   gap: var(--sp-4);
   padding-top: var(--sp-4);
 }
 
-/* 左に期間（と元帳の科目）、右に書き出し。どの欄にも上に見出しがあるので、下の線でそろえる。 */
-.report-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--sp-3) var(--sp-5);
-  padding: var(--sp-4) var(--sp-5);
+/*
+ * タブは1段のまま、入りきらない幅では横に動かす（2段に折り返さない）。
+ * 端の影で続きがあることを示す（中身と一緒に動く覆いと、枠に付いた影。続きの無い側は覆いが影を隠す）。
+ */
+.report-tabs {
+  position: relative;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  background:
+    linear-gradient(to right, var(--c-bg) 40%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--c-bg) 40%, transparent) right center / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--c-scroll-shadow), transparent) left center / 14px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--c-scroll-shadow), transparent) right center / 14px 100% no-repeat scroll;
 }
 
-.report-toolbar-main {
+.report-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- 期間の帯（年・月・自由な期間と「‹ 2026年 ▾ ›」。元帳は科目の欄も） ---- */
+.report-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--sp-3) var(--sp-5);
-  min-width: 0;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+/* 元帳でないときの科目の入れ物は空。空のまま折り返して、帯の高さを増やさないようにする。 */
+.report-account:empty {
+  display: none;
 }
 
 .period-picker {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--sp-3) var(--sp-4);
   min-width: 0;
+}
+
+/* 選び方の名前（期間の選び方）は、読み上げにだけ残す。帯の中では、選択肢の文字で分かる。 */
+.period-mode legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .period-controls {
@@ -63,10 +91,210 @@
   min-width: min(18em, 100%);
 }
 
-.report-export {
+/* ---- 見出しと、結論の数字 ---- */
+/* 見出しと、その横の「前の期間を表示中」の一言（見出しのすぐ横に置く。右端に離さない）。 */
+.report-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.report-title {
+  font-size: var(--fs-h2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 自由な期間の欄に誤りがあるあいだの「前の期間（…）を表示中です。」（reports.js）。見出しの横、狭い幅では下に。 */
+.report-stale {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-s);
+  background: var(--c-primary-soft);
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-stale > svg {
+  flex-shrink: 0;
+  color: var(--c-primary);
+}
+
+.report-body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+/*
+ * 結論の数字（当期純利益・納付額の見込み）。ホームの数字のカードと同じ形と大きさで、表の上に並べる。
+ * 枠の幅いっぱいに等分する（中身が左に寄って右が空かないように）。
+ */
+.rt-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-3);
+}
+
+.rt-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-surface);
+}
+
+.rt-figure.is-main {
+  border-left: 4px solid var(--c-primary);
+}
+
+.rt-figure dt {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+/* 見出しの補足（「（経過措置の控除を含む）」など）は、見出しの下の小さな2行目。 */
+.rt-figure-hint {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.rt-figure dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rt-figure.is-main dd {
+  font-size: var(--fs-kpi);
+  line-height: 1.25;
+}
+
+.rt-figure dd .unit {
+  font-size: var(--fs-sm);
+}
+
+.report-section h3 {
+  margin-bottom: var(--sp-2);
+  font-size: 16px;
+}
+
+/* 開閉（科目ごとの月別）。押せる高さを取り、開くと矢印が下を向く。 */
+.report-more summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 44px;
+  color: var(--c-primary);
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+
+.report-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.report-more-icon {
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.report-more[open] .report-more-icon {
+  transform: rotate(90deg);
+}
+
+.report-more[open] summary {
+  margin-bottom: var(--sp-2);
+}
+
+/*
+ * 帳票の下の注記（数字の読み方）。補足の文（--c-muted）より一段濃い本文の色にする（試算表の説明が、長い1行の
+ * 小さな淡い文字で追いにくかった）。文の配列で渡した注記は、1文ずつ行を分ける（report-table.js の reportNote）。
+ */
+.report-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  color: var(--c-text);
+}
+
+.report-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--c-primary);
+}
+
+.report-note-line {
+  display: block;
+}
+
+/* 消費税の注意の帯の中の、言葉の説明（経過措置など）。本文より一回り小さく、言葉は太く。 */
+.tax-terms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+  font-size: var(--fs-sm);
+}
+
+/* 「言葉：説明」を1つながりに（言葉だけの行を作らない）。 */
+.tax-terms dt,
+.tax-terms dd {
+  display: inline;
+}
+
+.tax-terms dt {
+  font-weight: 700;
+}
+
+.tax-terms dfn {
+  font-style: normal;
+}
+
+/* 一致の札は、ほかの札より一回り大きく（結果そのものなので）。 */
+.report-check {
+  display: flex;
+}
+
+.report-check .badge {
+  height: auto;
+  min-height: 28px;
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-tight);
+  white-space: normal;
+  text-wrap: balance;
+}
+
+/* ---- 書き出し（中身の下。最初の1画面を数字に使うため） ---- */
+.report-export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2) var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--c-border);
+}
+
+.report-export-label {
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
 }
 
 .report-export-row {
@@ -85,55 +313,147 @@
   opacity: 0.55;
 }
 
-.report-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
+/* ---- 広い幅の並び: 損益計算書の収益と費用、消費税の表と結論を、左右に置く ---- */
+.rt-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
 }
 
-.report-title {
-  font-size: var(--fs-h2);
-  font-variant-numeric: tabular-nums;
+.tax-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
 }
 
-.report-body {
+.tax-detail {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
   min-width: 0;
 }
 
-.report-narrow {
-  max-width: 760px;
+@media (min-width: 1100px) {
+  .rt-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 結論（納付額の見込み）は、読む順では先、見た目では右の列。 */
+  .tax-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  }
+
+  .tax-result {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .tax-detail {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .tax-result .rt-figures {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.report-section h3 {
-  margin-bottom: var(--sp-2);
-  font-size: 16px;
+/*
+ * 1列に並ぶ幅（損益計算書は1099px以下、貸借対照表は1023px以下）では、名前と金額の2列の表を本文の幅いっぱいにする
+ * （最大幅を付けていたが、幅768で表が本文の約7割にとどまり、上の期間の帯や数字のカードとの幅の差が目立った）。
+ */
+@media (max-width: 1099px) {
+  /* 結論の数字は、主の数字を1段に、残りの2つを2段目に（3つを横に並べると、見出しが語の途中で折れた）。 */
+  .rt-figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rt-figure.is-main {
+    grid-column: 1 / -1;
+  }
 }
 
-.report-more summary {
-  color: var(--c-primary);
-  font-weight: 700;
-  cursor: pointer;
+@media (max-width: 1023px) {
+  .report-toolbar {
+    align-items: stretch;
+  }
 }
 
-.report-more[open] summary {
-  margin-bottom: var(--sp-3);
+@media (max-width: 767px) {
+  /* 年・月の選び方は1行に収める（選択欄が縮む）。自由な期間の行だけは折り返す。 */
+  .period-picker,
+  .report-account {
+    width: 100%;
+  }
+
+  .period-mode,
+  .period-mode .seg-options {
+    width: 100%;
+  }
+
+  .period-mode .seg-option {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .period-controls {
+    width: 100%;
+  }
+
+  .period-row:not(.period-range) {
+    flex-wrap: nowrap;
+  }
+
+  .period-row:not(.period-range) .select,
+  .period-row:not(.period-range) .period-date {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* 「2026年」「10月」が欠けない幅は残す。 */
+  .period-row .period-year {
+    min-width: 6.5em;
+  }
+
+  .period-row .period-month {
+    min-width: 5em;
+  }
+
+  .period-date .input {
+    width: 100%;
+  }
+
+  .rt-figure {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  /* 帳票の注意の帯（消費税の参考値など）は、補足の文と同じ13pxに（16pxでは帯が最初の1画面を占め、数字が外に出た）。 */
+  .report-body > .banner {
+    font-size: var(--fs-sm);
+  }
+
+  /* 1億円を超える金額があるときは、2つ並びのカードに入らないので1列に（report-table.js の reportFigures）。 */
+  .rt-figures--long {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.report-note {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-2);
-}
+@media (max-width: 639px) {
+  .report-export {
+    justify-content: stretch;
+  }
 
-.report-note svg {
-  margin-top: 2px;
-}
+  .report-export-label {
+    width: 100%;
+  }
 
-.report-check {
-  display: flex;
+  .report-export-row {
+    width: 100%;
+  }
+
+  .report-export-row > * {
+    flex: 1 1 auto;
+  }
 }
