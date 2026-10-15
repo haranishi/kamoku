@@ -10,10 +10,9 @@
 use super::{ApiError, Call, Reply, ok, to_value};
 use crate::state::State;
 use kamoku_books::{
-    IncomeStatement, MAX_REPORT_AMOUNT, format_date, income_statement, monthly_series, tax_summary,
-    wallet_balances,
+    IncomeStatement, format_date, income_statement, monthly_series, tax_summary, wallet_balances,
 };
-use kamoku_store::{DraftFilter, DraftStatus, Store};
+use kamoku_store::{Store, StoreError};
 use serde_json::{Value, json};
 use time::{Date, Month};
 
@@ -41,32 +40,14 @@ fn summary(statement: &IncomeStatement) -> Value {
     })
 }
 
-// 未確認の出金の合計。下書きの表は区切って読むしかないので、500件ずつ読む。
 // 合計は、ブラウザの数値で正確に扱える範囲（data-model.md の決まり16）を超えたら断る。
 fn inbox_out_amount(store: &Store) -> Result<i64, ApiError> {
-    let mut total = 0i64;
-    let mut offset = 0u64;
-    loop {
-        let page = store.drafts(DraftFilter {
-            status: Some(DraftStatus::Draft),
-            limit: 500,
-            offset,
-            ..DraftFilter::default()
-        })?;
-        for draft in page.items.iter().filter(|d| d.direction == "out") {
-            total = total
-                .checked_add(draft.amount)
-                .filter(|t| *t <= MAX_REPORT_AMOUNT)
-                .ok_or_else(|| {
-                    ApiError::new(422, "amount_range", "未確認の出金の合計が大きすぎます。")
-                })?;
+    store.pending_out_amount().map_err(|error| match error {
+        StoreError::AmountRange => {
+            ApiError::new(422, "amount_range", "未確認の出金の合計が大きすぎます。")
         }
-        let count = u64::try_from(page.items.len()).map_err(ApiError::internal)?;
-        offset = offset.saturating_add(count);
-        if count == 0 || offset >= page.total {
-            return Ok(total);
-        }
-    }
+        other => other.into(),
+    })
 }
 
 /// `GET /reports/dashboard?month=YYYY-MM`（既定は今月）

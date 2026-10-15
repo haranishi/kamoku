@@ -272,6 +272,91 @@ fn confirm_drafts_row_by_row() {
     assert_eq!(c.api("/drafts?status=confirmed").json()["total"], 2);
 }
 
+// AC-05.4 AC-05.5 AC-07.2: 選んだ行だけを確定し、状態の違い・重複・不存在が混ざっても
+// 送った順に結果を返す。ホームの合計には未確認の出金だけを含める。
+#[test]
+fn selected_draft_confirmation_preserves_order_and_dashboard_status_rules() {
+    let s = TestServer::start();
+    let c = s.login();
+    books(&c);
+    let csv = "日付,摘要,出金,入金\n\
+        2026/10/01,未確認の出金,1,\n\
+        2026/10/01,未確認の入金,,2\n\
+        2026/10/01,無視する出金,3,\n\
+        2026/10/01,無視する入金,,4\n\
+        2026/10/01,確定する出金,5,\n\
+        2026/10/01,確定する入金,,6\n";
+    let uploaded = c.upload("", csv.as_bytes()).json();
+    let imported = c.post("/imports/commit", &job(&uploaded, "w02"));
+    assert_eq!(imported.status, 200, "{}", imported.text());
+    assert_eq!(imported.json()["created"], 6);
+    let ids = draft_ids(&c);
+    for (id, account, tax) in [
+        (ids[1], "sales", "S10"),
+        (ids[4], "exp_comm", "P10"),
+        (ids[5], "sales", "S10"),
+    ] {
+        let patched = c.patch(
+            &format!("/drafts/{id}"),
+            &json!({ "account": account, "tax_code": tax }),
+        );
+        assert_eq!(patched.status, 200, "{}", patched.text());
+    }
+    let confirmed = c
+        .post("/drafts/confirm", &json!({ "ids": [ids[4], ids[5]] }))
+        .json();
+    assert_eq!(
+        confirmed["confirmed"].as_array().unwrap().len(),
+        2,
+        "{confirmed}"
+    );
+    assert_eq!(confirmed["failed"], json!([]));
+    for id in &ids[2..4] {
+        assert_eq!(c.bare("POST", &format!("/drafts/{id}/ignore")).status, 200);
+    }
+    let dashboard = c.api("/reports/dashboard?month=2026-10").json();
+    assert_eq!(
+        dashboard["next_actions"],
+        json!({ "inbox_draft": 2, "inbox_out_amount": 1 })
+    );
+    assert_eq!(
+        c.post("/drafts/confirm", &json!({ "ids": [] })).json(),
+        json!({ "confirmed": [], "failed": [] })
+    );
+    let selected = [ids[1], 99_999, ids[2], ids[4], ids[0], ids[1], ids[3], -1];
+    let result = c.post("/drafts/confirm", &json!({ "ids": selected }));
+    assert_eq!(result.status, 200, "{}", result.text());
+    let result = result.json();
+    assert_eq!(result["confirmed"].as_array().unwrap().len(), 1, "{result}");
+    assert_eq!(result["confirmed"][0]["id"], ids[1]);
+    let failed: Vec<_> = result["failed"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|row| {
+            (
+                row["id"].as_i64().unwrap(),
+                row["error"]["code"].as_str().unwrap(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        failed,
+        [
+            (99_999, "not_found"),
+            (ids[2], "bad_request"),
+            (ids[4], "already_confirmed"),
+            (ids[0], "missing_account"),
+            (ids[3], "bad_request"),
+            (-1, "not_found")
+        ]
+    );
+    assert_eq!(
+        c.api("/reports/dashboard?month=2026-10").json()["next_actions"],
+        json!({ "inbox_draft": 1, "inbox_out_amount": 1 })
+    );
+}
+
 // api-inbox の状態の移り方: 取り込まない→戻す。確定済みは、仕訳を取り消したときだけ戻せる。
 // 取込から確定した仕訳を直しても、出どころ（source と draft）は残る。
 #[test]
