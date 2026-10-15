@@ -62,6 +62,7 @@ class RunRealTests(WorkflowFixture):
     def test_build_failure_does_not_fall_back_to_an_old_binary(self):
         result = self.run_real("all", KAMOKU_TEST_FAILURES=json.dumps({"cargo:build": 7}))
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("error: synthetic Rust compiler failure", result.stderr)
         self.assertEqual(self.commands("kamoku"), [])
         self.assertEqual(self.commands("python3"), [])
 
@@ -86,7 +87,7 @@ class RunRealTests(WorkflowFixture):
         result = self.run_real("contract", CARGO_TARGET_DIR=str(self.artifact.parent.parent))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.commands("cargo")[0]["args"],
-                         ["build", "-p", "kamoku-app", "--bin", "kamoku", "--locked", "--message-format=json"])
+                         ["build", "-p", "kamoku-app", "--bin", "kamoku", "--locked", "--message-format=json-render-diagnostics"])
         self.assertEqual(self.commands("kamoku")[0]["executable"], str(self.artifact))
         self.assertIn("再ビルド（既定）", result.stdout)
 

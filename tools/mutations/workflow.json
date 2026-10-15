@@ -27,8 +27,8 @@
     {
       "label": "依存: E2Eのビルドでロックファイルを更新できる",
       "file": "e2e/run-real.sh",
-      "find": "cargo build -p kamoku-app --bin kamoku --locked --message-format=json",
-      "replace": "cargo build -p kamoku-app --bin kamoku --message-format=json"
+      "find": "cargo build -p kamoku-app --bin kamoku --locked --message-format=json-render-diagnostics",
+      "replace": "cargo build -p kamoku-app --bin kamoku --message-format=json-render-diagnostics"
     }
   ]
 }

@@ -35,6 +35,12 @@ record("command", executable=sys.argv[0], channel=os.environ.get("KAMOKU_E2E_CHA
 failures = json.loads(os.environ.get("KAMOKU_TEST_FAILURES", "{}"))
 failure = failures.get(tool + ":" + (args[0] if args else ""))
 if failure:
+    if tool == "cargo" and args and args[0] == "build":
+        diagnostic = "error: synthetic Rust compiler failure"
+        if "--message-format=json-render-diagnostics" in args:
+            print(diagnostic, file=sys.stderr)
+        else:
+            print(json.dumps({"reason": "compiler-message", "message": {"rendered": diagnostic}}))
     sys.exit(failure)
 
 if tool == "node":

@@ -95,7 +95,7 @@ if [ "${KAMOKU_BIN+x}" = x ]; then
   echo "== 実行ファイル: KAMOKU_BINの指定（ビルドを省略）"
 else
   echo "== 実行ファイル: cargo buildで再ビルド（既定）"
-  if ! (cd .. && cargo build -p kamoku-app --bin kamoku --locked --message-format=json > "$TMP/build.jsonl"); then
+  if ! (cd .. && cargo build -p kamoku-app --bin kamoku --locked --message-format=json-render-diagnostics > "$TMP/build.jsonl"); then
     echo "Rustのビルドに失敗しました。試験を開始しません。" >&2
     exit 1
   fi

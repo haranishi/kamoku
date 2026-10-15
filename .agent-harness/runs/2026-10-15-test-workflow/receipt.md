@@ -37,6 +37,7 @@ updated head `6d707e41c05fb6ec318841980ff596d0f0fa1c70`.
 | Independent read-only review | Standards 0 findings; Spec 0 findings |
 | Shell compatibility | Bash 3.2.57 syntax and regression tests passed |
 | Real-server contract runner | 25 passed using the existing cached server binary |
+| Compiler failure diagnostics | Tiny offline crate confirmed readable stderr and artifact JSON on stdout |
 | UI unit tests | 168 passed |
 | Contrast / UI policy | 72 pairs passed / 121 files passed |
 | Ledger golden values | All 7 matched the independent Python calculation |
