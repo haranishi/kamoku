@@ -4,11 +4,11 @@
 
 ## 必要なもの
 
-- Rust 1.88以上と、Cのコンパイラ（[使い方](getting-started.md)）
+- Rust 1.89以上と、Cのコンパイラ（[使い方](getting-started.md)）
 - WASMターゲットと wasm-bindgen-cli 0.2.129（[画面のビルド](rust-ui.md)）
 - Node 24（検査器の試験と、ブラウザの通し試験）
 - Python 3（`tools/` の点検の道具。標準ライブラリだけで動きます）
-- PR前の完全検証には `cargo-deny`、Rust 1.88、`uvx` と準備済みの `reuse` も必要です（[試験の実行手順](testing-procedure.md)）。
+- PR前の完全検証には `cargo-deny`、Rust 1.89、`uvx` と準備済みの `reuse` も必要です（[試験の実行手順](testing-procedure.md)）。
 
 ## どこに何があるか
 

@@ -48,7 +48,7 @@ jobs:
 
   msrv:
     needs: rust-ui
-    name: 最小のRustバージョン (1.88)
+    name: 最小のRustバージョン (1.89)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -58,8 +58,8 @@ jobs:
         with:
           name: rust-ui-assets
           path: ui/rust/pkg
-      - run: rustup toolchain install 1.88 --profile minimal
-      - run: cargo +1.88 check --workspace --locked
+      - run: rustup toolchain install 1.89 --profile minimal
+      - run: cargo +1.89 check --workspace --locked
 
   deny:
     name: 依存のライセンスと脆弱性

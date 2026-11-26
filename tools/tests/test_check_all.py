@@ -34,11 +34,11 @@ class CheckAllTests(WorkflowFixture):
                     path.symlink_to(self.dispatcher)
 
     def test_msrv_must_be_installed_without_matching_1880(self):
-        for toolchains in ("stable-test-host", "1.880-test-host", "1.88.1-test-host"):
+        for toolchains in ("stable-test-host", "1.890-test-host", "1.89.1-test-host"):
             with self.subTest(toolchains=toolchains):
                 result = self.run_check(KAMOKU_TEST_TOOLCHAINS=toolchains)
                 self.assertEqual(result.returncode, 2, result.stderr)
-                self.assertIn("rustup toolchain install 1.88", result.stderr)
+                self.assertIn("rustup toolchain install 1.89", result.stderr)
                 self.assert_no_checks()
 
     def test_failed_toolchain_query_is_a_missing_prerequisite(self):
@@ -83,7 +83,7 @@ class CheckAllTests(WorkflowFixture):
     def test_full_mode_requires_the_msrv_wasm_target_but_quick_does_not(self):
         result = self.run_check(KAMOKU_TEST_MSRV_TARGETS="test-host")
         self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertIn("--toolchain 1.88.0-test-host", result.stderr)
+        self.assertIn("--toolchain 1.89.0-test-host", result.stderr)
         self.assert_no_checks()
         result = self.run_check("--quick", KAMOKU_TEST_MSRV_TARGETS="test-host")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -127,8 +127,8 @@ class CheckAllTests(WorkflowFixture):
         for arguments in cargo:
             if arguments[0] != "fmt":  # rustfmt does not resolve Cargo dependencies.
                 self.assertIn("--locked", arguments)
-        self.assertIn(["+1.88.0-test-host", "check", "--workspace", "--locked"], cargo)
-        self.assertIn(["+1.88.0-test-host", "check", "-p", "kamoku-ui", "--target", "wasm32-unknown-unknown", "--locked"], cargo)
+        self.assertIn(["+1.89.0-test-host", "check", "--workspace", "--locked"], cargo)
+        self.assertIn(["+1.89.0-test-host", "check", "-p", "kamoku-ui", "--target", "wasm32-unknown-unknown", "--locked"], cargo)
         self.assertIn(["clippy", "-p", "kamoku-ui", "--target", "wasm32-unknown-unknown", "--locked", "--", "-D", "warnings"], cargo)
         generation = next(i for i, event in enumerate(self.events()) if event["tool"] == "wasm-bindgen" and event["args"] != ["--version"])
         wasm_clippy = next(i for i, event in enumerate(self.events()) if event["tool"] == "cargo" and event["args"][:3] == ["clippy", "-p", "kamoku-ui"])

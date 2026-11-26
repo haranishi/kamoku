@@ -31,7 +31,7 @@ time = { version = "0.3.55", default-features = false, features = ["formatting",
 
 [dev-dependencies]
 # 保存層と同じ版（新しいクレートは増えない）。別の接続から失敗を起こす試験だけで使う。
-rusqlite = { version = "0.40.2", features = ["bundled"] }
+rusqlite = { version = "0.41.1", features = ["bundled"] }
 tempfile = "3.27.0"
 
 [lints]

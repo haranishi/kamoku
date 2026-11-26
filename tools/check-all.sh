@@ -11,7 +11,7 @@ set -uo pipefail
 
 usage() {
   echo "使い方: tools/check-all.sh [--quick | --help]"
-  echo "  --quick  Rust 1.88とcargo-denyの検査を省略する（完全な検査ではありません）"
+  echo "  --quick  Rust 1.89とcargo-denyの検査を省略する（完全な検査ではありません）"
 }
 
 quick=0
@@ -52,18 +52,18 @@ if [ "$quick" = 0 ]; then
       while IFS= read -r line; do
         name="${line%% *}"
         case "$name" in
-          1.88 | 1.88.0 | 1.88-* | 1.88.0-*) msrv="$name"; break ;;
+          1.89 | 1.89.0 | 1.89-* | 1.89.0-*) msrv="$name"; break ;;
         esac
       done <<< "$toolchains"
     fi
-    [ -n "$msrv" ] || missing+=("Rust 1.88: rustup toolchain install 1.88 --profile minimal")
+    [ -n "$msrv" ] || missing+=("Rust 1.89: rustup toolchain install 1.89 --profile minimal")
     if [ -n "$msrv" ]; then
       if ! targets="$(rustup target list --installed --toolchain "$msrv" 2>/dev/null)" || ! [[ "$targets" =~ (^|$'\n')wasm32-unknown-unknown($|$'\n') ]]; then
-        missing+=("Rust 1.88のWASMターゲット: rustup target add wasm32-unknown-unknown --toolchain $msrv")
+        missing+=("Rust 1.89のWASMターゲット: rustup target add wasm32-unknown-unknown --toolchain $msrv")
       fi
     fi
   else
-    missing+=("rustup をPATHに追加し、rustup toolchain install 1.88 --profile minimal")
+    missing+=("rustup をPATHに追加し、rustup toolchain install 1.89 --profile minimal")
   fi
   command -v cargo-deny >/dev/null 2>&1 || missing+=("cargo-deny: cargo install cargo-deny --locked")
 fi
@@ -71,12 +71,12 @@ if [ "${#missing[@]}" -gt 0 ]; then
   echo "必要な前提が不足しています。検査を開始しません。" >&2
   echo "必要なコマンド: cargo rustup wasm-bindgen (0.2.129) node (24以上) python3 uvx git" >&2
   echo "使用中のRustにwasm32-unknown-unknownターゲットが必要です。" >&2
-  [ "$quick" = 1 ] || echo "完全モードでは Rust 1.88 / cargo-deny も必要です。" >&2
+  [ "$quick" = 1 ] || echo "完全モードでは Rust 1.89 / cargo-deny も必要です。" >&2
   printf '  - %s\n' "${missing[@]}" >&2
   exit 2
 fi
 if [ "$quick" = 1 ]; then
-  echo "quick: 明示的に省略: Rust 1.88、依存のcargo-deny検査"
+  echo "quick: 明示的に省略: Rust 1.89、依存のcargo-deny検査"
 fi
 failed=()
 
@@ -93,8 +93,8 @@ step "Rust: clippy" cargo clippy --workspace --all-targets --all-features --lock
 step "Rust: 試験" cargo test --workspace --locked
 step "Rust: 文書" env RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --locked
 if [ "$quick" = 0 ]; then
-  step "Rust: 最小の1.88" cargo "+$msrv" check --workspace --locked
-  step "Rust UI: 最小の1.88" cargo "+$msrv" check -p kamoku-ui --target wasm32-unknown-unknown --locked
+  step "Rust: 最小の1.89" cargo "+$msrv" check --workspace --locked
+  step "Rust UI: 最小の1.89" cargo "+$msrv" check -p kamoku-ui --target wasm32-unknown-unknown --locked
   step "依存: cargo deny" cargo deny --locked check
 fi
 step "画面: 単体試験" node --test ui/tests/
@@ -109,7 +109,7 @@ step "ライセンス表示(REUSE)" uvx --offline --from "reuse[charset-normaliz
 printf '\n== まとめ\n'
 if [ "${#failed[@]}" = 0 ]; then
   if [ "$quick" = 1 ]; then
-    echo "quickの範囲は通過しました（Rust 1.88とcargo-denyの省略あり）。"
+    echo "quickの範囲は通過しました（Rust 1.89とcargo-denyの省略あり）。"
   else
     echo "完全モードの検査がすべて通過しました。"
   fi

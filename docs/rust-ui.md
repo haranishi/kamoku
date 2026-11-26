@@ -6,7 +6,7 @@ JavaScriptとして配信するのは、WASMの読み込みを始めるローダ
 
 ## 生成してから本体をビルドする
 
-Rust 1.88以上、Python 3、Cコンパイラを用意し、最初に次を実行します。
+Rust 1.89以上、Python 3、Cコンパイラを用意し、最初に次を実行します。
 
 ```sh
 rustup target add wasm32-unknown-unknown
@@ -43,6 +43,6 @@ e2e/run-real.sh
 python3 tools/test-rust-ui.py
 ```
 
-CIはWASMを生成・検査してから、その生成物をLinux/macOSの本体試験、Rust 1.88、実サーバーのブラウザ試験へ渡します。生成物が無い状態で以前の画面へ戻す処理は持ちません。
+CIはWASMを生成・検査してから、その生成物をLinux/macOSの本体試験、Rust 1.89、実サーバーのブラウザ試験へ渡します。生成物が無い状態で以前の画面へ戻す処理は持ちません。
 
 速さは同じ合成データと環境で測ります。Rustの採用だけでは高速化を証明できません。実機のIME、読み上げ、Safari、Firefox、Windowsの確認範囲は[試験の地図](testing.md)へ分けて記録します。

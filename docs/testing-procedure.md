@@ -8,8 +8,8 @@ RustとCのコンパイラに加え、次の道具が必要です。
 
 | 道具 | 用途 |
 |---|---|
-| Rust 1.88以上、rustfmt、clippy | 本体のビルド・試験・静的検査 |
-| Rust 1.88のツールチェーン、cargo-deny | 最小バージョンと依存の検査 |
+| Rust 1.89以上、rustfmt、clippy | 本体のビルド・試験・静的検査 |
+| Rust 1.89のツールチェーン、cargo-deny | 最小バージョンと依存の検査 |
 | WASMターゲット、wasm-bindgen-cli 0.2.129 | Rust画面の生成 |
 | Node 24以上、npm | 静的検査器の試験、Playwright |
 | Python 3 | 文書・仕様・台帳・実行手順の検査 |
@@ -19,7 +19,7 @@ RustとCのコンパイラに加え、次の道具が必要です。
 
 ```sh
 rustup target add wasm32-unknown-unknown
-rustup toolchain install 1.88 --profile minimal --target wasm32-unknown-unknown
+rustup toolchain install 1.89 --profile minimal --target wasm32-unknown-unknown
 cargo install wasm-bindgen-cli --version 0.2.129 --locked
 uvx --from 'reuse[charset-normalizer]' reuse --version
 npm --prefix e2e ci
@@ -51,7 +51,7 @@ e2e/run-real.sh
 
 前者はWASM生成・Rustと画面の単体試験・静的検査・仕様・文書・依存・ライセンスを確認します。後者はWASMを生成してRustサーバーへ組み込み、スモーク、ブラウザ操作、契約試験、画面撮影を順に流します。各段階で新しい帳簿を使い、サーバーを止めてから次へ進みます。CIも同じ通し試験の入口を使います。
 
-Nodeなど必須コマンドが無ければ開始前に失敗します。スクリプトは不足したRustツールやPlaywrightを自動導入しません。REUSEは準備済みの環境をオフラインで使い、未準備なら検査失敗にします。`--quick` はRust 1.88とcargo-denyを明示的に省く作業中の確認用で、完全な検証の代わりにはなりません。
+Nodeなど必須コマンドが無ければ開始前に失敗します。スクリプトは不足したRustツールやPlaywrightを自動導入しません。REUSEは準備済みの環境をオフラインで使い、未準備なら検査失敗にします。`--quick` はRust 1.89とcargo-denyを明示的に省く作業中の確認用で、完全な検証の代わりにはなりません。
 
 ## 一部だけ再実行する
 
