@@ -21,6 +21,8 @@ const channel = process.env.KAMOKU_E2E_CHANNEL || undefined;
 export default defineConfig({
   testDir: '.',
   testMatch: /.*\.spec\.mjs$/,
+  // お試し版は静的ファイル専用の設定（web-demo.config.mjs）で動かす。
+  testIgnore: /web-demo\.spec\.mjs$/,
   timeout: 30_000,
   expect: { timeout: 5_000 },
   // 試験どうしが同じ模擬サーバーの設定（課税の区分など）を変えるので、1つずつ順に動かす。
@@ -36,7 +38,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'flows', testIgnore: /screens\.spec\.mjs/, use: { baseURL: flowsURL } },
+    { name: 'flows', testIgnore: [/screens\.spec\.mjs/, /web-demo\.spec\.mjs/], use: { baseURL: flowsURL } },
     { name: 'screens', testMatch: /screens\.spec\.mjs/, use: { baseURL: screensURL } },
   ],
   webServer: external

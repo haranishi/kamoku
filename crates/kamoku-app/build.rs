@@ -12,6 +12,12 @@ use std::path::{Path, PathBuf};
 include!("src/ui_rules.rs");
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let target = std::env::var("TARGET").unwrap_or_default();
+    if target.contains("wasm32") {
+        // 画面の埋め込みはサーバー用。ブラウザ版は静的ファイルを別に配る。
+        println!("cargo:rerun-if-changed=build.rs");
+        return Ok(());
+    }
     let manifest = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?);
     let ui = manifest.join("..").join("..").join("ui");
     println!("cargo:rerun-if-changed=build.rs");

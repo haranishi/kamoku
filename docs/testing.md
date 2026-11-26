@@ -18,6 +18,7 @@
 | ブラウザの通し試験 | 本物のサーバーを相手に、キーボードだけの流れまで通す | `e2e/run-real.sh flows` |
 | 契約試験 | 模擬サーバーと本物の、応えの形が同じか | `e2e/run-real.sh contract` |
 | スクリーンショット | 全画面を3つの幅とライト・ダークで開き、描画できることを確かめて撮る | `e2e/run-real.sh screens` |
+| ブラウザのお試し版 | 静的ファイルだけをサブパスと配信先と同じCSPで配り、US-14を画面の操作で確かめる | `bash tools/build-web-demo.sh` のあと `npx playwright test -c web-demo.config.mjs`（[説明](web-demo.md)） |
 | 変異試験 | わざと誤りを入れて、試験が赤くなるか | `python3 tools/mutate.py tools/mutations/<名前>.json` |
 
 ## 試験が「門番」になっているか

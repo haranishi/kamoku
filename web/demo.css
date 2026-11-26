@@ -1,0 +1,80 @@
+/* SPDX-FileCopyrightText: 2026 Ikki Nishihara and the kamoku contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* お試し版の帯だけ。サーバー版の CSS は変えない。狭い幅の1行隠しより具体的にして、本文を見せる。 */
+.banners > .banner--info.banner--web-demo {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
+
+.banners > .banner--info.banner--web-demo .banner-body {
+  flex: 1 1 12rem;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.banners > .banner--info.banner--web-demo .banner-body > p:not(.banner-title) {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.banners > .banner--info.banner--web-demo .banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.banners > .banner--info.banner--web-demo .banner-actions a,
+.banners > .banner--info.banner--web-demo .banner-actions .btn {
+  white-space: normal;
+}
+
+.backup-unavailable {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* 狭い幅では帯を低くする。2つのボタンを1行に並べ、文字を少し小さくする（押せる高さは40px以上）。 */
+@media (max-width: 480px) {
+  .banners > .banner--info.banner--web-demo {
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .banners > .banner--info.banner--web-demo > svg {
+    display: none;
+  }
+
+  .banners > .banner--info.banner--web-demo .banner-body > p:not(.banner-title) {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  .banners > .banner--info.banner--web-demo .banner-actions {
+    flex-wrap: nowrap;
+  }
+
+  .banners > .banner--info.banner--web-demo .banner-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    height: auto;
+    min-height: 40px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
+}

@@ -35,6 +35,16 @@ fn block(title: &str, children: &[Element]) -> Element {
     append(&node, children);
     node
 }
+fn backup_action(ctx: &Context) -> Element {
+    if web_demo() {
+        return h(
+            "p",
+            "backup-unavailable",
+            "このお試し版では、帳簿の控え（バックアップ）は作れません。控えは帳簿ファイルの複製で、この版の帳簿はブラウザの中の一時的なメモリにしかないためです。控えを作るには、ソースから kamoku を動かしてください（GitHub の README「合成データで試す」）。",
+        );
+    }
+    download(ctx, "帳簿の控え（バックアップ）", "/export/backup.db")
+}
 fn download(ctx: &Context, label: &str, path: &str) -> Element {
     let node = link(label, &format!("/api/v1{path}"), "btn");
     attrs(&node, &[("download", "")]);
@@ -277,7 +287,7 @@ pub(crate) fn mount(ctx: &Context, status: &Value) -> Element {
                         "div",
                         "export-grid",
                         &[
-                            download(ctx, "帳簿の控え（バックアップ）", "/export/backup.db"),
+                            backup_action(ctx),
                             download(ctx, "全件のデータ（JSON）", "/export/all.json"),
                         ],
                     ),

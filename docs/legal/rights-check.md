@@ -77,3 +77,15 @@ cargo-deny 0.20.2で、ライセンス・既知の脆弱性・取得元・禁止
 ## 全画面のRust移行（2026-10-16）
 
 既存のkamokuの画面・仕様・試験を基に、UI・状態・入力・通信・DOM生成をRustへ移しました。他社の画面やコードは使っていません。追加依存は幅の正規化と整数式の互換性を保つ `unicode-normalization`、`num-bigint`、`num-traits` です。生成接続コードと最小ローダーは残し、旧業務JavaScriptは配信対象から外します。税・帳簿保存・認証のルールや、自動仕訳の範囲に変更はありません。比較と撮影は合成データを使い、認証値・ログ・DBは公開対象へ含めません。
+
+## ブラウザのお試し版（2026-11-26）
+
+ブラウザへ配るために、新しいクレートや版は足していません。wasm32 では、`Cargo.lock` に既にある getrandom 0.4.3 の feature `wasm_js`、wasm-bindgen 0.2.129、js-sys 0.3.106 を使います。
+
+sqlite-wasm-rs 0.5.5 は、レジストリの LICENSE を読みました。MIT で、著作権表示は Copyright (c) 2024 Spxg です。同梱の sqlite3.h の冒頭は、著者がこのソースの著作権を放棄する宣言です。
+
+rsqlite-vfs 0.1.1 は、`Cargo.toml` の license が MIT です。パッケージの中に LICENSE ファイルは無く、repository と authors の欄もありません。sqlite-wasm-rs と同じリポジトリだとは確かめられないので、`THIRD_PARTY_LICENSES.txt` には MIT の定型文を載せ、著作権表示と本文は未確認と書いています。
+
+`THIRD_PARTY_LICENSES.txt` には、帳簿（kamoku-web）と画面（kamoku-ui）の両方の WASM の依存を載せます。組み立てるときの `cargo metadata` から、名前・版・ライセンス欄・見つかった本文を書き出し、本文のファイルが無いものには未確認と書きます。どちらの WASM にも、Rust の標準ライブラリ（MIT OR Apache-2.0）の一部が入ります。
+
+sqlite-wasm-rs 0.5.5 が同梱する SQLite は 3.53.0 で、RUSTSEC-2026-0459（7節）を直した版より前です。この注意の条件は、第三者が作ったDBと `-wal` のファイルを開くことです。ブラウザ版はメモリ上のDBだけを開き、ファイルを開かないので、当たらないと判断しました。

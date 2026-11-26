@@ -10,10 +10,11 @@
 //!   同じ印・同じ本文の再送は、いっぱいでも必ず最初の結果を返す。
 
 use super::ApiError;
+use crate::mono::Mono;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 /// `client_id` の長さの上限（バイト）。
 pub(crate) const CLIENT_ID_MAX_LEN: usize = 64;
@@ -60,7 +61,7 @@ pub(crate) enum Seen {
 }
 
 struct Record {
-    at: Instant,
+    at: Mono,
     digest: BodyDigest,
     response: Value,
     size: usize,
@@ -84,7 +85,7 @@ impl ClientIds {
         }
     }
 
-    fn purge(&mut self, now: Instant) {
+    fn purge(&mut self, now: Mono) {
         let ttl = self.limits.ttl;
         let mut freed = 0usize;
         self.records.retain(|_, r| {
@@ -105,7 +106,7 @@ impl ClientIds {
         &mut self,
         id: &str,
         digest: &BodyDigest,
-        now: Instant,
+        now: Mono,
     ) -> Result<Seen, ApiError> {
         self.purge(now);
         if let Some(seen) = self.records.get(id) {
@@ -130,7 +131,7 @@ impl ClientIds {
     }
 
     /// 保存できた要求を記録します。空きは [`ClientIds::check`] で確かめてあるので、追い出さない。
-    pub(crate) fn insert(&mut self, id: String, digest: BodyDigest, response: Value, now: Instant) {
+    pub(crate) fn insert(&mut self, id: String, digest: BodyDigest, response: Value, now: Mono) {
         let size = serde_json::to_vec(&response)
             .map_or(0, |b| b.len())
             .saturating_add(id.len())
