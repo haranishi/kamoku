@@ -264,10 +264,7 @@ impl Row {
             }
             _ => {}
         }
-        if !s.ctx.alive() {
-            return false;
-        }
-        true
+        s.ctx.alive()
     }
     pub fn mark_next(self: &Rc<Self>, col: &str) {
         if !self.commit(col) || !self.set_candidate(true) {
