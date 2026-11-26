@@ -13,7 +13,7 @@ license = "MIT OR Apache-2.0"
 kamoku-books = { version = "0.0.1", path = "../kamoku-books" }
 kamoku-import = { version = "0.0.1", path = "../kamoku-import" }
 kamoku-ledger = { version = "0.0.1", path = "../kamoku-ledger" }
-rusqlite = { version = "0.40.2", features = ["bundled"] }
+rusqlite = { version = "0.41.1", features = ["bundled"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 time = { version = "0.3.55", default-features = false }

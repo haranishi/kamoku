@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   wasm-browser:
-    name: Rust UI (WASM, Rust 1.88)
+    name: Rust UI (WASM, Rust 1.89)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -17,8 +17,8 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup target add wasm32-unknown-unknown
-      - run: rustup toolchain install 1.88 --profile minimal --target wasm32-unknown-unknown
-      - run: cargo +1.88 check -p kamoku-ui --target wasm32-unknown-unknown --locked
+      - run: rustup toolchain install 1.89 --profile minimal --target wasm32-unknown-unknown
+      - run: cargo +1.89 check -p kamoku-ui --target wasm32-unknown-unknown --locked
       - run: cargo clippy -p kamoku-ui --target wasm32-unknown-unknown --locked -- -D warnings
       - run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
       - run: bash tools/build-rust-ui.sh

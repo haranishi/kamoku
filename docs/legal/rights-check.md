@@ -50,6 +50,8 @@ kamokuのコードと文書は、作者が仕様を決め、AI（Claude、Codex�
 
 cargo-deny 0.20.2で、ライセンス・既知の脆弱性・取得元・禁止の4項目を確認し、すべて通過しました。Phase 0の依存のライセンスは、MIT、Apache-2.0、そして Unicode-3.0 です（`unicode-ident` が `(MIT OR Apache-2.0) AND Unicode-3.0`）。
 
+2026-11-26に、SQLiteの脆弱性の注意（RUSTSEC-2026-0459 / CVE-2026-119375。第三者が作ったDBと `-wal` のファイルを開くと、メモリの中身が読み出されうる）に対応して、`rusqlite` を0.41.1、`libsqlite3-sys` を0.39.1へ上げました（どちらもMIT。同梱するSQLiteは3.54.1で、public domain）。`rusqlite` 0.41 に合わせ、最小のRustを1.89にしました。同じ日に cargo-deny の4項目を流し直し、通過しました。
+
 実データの混入は、`.gitignore` でCSV・PDF・SQLiteなどの誤追加を減らし、公開前にgitleaksで走査して確かめます。`.gitignore` は、強制追加や、Markdown・画像の中の実データまでは防げません。
 
 ## 確認できていないこと

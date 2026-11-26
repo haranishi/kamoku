@@ -56,7 +56,7 @@ if tool == "node":
             sys.exit(2)
 elif tool == "rustup":
     if args == ["toolchain", "list"]:
-        print(os.environ.get("KAMOKU_TEST_TOOLCHAINS", "1.88.0-test-host\n1.99.0-test-host (default)"))
+        print(os.environ.get("KAMOKU_TEST_TOOLCHAINS", "1.89.0-test-host\n1.99.0-test-host (default)"))
     elif args[:3] == ["target", "list", "--installed"] and (len(args) == 3 or args[3:4] == ["--toolchain"]):
         key = "KAMOKU_TEST_MSRV_TARGETS" if len(args) > 3 else "KAMOKU_TEST_TARGETS"
         print(os.environ.get(key, "test-host\nwasm32-unknown-unknown"))
