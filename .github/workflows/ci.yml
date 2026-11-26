@@ -154,7 +154,9 @@ jobs:
       # SQLite の C を WASM の静的ライブラリにまとめる LLVM の ar。組み立てスクリプトは入れない。
       - run: rustup component add llvm-tools
       # clippy も組み立てスクリプトと同じ LLVM の ar を使う（SQLite の C をまとめる build.rs が動くため）。
-      - run: echo "AR_wasm32_unknown_unknown=$(rustc --print sysroot)/lib/rustlib/$(rustc -vV | sed -n 's/^host: //p')/bin/llvm-ar" >> "$GITHUB_ENV"
+      - run: |
+          host="$(rustc -vV | sed -n 's/^host: //p')"
+          echo "AR_wasm32_unknown_unknown=$(rustc --print sysroot)/lib/rustlib/$host/bin/llvm-ar" >> "$GITHUB_ENV"
       - run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
       - run: cargo clippy -p kamoku-web -p kamoku-app -p kamoku-store --lib --target wasm32-unknown-unknown --locked -- -D warnings
       - run: bash tools/build-web-demo.sh
