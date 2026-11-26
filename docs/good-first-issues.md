@@ -31,14 +31,10 @@
 - 対象: `crates/kamoku-import/src/mapping.rs` の `DATE_WORDS` `DESC_WORDS` `OUT_WORDS` `IN_WORDS`。
 - 完了: 語を足し、その見出しを持つ**合成の**CSV（実在の店・口座・金額は使わない）を `tools/make-fixtures.py` に足して、`crates/kamoku-import/tests/` に試験を足す。`cargo test -p kamoku-import` と `python3 tools/make-fixtures.py --check` を通す。
 
-### 5. まだ試験の無い受け入れ条件に、試験を足す（中）
+### 5. 人が確かめる項目を、手元で確かめる（易）
 
-```
-python3 tools/check-spec-trace.py
-```
-
-を流すと、試験からの参照が無い条件が並びます。1つ選んで、試験を足してください。試験の名前かコメントに、条件の番号（`AC-06.1` など）を書きます。
-- 完了: 足した試験が通る。わざと実装を壊して、試験が赤くなることも確かめる（[道具](../tools/README.md)の `mutate.py` が使えます）。
+自動の試験では確かめきれない項目があります。SafariとFirefoxでの日本語入力（[キー操作](spec/keyboard.md)）、初めての人が15分以内に起動できるか（AC-12.3）、ExcelでCSVが文字化けしないか（AC-13.2）などです。条件の一覧は、`docs/spec/stories-*.md` の `[manual]` の行にあります。
+- 完了: OS・ブラウザ・アプリの版と、確かめた結果（できた／できない）をIssueに書く。帳簿は合成のデータを使う。
 
 ### 6. ブラウザの試験に、FirefoxかWebKitを足す（中）
 
@@ -49,8 +45,8 @@ python3 tools/check-spec-trace.py
 ### 7. 画面の文言を、やさしい日本語に直す（中）
 
 専門用語が多い、長い、原因と直し方が書かれていないエラー文を見つけたら、直してください。
-- 対象: `ui/js/` の下の文言。エラーは「原因と直し方」の形にします。
-- 完了: `node --test ui/tests/` と `npm test`（`e2e/`）が通る。直した前後の文言をPRに書く。
+- 対象: `crates/kamoku-ui/src/` の下の文言。エラーは「原因と直し方」の形にします。
+- 完了: `cargo test -p kamoku-ui` と `e2e/run-real.sh` が通る（準備は[試験の実行手順](testing-procedure.md)）。直した前後の文言をPRに書く。
 
 ### 8. 色の組み合わせの検査を足す（易）
 
