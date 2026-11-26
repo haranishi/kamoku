@@ -10,22 +10,37 @@
 //! - 仕訳の組み立てと帳票の計算は `kamoku-books`、保存は `kamoku-store`、CSVの読み取りは
 //!   `kamoku-import` を呼ぶだけで、規則を自前で持たない。
 //! - コマンドは [`cli::run`]。`serve` `demo` `verify` `backup` がある。
+//! - wasm32 ではサーバーの受け口を外し、[`web`] が同じ API をメモリ上の帳簿で動かす。
 
+#[cfg(not(target_arch = "wasm32"))]
 pub mod cli;
 pub mod demo;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod http;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod server;
+pub mod web;
 
 mod api;
+#[cfg(not(target_arch = "wasm32"))]
 mod app;
+#[cfg(not(target_arch = "wasm32"))]
 mod browser;
 mod clock;
 mod csv;
+mod dispatch;
+#[cfg(not(target_arch = "wasm32"))]
 mod gate;
 mod ids;
+mod method;
+mod mode;
+mod mono;
+#[cfg(not(target_arch = "wasm32"))]
 mod paths;
 mod query;
 mod router;
 mod state;
+#[cfg(not(target_arch = "wasm32"))]
 mod statics;
+#[cfg(not(target_arch = "wasm32"))]
 mod ui_rules;

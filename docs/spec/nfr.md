@@ -47,6 +47,6 @@
 
 ## 参加しやすさ
 
-- 通常の画面はビルド不要で、そのまま編集して再読込で確かめられる（`--ui-dir`）。任意の[Rustプレビュー](../rust-ui-preview.md)はWASMのビルドが必要。
-- 通常の画面は依存0で、グラフは自作のSVG。Rustプレビューは版を固定した `web-sys`・`wasm-bindgen` 等を使い、生成された接続用JavaScriptも配る。いずれも外部から実行時に取得しない。
+- 画面はRustで書き、WASMにする。Rustを直したら `tools/build-rust-ui.sh` で作り直して確かめる。HTMLとCSSは、`--ui-dir` で起動すれば再読込で確かめられる（[画面の構成](../rust-ui.md)）。
+- 画面は版を固定した `web-sys`・`wasm-bindgen` 等を使い、生成された接続用JavaScriptも配る。外部から実行時に取得しない。グラフは自作のSVG。
 - 1つのソースは、読み切れる大きさ（目安は300行）に分ける。

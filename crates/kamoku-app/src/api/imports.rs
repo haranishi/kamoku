@@ -6,12 +6,13 @@
 
 use super::{ApiError, Call, Reply, ok, to_value};
 use crate::ids;
+use crate::mono::Mono;
 use crate::state::State;
 use kamoku_import::{EncodingChoice, Table, TextEncoding, decode, guess_mapping, parse_csv};
 use kamoku_store::Store;
 use serde_json::json;
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 pub(super) const UPLOAD_TTL: Duration = Duration::from_secs(30 * 60);
 // 10MBのCSVを読んだ表は、その数倍のメモリを使う。置いておく数を絞る。
@@ -20,7 +21,7 @@ const SAMPLE_ROWS: usize = 20;
 
 /// 送られたファイル（読んだ表）。
 pub(crate) struct Upload {
-    pub(super) at: Instant,
+    pub(super) at: Mono,
     pub(super) filename: String,
     pub(super) table: Table,
 }
@@ -29,8 +30,9 @@ pub(crate) struct Upload {
 #[derive(Default)]
 pub(crate) struct Uploads(pub(super) HashMap<String, Upload>);
 impl Uploads {
-    fn purge(&mut self, now: Instant) {
-        self.0.retain(|_, u| now.duration_since(u.at) < UPLOAD_TTL);
+    fn purge(&mut self, now: Mono) {
+        self.0
+            .retain(|_, u| now.saturating_duration_since(u.at) < UPLOAD_TTL);
     }
     fn insert(&mut self, id: String, upload: Upload) {
         self.purge(upload.at);
@@ -154,7 +156,7 @@ pub(crate) fn import_upload(state: &mut State, call: &Call<'_>) -> Result<Reply,
     state.uploads.insert(
         upload_id,
         Upload {
-            at: Instant::now(),
+            at: Mono::now(),
             filename,
             table,
         },

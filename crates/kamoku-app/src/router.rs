@@ -4,7 +4,7 @@
 //! `/api/v1` の経路の表（メソッド・パス・本文の種類・書き込みか・処理）。経路はこの表だけで決める。
 
 use crate::api::{self, Run};
-use crate::http::Method;
+use crate::method::Method;
 use crate::query::percent_decode;
 
 /// JSONの本文の上限（1MB）。

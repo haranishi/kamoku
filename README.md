@@ -18,7 +18,7 @@ bash tools/build-rust-ui.sh
 cargo run -p kamoku-app -- demo
 ```
 
-ブラウザが開き、架空の事業の2026年の帳簿が見られます。本物の帳簿の置き場所には触りません。Rust 1.89以上、Python 3と、Cのコンパイラ（macOSはXcodeのコマンドラインツール）が要ります。最初のビルドは数分かかります。自分の帳簿をつけるときは `demo` を `serve` に替えます（[使い方](docs/getting-started.md)）。
+ブラウザが開き、架空の事業の2026年の帳簿が見られます。本物の帳簿の置き場所には触りません。Rust 1.89以上、Python 3と、Cのコンパイラ（macOSはXcodeのコマンドラインツール）が要ります。最初のビルドは数分かかります。自分の帳簿をつけるときは `demo` を `serve` に替えます（[使い方](docs/getting-started.md)）。サーバーを使わずブラウザだけで試す版は、同じ準備と `rustup component add llvm-tools` のあと `bash tools/build-web-demo.sh` で `target/web-demo/` に組み立てます。入力はそのブラウザの中だけで、再読み込みで消えます（[ブラウザのお試し版](docs/web-demo.md)）。
 
 ## 設計で大切にしていること
 

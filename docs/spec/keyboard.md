@@ -14,7 +14,7 @@
 
 フォームの暗黙の送信には頼りません。`<form>` の `submit` は常に `preventDefault` し、保存は、キー処理かボタンのクリックからだけ呼びます。50ミリ秒は経験値で、ブラウザやOSごとの保証はありません。
 
-この判定は `ui/js/ime.js` の1つの関数に閉じ込め、全画面から使います。Nodeの試験と、Chromiumの変換の模擬（`Input.imeSetComposition`）で確かめます。AC-05.2 の自動の試験はChromiumの範囲です。SafariとFirefox、Windowsの変換は、公開の前に人が確かめます。
+この判定は `crates/kamoku-ui/src/interaction.rs` に閉じ込め、全画面は `app/core/keys.rs` の `ime_ignore` を通して使います。Rustの単体試験と、Chromiumの変換の模擬（`Input.imeSetComposition`）で確かめます。AC-05.2 の自動の試験はChromiumの範囲です。SafariとFirefox、Windowsの変換は、まだ人が確かめていません。
 
 ## 全体のキー
 

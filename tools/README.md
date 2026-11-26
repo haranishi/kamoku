@@ -74,3 +74,7 @@ python3 tools/smoke-demo.py --bin target/debug/kamoku
 ```
 python3 tools/check-links.py
 ```
+
+## ブラウザのお試し版を組み立てる
+
+`build-web-demo.sh [出力先]` が、画面と帳簿の WASM をビルドし、`assemble-web-demo.py` で静的ファイルにまとめ、`check-web-demo-output.py` で手元の絶対パス・秘密に見える行・25MiB 超えのファイルが無いことを確かめます。仕組みは[ブラウザのお試し版](../docs/web-demo.md)にあります。

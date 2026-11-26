@@ -4,7 +4,7 @@
 //! サーバーが持つ状態。全部を1つの `Mutex` に入れ、1つの要求の処理は「ロックを取って、計算して、放す」。
 
 use crate::api::{ClientIds, Uploads};
-use crate::server::Mode;
+use crate::mode::Mode;
 use kamoku_store::Store;
 
 /// サーバーが持つ状態。

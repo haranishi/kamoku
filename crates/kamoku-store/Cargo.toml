@@ -18,6 +18,9 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 time = { version = "0.3.55", default-features = false }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = "=0.3.106"
+
 [lints]
 workspace = true
 

@@ -1,0 +1,24 @@
+[package]
+name = "kamoku-web"
+description = "ブラウザだけで動く kamoku のお試し版。WASM からメモリ上の帳簿を扱う。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish.workspace = true
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kamoku-app = { version = "0.0.1", path = "../kamoku-app" }
+time = { version = "0.3.55", default-features = false, features = ["macros"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = "=0.3.106"
+wasm-bindgen = "=0.2.129"
+
+[lints]
+workspace = true

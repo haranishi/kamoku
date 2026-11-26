@@ -26,8 +26,67 @@ pub use error::{StoreError, VerifyFailure};
 use kamoku_books::Chart;
 use kamoku_ledger::{EntryId, EventKind, Ledger};
 use rusqlite::{Connection, OptionalExtension};
-use std::{collections::HashMap, path::Path, time::Instant};
+use std::{collections::HashMap, path::Path};
 pub use types::*;
+
+#[cfg(not(target_arch = "wasm32"))]
+fn monotonic_now() -> std::time::Instant {
+    std::time::Instant::now()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn monotonic_elapsed(start: std::time::Instant) -> std::time::Duration {
+    start.elapsed()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn unix_secs() -> Result<u64, StoreError> {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .map_err(|e| StoreError::Invalid(e.to_string()))
+}
+
+#[cfg(target_arch = "wasm32")]
+fn monotonic_now() -> f64 {
+    js_sys::Date::now()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn monotonic_elapsed(start: f64) -> std::time::Duration {
+    let now = js_sys::Date::now();
+    let delta = if now.is_finite() { now - start } else { 0.0 };
+    std::time::Duration::from_millis(date_millis(delta))
+}
+
+#[cfg(target_arch = "wasm32")]
+#[allow(
+    clippy::unnecessary_wraps,
+    reason = "ネイティブ版と同じ形で呼ぶため。Date.now() は失敗しない"
+)]
+fn unix_secs() -> Result<u64, StoreError> {
+    Ok(date_millis(js_sys::Date::now()) / 1000)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn date_millis(ms: f64) -> u64 {
+    // f64 が整数を正確に表せる上限（2^53-1）。超えたら打ち切る。
+    const MAX_EXACT: f64 = 9_007_199_254_740_991.0;
+    if !ms.is_finite() || ms <= 0.0 {
+        return 0;
+    }
+    if ms >= MAX_EXACT {
+        return u64::MAX;
+    }
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss,
+        reason = "有限・非負・2^53 未満なので、小数を切り捨てた整数は u64 に正確に入る"
+    )]
+    let whole = ms.floor() as u64;
+    whole
+}
 
 /// `SQLite`接続と検証済み台帳。外部の変更は書き込み前に検出します。
 pub struct Store {
@@ -67,7 +126,7 @@ impl Store {
         Self::from_connection(Connection::open_in_memory()?)
     }
     fn from_connection(mut conn: Connection) -> Result<(Self, LoadReport), StoreError> {
-        let start = Instant::now();
+        let start = monotonic_now();
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000;")?;
         let version: u32 = conn.query_row("PRAGMA user_version", [], |r| r.get(0))?;
         if version > 1 {
@@ -84,11 +143,7 @@ impl Store {
             tx.execute("INSERT INTO meta VALUES('schema','1')", [])?;
             tx.execute(
                 "INSERT INTO meta VALUES('created_at',?)",
-                [std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map_err(|e| StoreError::Invalid(e.to_string()))?
-                    .as_secs()
-                    .to_string()],
+                [unix_secs()?.to_string()],
             )?;
             for account in kamoku_books::standard_accounts() {
                 db_masters::insert_account(&tx, &account)?;
@@ -117,7 +172,7 @@ impl Store {
             events_in_db: loaded.count,
             events_loaded: store.ledger.events().len() as u64,
             entries: store.numbers.len() as u64,
-            elapsed: start.elapsed(),
+            elapsed: monotonic_elapsed(start),
             verification: store
                 .failure
                 .clone()

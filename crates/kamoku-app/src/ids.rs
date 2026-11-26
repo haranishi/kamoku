@@ -29,6 +29,8 @@ pub(crate) fn entry_id(millis: u64, random: u32) -> String {
 }
 
 /// 定数時間の比較。合言葉とセッション値の比較で、一致した長さを時間から推し量らせないため。
+/// 合言葉はサーバーだけにある。
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn same_secret(a: &str, b: &str) -> bool {
     let (a, b) = (a.as_bytes(), b.as_bytes());
     if a.len() != b.len() {
