@@ -5,15 +5,14 @@
 //! 変更の要求の出所（403）→ 経路（404・405）→ 本文の種類（400）→ 読み取り専用（409）→ 処理。
 //! 本文は、ここまでの検査を通った要求のものだけを読む。
 
-use crate::api::{ApiError, Call, Reply};
+use crate::api::ApiError;
+use crate::dispatch::{self, Incoming, Outcome};
 use crate::gate::{self, Sessions};
 use crate::http::{Handler, Head, Method, Request, Response};
-use crate::query::Query;
-use crate::router::{self, Body, JSON_LIMIT, Lookup};
+use crate::router::JSON_LIMIT;
 use crate::state::State;
 use crate::statics::{self, Statics};
 use crate::{clock, ids};
-use kamoku_store::StoreError;
 use std::sync::{Mutex, MutexGuard};
 
 /// サーバーの中身。受け口の処理のスレッドから共有される。
@@ -24,8 +23,6 @@ pub(crate) struct App {
     statics: Statics,
     state: Mutex<State>,
 }
-
-const API_PREFIX: &str = "/api/v1";
 
 #[cfg(test)]
 mod tests;
@@ -92,130 +89,43 @@ impl App {
     }
 
     fn api(&self, head: &Head, body: &[u8]) -> Response {
-        let path = head.path.strip_prefix(API_PREFIX).unwrap_or_default();
-        let Lookup::Route(route, params) = router::find(head.method, path) else {
-            return json_error(&ApiError::not_found("その経路はありません。"));
-        };
-        let query = match Query::parse(&head.query) {
-            Ok(query) => query,
-            Err(e) => return json_error(&e),
-        };
-        let call = Call {
-            params: &params,
-            query: &query,
+        let incoming = Incoming {
+            method: head.method,
+            path: &head.path,
+            query: &head.query,
             body,
             now: clock::now_secs(),
             today: clock::today(),
         };
-        let result = {
+        // ロックの中では処理だけを行い、JSON への変換はロックの外で行う。
+        let result = dispatch::prepare(&incoming).and_then(|prepared| {
             let mut state = self.lock();
-            if route.write && state.store.read_only().is_some() {
-                Err(read_only_error())
-            } else {
-                refresh_masters(&mut state, head.method, route.write)
-                    .and_then(|()| (route.run)(&mut state, &call))
-            }
-        };
-        match result {
-            Ok(Reply::Json(status, value)) => match serde_json::to_vec(&value) {
-                Ok(bytes) => {
-                    Response::new(status).with_body("application/json; charset=utf-8", bytes)
-                }
-                Err(e) => log_and_respond(head, &ApiError::internal(e)),
-            },
-            Ok(Reply::File(file)) => {
-                let mut response = Response::new(200)
-                    .with_body(file.content_type, file.body)
-                    .with_header(
-                        "Content-Disposition",
-                        &format!("attachment; filename=\"{}\"", file.filename),
-                    );
-                if let Some(warning) = &file.warning {
-                    response.set_header("X-Kamoku-Warning", warning);
-                }
-                response
-            }
-            Err(e) => log_and_respond(head, &e),
-        }
+            dispatch::run(&mut state, &prepared, &incoming)
+        });
+        outcome_response(dispatch::respond(&incoming, result))
     }
 
     fn inspect_api(&self, head: &Head) -> Result<u64, Response> {
-        let Some(path) = head.path.strip_prefix(API_PREFIX) else {
-            return Err(json_error(&ApiError::not_found("その経路はありません。")));
-        };
-        let route = match router::find(head.method, path) {
-            Lookup::Route(route, _) => route,
-            Lookup::Missing => {
-                return Err(json_error(&ApiError::not_found("その経路はありません。")));
-            }
-            Lookup::WrongMethod(allowed) => {
-                let error = ApiError::new(
-                    405,
-                    "method_not_allowed",
-                    "この経路では、そのメソッドは使えません。",
-                );
-                return Err(json_error(&error).with_header("Allow", &allowed.join(", ")));
-            }
-        };
-        let content_type = head.header("content-type").map(|v| {
-            v.split(';')
-                .next()
-                .unwrap_or_default()
-                .trim()
-                .to_ascii_lowercase()
-        });
-        let wanted = match route.body {
-            Body::Json => Some("application/json"),
-            Body::Csv => Some("application/octet-stream"),
-            Body::None => None,
-        };
-        if let Some(wanted) = wanted
-            && content_type.as_deref() != Some(wanted)
-        {
-            let error = ApiError::bad_request(format!("Content-Type は {wanted} にしてください。"))
-                .with_field("Content-Type");
-            return Err(json_error(&error));
-        }
-        if route.write && self.lock().store.read_only().is_some() {
-            return Err(json_error(&read_only_error()));
-        }
-        Ok(route.body.limit())
+        // 読み取り専用かは、書き込みの経路のときだけロックを取って見る。
+        dispatch::inspect(head.method, &head.path, head.header("content-type"), || {
+            self.lock().store.read_only().is_some()
+        })
+        .map_err(outcome_response)
     }
 }
 
-// 変更系の要求は、組み立てる前に、設定と科目をDBの今の値にそろえる。別のプロセスが既定の割合などを
-// 変えていても、古い値で組み立てて黙って保存しないため。台帳の末尾も変わっていれば、保存の層が読み直した
-// うえで、書き込みは 409 stale（api-common.md）。書き込みでない要求（プレビューなど）は、そのまま続ける。
-fn refresh_masters(state: &mut State, method: Method, write: bool) -> Result<(), ApiError> {
-    if !method.changes_state() {
-        return Ok(());
+fn outcome_response(outcome: Outcome) -> Response {
+    let mut response = Response::new(outcome.status);
+    response.body = outcome.body;
+    for (name, value) in outcome.headers {
+        response.set_header(&name, &value);
     }
-    match state.store.refresh_masters() {
-        Ok(()) => Ok(()),
-        Err(StoreError::Stale) if !write => Ok(()),
-        Err(e) => Err(e.into()),
-    }
-}
-
-fn read_only_error() -> ApiError {
-    ApiError::from(StoreError::ReadOnly)
+    response
 }
 
 fn json_error(error: &ApiError) -> Response {
     let bytes = serde_json::to_vec(&error.body()).unwrap_or_default();
     Response::new(error.status).with_body("application/json; charset=utf-8", bytes)
-}
-
-// 想定外の失敗の中身は応答に出さず、標準エラーに書く。問い合わせの文字列は書かない（合言葉を含みうるため）。
-fn log_and_respond(head: &Head, error: &ApiError) -> Response {
-    if let Some(detail) = &error.detail {
-        eprintln!(
-            "kamoku: 想定外の失敗（{} {}）: {detail}",
-            head.method.as_str(),
-            head.path
-        );
-    }
-    json_error(error)
 }
 
 impl Handler for App {

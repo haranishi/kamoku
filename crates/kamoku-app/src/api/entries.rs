@@ -9,6 +9,7 @@ use super::client_ids::{self, CLIENT_ID_MAX_LEN, Seen};
 use super::entry_view::{current, detail_json, entry_id};
 use super::input::{compose, compose_settings, parse_entry};
 use super::{ApiError, Call, Reply, created, ok, to_value};
+use crate::mono::Mono;
 use crate::state::State;
 use crate::{clock, ids};
 use kamoku_books::Source;
@@ -16,7 +17,6 @@ use kamoku_ledger::{Entry, EntryId};
 use kamoku_store::{NewPartner, Store};
 use serde_json::{Map, Value, json};
 use std::collections::HashSet;
-use std::time::Instant;
 
 /// 新しい仕訳ID（台帳にも `taken` にも無いもの）。
 pub(crate) fn fresh_id(store: &Store, taken: &mut HashSet<EntryId>) -> Result<EntryId, ApiError> {
@@ -105,7 +105,7 @@ fn client_id(map: &Map<String, Value>) -> Result<Option<String>, ApiError> {
 pub(crate) fn entry_create(state: &mut State, call: &Call<'_>) -> Result<Reply, ApiError> {
     let map = object(call.body)?;
     let client = client_id(&map)?;
-    let now = Instant::now();
+    let now = Mono::now();
     let remember = match client {
         Some(id) => {
             let digest = client_ids::digest(&map)?;

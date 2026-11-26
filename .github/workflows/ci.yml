@@ -142,6 +142,39 @@ jobs:
             e2e/rust-ui-results/journal-1440.png
             e2e/rust-ui-results/metrics.json
 
+  web-demo:
+    name: ブラウザのお試し版
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup target add wasm32-unknown-unknown
+      # SQLite の C を WASM の静的ライブラリにまとめる LLVM の ar。組み立てスクリプトは入れない。
+      - run: rustup component add llvm-tools
+      # clippy も組み立てスクリプトと同じ LLVM の ar を使う（SQLite の C をまとめる build.rs が動くため）。
+      - run: echo "AR_wasm32_unknown_unknown=$(rustc --print sysroot)/lib/rustlib/$(rustc -vV | sed -n 's/^host: //p')/bin/llvm-ar" >> "$GITHUB_ENV"
+      - run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - run: cargo clippy -p kamoku-web -p kamoku-app -p kamoku-store --lib --target wasm32-unknown-unknown --locked -- -D warnings
+      - run: bash tools/build-web-demo.sh
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - run: npx playwright test -c web-demo.config.mjs
+        working-directory: e2e
+        env:
+          KAMOKU_WEB_DEMO_SHOTS: ${{ github.workspace }}/target/web-demo-shots
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: web-demo
+          if-no-files-found: error
+          path: target/web-demo
+
   secrets:
     name: 秘密情報と実データの走査
     runs-on: ubuntu-latest

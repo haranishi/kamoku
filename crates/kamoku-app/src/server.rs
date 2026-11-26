@@ -17,24 +17,7 @@ use std::net::{Ipv4Addr, TcpListener};
 use std::path::PathBuf;
 use std::sync::Arc;
 
-/// 動かし方。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Mode {
-    /// 本物の帳簿。
-    Normal,
-    /// 合成データの帳簿（画面の上に「デモのデータです」と出す）。
-    Demo,
-}
-impl Mode {
-    /// `/status` の `mode` に入れる名前。
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Normal => "normal",
-            Self::Demo => "demo",
-        }
-    }
-}
+pub use crate::mode::Mode;
 
 /// 起動の指定。
 #[derive(Debug, Clone)]

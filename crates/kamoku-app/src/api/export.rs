@@ -5,10 +5,12 @@
 
 use super::entry_view::{Current, all_current};
 use super::{ApiError, Call, FileReply, Reply};
+use crate::clock;
 use crate::csv::{Encoding, Writer, num, text};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::paths;
 use crate::query::Query;
 use crate::state::State;
-use crate::{clock, paths};
 use kamoku_books::format_date;
 use kamoku_ledger::{Event, EventKind, Side};
 use serde_json::{Value, json};
@@ -184,6 +186,7 @@ pub(crate) fn export_all(state: &mut State, call: &Call<'_>) -> Result<Reply, Ap
 }
 
 /// `GET /export/backup.db`。`VACUUM INTO` で一時ファイルに作り、読んで消してから返す。
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn export_backup(state: &mut State, call: &Call<'_>) -> Result<Reply, ApiError> {
     let bytes = paths::backup_bytes(&state.store).map_err(ApiError::internal)?;
     Ok(Reply::File(FileReply {
@@ -192,6 +195,16 @@ pub(crate) fn export_backup(state: &mut State, call: &Call<'_>) -> Result<Reply,
         body: bytes,
         warning: None,
     }))
+}
+
+/// ブラウザのお試し版にはファイルの複製を置く場所が無い。
+#[cfg(target_arch = "wasm32")]
+pub(crate) fn export_backup(_state: &mut State, _call: &Call<'_>) -> Result<Reply, ApiError> {
+    Err(ApiError::new(
+        501,
+        "not_available",
+        "このお試し版では、帳簿の控え（バックアップ）は作れません。控えは帳簿ファイルの複製で、ブラウザの中の一時的なメモリには書き出せません。ソースから kamoku を動かしてください。",
+    ))
 }
 
 // 帳票のCSVが共通に使う、期間の名前。

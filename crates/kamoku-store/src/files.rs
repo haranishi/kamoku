@@ -15,6 +15,10 @@ fn mode(path: &Path, bits: u32) -> Result<(), StoreError> {
     Ok(())
 }
 #[cfg(not(unix))]
+#[allow(
+    clippy::unnecessary_wraps,
+    reason = "unix 版と同じ形で呼ぶため。権限の無い環境（wasm32 など）では何もしない"
+)]
 fn mode(_path: &Path, _bits: u32) -> Result<(), StoreError> {
     Ok(())
 }
@@ -94,7 +98,11 @@ impl Store {
         let temp = loop {
             let n = BACKUP_ID.fetch_add(1, Ordering::Relaxed);
             let temp = directory.join(format!(".kamoku-backup-{}-{n}", std::process::id()));
+            // wasm32 には unix の mode が無く、mut も要らない。
+            #[cfg(unix)]
             let mut builder = fs::DirBuilder::new();
+            #[cfg(not(unix))]
+            let builder = fs::DirBuilder::new();
             #[cfg(unix)]
             {
                 use std::os::unix::fs::DirBuilderExt;

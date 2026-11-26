@@ -323,6 +323,38 @@ fn all(selector: &str) -> Vec<Element> {
         })
         .unwrap_or_default()
 }
+fn trial_banner(ctx: &Context) -> Element {
+    let note = h(
+        "p",
+        "",
+        "架空の帳簿です。このブラウザの中だけで動き、閉じるか再読み込みで元に戻ります。税の計算は参考値です。「今日」は帳簿に合わせた2026年9月30日です。",
+    );
+    let reset = button("最初の帳簿に戻す", "");
+    ctx.on(&reset, "click", move |_| {
+        let _ = window().location().reload();
+    });
+    let actions = h("div", "banner-actions", "");
+    // 外のURLは画面のソースに書かない決まり（check-policy）。お試し版の index.html の meta から読む。
+    if let Some(url) = web_demo_source() {
+        let source = link("ソース（GitHub）", &url, "btn");
+        // 別のタブで開く。同じタブで離れると、このブラウザの中の入力が消えるため。
+        attrs(
+            &source,
+            &[("target", "_blank"), ("rel", "noopener noreferrer")],
+        );
+        append(&actions, &[source]);
+    }
+    append(&actions, &[reset]);
+    let body = h("div", "banner-body", "");
+    append(
+        &body,
+        &[h("strong", "banner-title", "お試し版です"), note, actions],
+    );
+    let banner = h("div", "banner banner--info banner--web-demo", "");
+    append(&banner, &[icon("info"), body]);
+    banner
+}
+
 pub(crate) fn sync(ctx: &Context) {
     let first = ctx.route.path.split('/').nth(1).unwrap_or("");
     let nav = if first.is_empty() {
@@ -365,7 +397,9 @@ pub(crate) fn sync(ctx: &Context) {
         }
         if let Some(banners) = document().get_element_by_id("banners") {
             replace(&banners, &[]);
-            if st["mode"] == "demo" {
+            if st["mode"] == "demo" && web_demo() {
+                append(&banners, &[trial_banner(ctx)]);
+            } else if st["mode"] == "demo" {
                 let b = h("div", "banner banner--info", "");
                 append(
                     &b,

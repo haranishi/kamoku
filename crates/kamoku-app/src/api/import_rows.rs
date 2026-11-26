@@ -6,6 +6,7 @@
 use super::body::{Fields, object};
 use super::imports::{UPLOAD_TTL, Upload, Uploads, wallet_code};
 use super::{ApiError, Call, Reply, ok, to_value};
+use crate::mono::Mono;
 use crate::state::State;
 use kamoku_books::format_date;
 use kamoku_import::{
@@ -127,7 +128,7 @@ fn job<'a>(
     let upload = uploads
         .0
         .get(&id)
-        .filter(|u| u.at.elapsed() < UPLOAD_TTL)
+        .filter(|u| Mono::now().saturating_duration_since(u.at) < UPLOAD_TTL)
         .ok_or_else(|| {
             ApiError::not_found(
                 "取り込むファイルの期限が切れました（30分）。もう一度ファイルを選んでください。",
