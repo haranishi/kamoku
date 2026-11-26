@@ -21,7 +21,7 @@
 
 ## 組み立て
 
-Rust 1.88 以上、`wasm32-unknown-unknown`、`wasm-bindgen` 0.2.129、Python 3、C のコンパイラ（clang）と、Rust が配る LLVM の ar（`rustup component add llvm-tools`）が要ります。macOS の `ar` は WASM のオブジェクトを捨てて SQLite が空になるので、macOS でも Linux でも LLVM の ar を使います。スクリプトは道具を入れず、足りなければ入れ方を示して止まります。最初のビルドは数分かかります。
+Rust 1.89 以上、`wasm32-unknown-unknown`、`wasm-bindgen` 0.2.129、Python 3、C のコンパイラ（clang）と、Rust が配る LLVM の ar（`rustup component add llvm-tools`）が要ります。macOS の `ar` は WASM のオブジェクトを捨てて SQLite が空になるので、macOS でも Linux でも LLVM の ar を使います。スクリプトは道具を入れず、足りなければ入れ方を示して止まります。最初のビルドは数分かかります。
 
 ```
 bash tools/build-web-demo.sh
